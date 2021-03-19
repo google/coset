@@ -1,0 +1,17 @@
+[package]
+name = "coset"
+version = "0.1.0"
+authors = ["David Drysdale <drysdale@google.com>"]
+edition = "2018"
+license = "Apache-2.0"
+description = "Set of types for supporting COSE"
+keywords = ["cryptography", "cose"]
+categories = ["cryptography"]
+
+[dependencies]
+maplit = "^1.0"
+serde_cbor = "^0.11.1"
+serde = { version = "^1.0.123", features = ["derive"] }
+
+[dev-dependencies]
+hex = "^0.4.2"

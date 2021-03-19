@@ -1,0 +1,139 @@
+name: CI
+on:
+  pull_request:
+    paths-ignore:
+      - README.md
+  push:
+    branches: main
+    paths-ignore:
+      - README.md
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - nightly-2020-10-19
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          components: rustfmt
+          override: true
+      - run: cargo build --release --all
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - nightly-2020-10-19
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          components: rustfmt
+          override: true
+      - run: cargo test --all -- --nocapture
+
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+      - run: go get github.com/campoy/embedmd
+      - uses: actions/setup-ruby@v1
+      - run: gem install mdl
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-10-19
+          override: true
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+      - run: scripts/check-format.sh
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-10-19
+          override: true
+          components: rustfmt, clippy
+      - run: cargo clippy --all-features --all-targets
+
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - run: cargo doc --no-deps --document-private-items
+
+  udeps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-10-19
+          override: true
+          components: rustfmt
+      - uses: actions-rs/install@v0.1.2
+        with:
+          crate: cargo-udeps
+          use-tool-cache: true
+          version: 0.1.15
+      - run: cargo udeps
+
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-10-19
+          override: true
+          components: rustfmt
+      - run: cargo install --locked --version 0.8.5 cargo-deny
+      - run: cargo deny check
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-10-19
+          override: true
+          components: rustfmt
+      - uses: actions-rs/install@v0.1.2
+        with:
+          crate: cargo-tarpaulin
+          use-tool-cache: true
+      - run: cargo tarpaulin --verbose --ignore-tests --all-features --timeout=600 --out Xml
+      - name: Upload to codecov.io
+        run: |
+          bash <(curl -s https://codecov.io/bash)
