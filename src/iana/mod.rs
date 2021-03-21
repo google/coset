@@ -14,7 +14,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-//! Enumerations for IANA-managed values, from https://www.iana.org/assignments/cose/cose.xhtml.
+//! Enumerations for IANA-managed values.
+//!
+//! Sources:
+//! - <https://www.iana.org/assignments/cose/cose.xhtml>
+//! - <https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml>
+//! - <https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats>
 
 use serde::{Deserialize, Serialize};
 
@@ -607,5 +612,133 @@ iana_registry! {
         MacCreate: 9,
         /// Key is used for validating MACs.
         MacVerify: 10,
+    }
+}
+
+iana_registry! {
+    /// CBOR tag values for COSE structures.
+    ///
+    /// From IANA registry https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml
+    /// as of 2021-03-19.
+    CborTag {
+        /// COSE Single Recipient Encrypted Data Object
+        CoseEncrypt0: 16,
+        /// COSE Mac w/o Recipients Object
+        CoseMac0: 17,
+        /// COSE Single Signer Data Object
+        CoseSign1: 18,
+        /// CBOR Web Token (CWT)
+        Cwt: 61,
+        /// COSE Encrypted Data Object
+        CoseEncrypt: 96,
+        /// COSE MACed Data Object
+        CoseMac: 97,
+        /// COSE Signed Data Object
+        CoseSign: 98,
+    }
+}
+
+iana_registry! {
+    /// CoAP Content Formats
+    ///
+    /// From IANA registry https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats
+    /// as of 2021-03-19.
+    CoapContentFormat {
+        /// text/plain; charset=utf-8
+        TextPlainUtf8: 0,
+        /// application/cose; cose-type="cose-encrypt0"
+        CoseEncrypt0: 16,
+        /// application/cose; cose-type="cose-mac0"
+        CoseMac0: 17,
+        /// application/cose; cose-type="cose-sign1"
+        CoseSign1: 18,
+        /// application/link-format
+        LinkFormat: 40,
+        /// application/xml
+        Xml: 41,
+        /// application/octet-stream
+        OctetStream: 42,
+        /// application/exi
+        Exi: 47,
+        /// application/json
+        Json: 50,
+        /// application/json-patch+json
+        JsonPatchJson: 51,
+        /// application/merge-patch+json
+        MergePatchJson: 52,
+        /// application/cbor
+        Cbor: 60,
+        /// application/cwt
+        Cwt: 61,
+        /// application/multipart-core
+        MultipartCore: 62,
+        /// application/cbor-seq
+        CborSeq: 63,
+        /// application/cose; cose-type="cose-encrypt"
+        CoseEncrypt: 96,
+        /// application/cose; cose-type="cose-mac"
+        CoseMac: 97,
+        /// application/cose; cose-type="cose-sign"
+        CoseSign: 98,
+        /// application/cose-key
+        CoseKey: 101,
+        /// application/cose-key-set
+        CoseKeySet: 102,
+        /// application/senml+json
+        SenmlJson: 110,
+        /// application/sensml+json
+        SensmlJson: 111,
+        /// application/senml+cbor
+        SenmlCbor: 112,
+        /// application/sensml+cbor
+        SensmlCbor: 113,
+        /// application/senml-exi
+        SenmlExi: 114,
+        /// application/sensml-exi
+        SensmlExi: 115,
+        /// application/coap-group+json
+        CoapGroupJson: 256,
+        /// application/dots+cbor
+        DotsCbor: 271,
+        /// application/pkcs7-mime; smime-type=server-generated-key
+        Pkcs7MimeSmimeTypeServerGeneratedKey: 280,
+        /// application/pkcs7-mime; smime-type=certs-only
+        Pkcs7MimeSmimeTypeCertsOnly: 281,
+        /// application/pkcs7-mime; smime-type=CMC-Request
+        Pkcs7MimeSmimeTypeCmcRequest: 282,
+        /// application/pkcs7-mime; smime-type=CMC-Response
+        Pkcs7MimeSmimeTypeCmcResponse: 283,
+        /// application/pkcs8
+        Pkcs8: 284,
+        /// application/csrattrs
+        Csrattrs: 285,
+        /// application/pkcs10
+        Pkcs10: 286,
+        /// application/pkix-cert
+        PkixCert: 287,
+        /// application/senml+xml
+        SenmlXml: 310,
+        /// application/sensml+xml
+        SensmlXml: 311,
+        /// application/senml-etch+json
+        SenmlEtchJson: 320,
+        /// application/senml-etch+cbor
+        SenmlEtchCbor: 322,
+        /// application/td+json
+        TdJson: 432,
+        /// application/vnd.ocf+cbor
+        VndOcfCbor: 10000,
+        /// application/oscore
+        Oscore: 10001,
+        // application/json deflate
+        JsonDeflate: 11050,
+        // application/cbor deflate
+        CborDeflate: 11060,
+        /// application/vnd.oma.lwm2m+tlv
+        VndOmaLwm2mTlv: 11542,
+        /// application/vnd.oma.lwm2m+json
+        VndOmaLwm2mJson: 11543,
+        /// application/vnd.oma.lwm2m+cbor
+        VndOmaLwm2mCbor: 11544,
     }
 }
