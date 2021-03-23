@@ -143,3 +143,196 @@ fn test_cose_signature_decode_fail() {
         expect_err(result, err_msg);
     }
 }
+
+#[test]
+fn test_cose_sign_encode() {
+    let tests = vec![
+        (
+            CoseSign {
+                payload: Some(vec![]),
+                ..Default::default()
+            },
+            concat!(
+                "84", // 4-tuple
+                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0", // 0-map
+                "40", // 0-bstr
+                "80", // 0-tuple
+            ),
+        ),
+        (
+            CoseSign {
+                payload: None,
+                signatures: vec![CoseSignature::default()],
+                ..Default::default()
+            },
+            concat!(
+                "84", // 4-tuple
+                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0", // 0-map
+                "f6", // null
+                "81", // 1-tuple
+                "83", "40a040", // 3-tuple
+            ),
+        ),
+    ];
+    for (i, (sign, sign_data)) in tests.iter().enumerate() {
+        let got = cbor::ser::to_vec(&sign).unwrap();
+        assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
+
+        let got = CoseSign::from_slice(&got).unwrap();
+        assert_eq!(*sign, got);
+    }
+}
+
+#[test]
+fn test_cose_sign_decode_fail() {
+    let tests = vec![
+        (
+            concat!(
+                "84",       // 4-tuple
+                "40",       // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "40",       // 0-bstr (invalid: should be map)
+                "43010203", // 3-bstr
+                "80",       // 0-tuple
+            ),
+            "expected map",
+        ),
+        (
+            concat!(
+                "84",       // 4-tuple
+                "a0",       // 0-map (invalid: should be bstr)
+                "a0",       // 0-map
+                "43010203", // 3-bstr
+                "80",       // 0-tuple
+            ),
+            "expected bstr encoded map",
+        ),
+        (
+            concat!(
+                "85",       // 5-tuple
+                "40",       // 0-bstr
+                "a0",       // 0-map
+                "43010203", // 3-bstr
+                "80",       // 0-tuple
+                "43010203", // 3-bstr
+            ),
+            "expected array with 4 items",
+        ),
+        (
+            concat!(
+                "83",       // 3-tuple
+                "40",       // 0-bstr
+                "a0",       // 0-map
+                "43010203", // 3-bstr
+            ),
+            "expected array with 4 items",
+        ),
+    ];
+    for (sign_data, err_msg) in tests.iter() {
+        let data = hex::decode(sign_data).unwrap();
+        let result = CoseSign::from_slice(&data);
+        expect_err(result, err_msg);
+    }
+}
+
+#[test]
+fn test_cose_sign1_encode() {
+    let tests = vec![
+        (
+            CoseSign1 {
+                payload: Some(vec![]),
+                ..Default::default()
+            },
+            concat!(
+                "84", // 4-tuple
+                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0", // 0-map
+                "40", // 0-bstr
+                "40", // 0-bstr
+            ),
+        ),
+        (
+            CoseSign1 {
+                payload: None,
+                signature: vec![1, 2, 3],
+                ..Default::default()
+            },
+            concat!(
+                "84", // 4-tuple
+                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0", // 0-map
+                "f6", // null
+                "43", "010203", // 3-bstr
+            ),
+        ),
+    ];
+    for (i, (sign, sign_data)) in tests.iter().enumerate() {
+        let got = cbor::ser::to_vec(&sign).unwrap();
+        assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
+
+        let got = CoseSign1::from_slice(&got).unwrap();
+        assert_eq!(*sign, got);
+    }
+}
+
+#[test]
+fn test_cose_sign1_decode_fail() {
+    let tests = vec![
+        (
+            concat!(
+                "84",       // 4-tuple
+                "40",       // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "40",       // 0-bstr (invalid: should be map)
+                "43010203", // 3-bstr
+                "40",       // 0-bstr
+            ),
+            "expected map",
+        ),
+        (
+            concat!(
+                "84",       // 4-tuple
+                "a0",       // 0-map (invalid: should be bstr)
+                "a0",       // 0-map
+                "43010203", // 3-bstr
+                "40",       // 0-bstr
+            ),
+            "expected bstr encoded map",
+        ),
+        (
+            concat!(
+                "84",       // 4-tuple
+                "40",       // 0-bstr
+                "a0",       // 0-map
+                "43010203", // 3-bstr
+                "80",       // 0-arr (invalid: should be bstr)
+            ),
+            "expected bstr",
+        ),
+        (
+            concat!(
+                "85",       // 5-tuple
+                "40",       // 0-bstr
+                "a0",       // 0-map
+                "43010203", // 3-bstr
+                "40",       // 0-bstr
+                "43010203", // 3-bstr
+            ),
+            "expected array with 4 items",
+        ),
+        (
+            concat!(
+                "83",       // 3-tuple
+                "40",       // 0-bstr
+                "a0",       // 0-map
+                "43010203", // 3-bstr
+            ),
+            "expected array with 4 items",
+        ),
+    ];
+    for (sign_data, err_msg) in tests.iter() {
+        let data = hex::decode(sign_data).unwrap();
+        let result = CoseSign1::from_slice(&data);
+        expect_err(result, err_msg);
+    }
+}
