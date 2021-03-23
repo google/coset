@@ -20,7 +20,7 @@ use crate::{
     iana,
     iana::EnumI128,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, Label,
+    Algorithm, CoseSignature, Label,
 };
 use serde::{de::Unexpected, Deserialize, Serialize, Serializer};
 use serde_cbor as cbor;
@@ -66,7 +66,7 @@ pub struct Header {
     /// Partial initialization vector
     pub partial_iv: Vec<u8>,
     /// Counter signature
-    // TODO: pub counter_signature: Vec<Box<CoseSignature>>,
+    pub counter_signatures: Vec<CoseSignature>,
     /// Any additional header values.
     pub rest: BTreeMap<Label, cbor::Value>,
 }
@@ -80,6 +80,7 @@ impl Header {
             && self.key_id.is_empty()
             && self.iv.is_empty()
             && self.partial_iv.is_empty()
+            && self.counter_signatures.is_empty()
             && self.rest.is_empty()
     }
 }
@@ -187,18 +188,37 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, &"bstr value"),
                 },
                 x if x == COUNTER_SIG => match value {
-                    cbor::Value::Array(a) => {
-                        if a.is_empty() {
+                    cbor::Value::Array(sig_or_sigs) => {
+                        if sig_or_sigs.is_empty() {
                             return Err(serde::de::Error::invalid_value(
                                 Unexpected::TupleVariant,
                                 &"non-empty array",
                             ));
                         }
-                        /* TODO: fill headers.counter_signature
-                        headers.counter_signature = a
-                            .map(|v| Box::new(CoseSignature::from_cbor_value(v)?))
-                            .collect();
-                        */
+                        // The encoding of counter signature[s] is pesky:
+                        // - a single counter signature is encoded as `COSE_Signature` (a 3-tuple)
+                        // - multiple counter signatures are encoded as `[+ COSE_Signature]`
+                        //
+                        // Determine which is which by looking at the first entry of the array:
+                        // - If it's a bstr, sig_or_sigs is a single signature.
+                        // - If it's an array, sig_or_sigs is an array of signatures
+                        match &sig_or_sigs[0] {
+                            cbor::Value::Bytes(_) => {
+                                headers
+                                    .counter_signatures
+                                    .push(CoseSignature::from_cbor_value(cbor::Value::Array(
+                                        sig_or_sigs,
+                                    ))?)
+                            }
+                            cbor::Value::Array(_) => {
+                                for sig in sig_or_sigs.into_iter() {
+                                    headers
+                                        .counter_signatures
+                                        .push(CoseSignature::from_cbor_value(sig)?);
+                                }
+                            }
+                            v => return cbor_type_error(&v, &"array or bstr value"),
+                        }
                     }
                     v => return cbor_type_error(&v, &"array value"),
                 },
@@ -253,11 +273,22 @@ impl AsCborValue for Header {
         if !self.partial_iv.is_empty() {
             map.insert(PARTIAL_IV, cbor::Value::Bytes(self.partial_iv.to_vec()));
         }
-        /* TODO
-        if !self.counter_signature.is_empty() {
-            map.serialize_entry(&COUNTER_SIG, &self.counter_signature);
+        if !self.counter_signatures.is_empty() {
+            if self.counter_signatures.len() == 1 {
+                // A single counter signature is encoded differently.
+                map.insert(COUNTER_SIG, self.counter_signatures[0].to_cbor_value());
+            } else {
+                map.insert(
+                    COUNTER_SIG,
+                    cbor::Value::Array(
+                        self.counter_signatures
+                            .iter()
+                            .map(|s| s.to_cbor_value())
+                            .collect(),
+                    ),
+                );
+            }
         }
-        */
         for (label, value) in &self.rest {
             map.insert(label.to_cbor_value(), value.clone());
         }
@@ -330,6 +361,12 @@ impl HeaderBuilder {
         self
     }
 
+    /// Add a counter signature.
+    pub fn add_counter_signature(mut self, sig: CoseSignature) -> Self {
+        self.0.counter_signatures.push(sig);
+        self
+    }
+
     /// Set a header label:value pair.
     ///
     /// # Panics
@@ -339,7 +376,7 @@ impl HeaderBuilder {
         if label >= iana::HeaderParameter::Alg.to_i128()
             && label <= iana::HeaderParameter::CounterSignature.to_i128()
         {
-            panic!("param() method used to set core header parameter"); // safe: invalid input
+            panic!("value() method used to set core header parameter"); // safe: invalid input
         }
         self.0.rest.insert(Label::Int(label), value);
         self

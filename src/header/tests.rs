@@ -71,15 +71,58 @@ fn test_headers_encode() {
                     Label::Int(0x46) => cbor::Value::Integer(0x47),
                     Label::Text("a".to_owned()) => cbor::Value::Integer(0x47),
                 },
+                counter_signatures: vec![CoseSignature {
+                    signature: vec![1, 2, 3],
+                    ..Default::default()
+                }],
                 ..Default::default()
             },
             concat!(
-                "a7", // 7-map
+                "a8", // 8-map
                 "01", "63616263", // 1 (alg) => "abc"
                 "02", "81", "6164", // 2 (crit) => 1-arr ["d"]
                 "03", "63612f62", // 3 (content-type) => "a/b"
                 "04", "43", "010203", // 4 (kid) => 3-bstr
                 "05", "43", "010203", // 5 (iv) => 3-bstr
+                "07", "83", // 7 (sig) => [3-arr for COSE_Signature
+                "40", "a0", "43010203", // ]
+                "1846", "1847", // 46 => 47  (note canonical ordering)
+                "6161", "1847", // "a" => 47
+            ),
+        ),
+        (
+            Header {
+                alg: Some(Algorithm::Text("abc".to_owned())),
+                crit: vec![Label::Text("d".to_owned())],
+                content_type: Some(ContentType::Text("a/b".to_owned())),
+                kid: vec![1, 2, 3],
+                iv: vec![1, 2, 3],
+                rest: btreemap! {
+                    Label::Int(0x46) => cbor::Value::Integer(0x47),
+                    Label::Text("a".to_owned()) => cbor::Value::Integer(0x47),
+                },
+                counter_signatures: vec![
+                    CoseSignature {
+                        signature: vec![1, 2, 3],
+                        ..Default::default()
+                    },
+                    CoseSignature {
+                        signature: vec![3, 4, 5],
+                        ..Default::default()
+                    },
+                ],
+                ..Default::default()
+            },
+            concat!(
+                "a8", // 8-map
+                "01", "63616263", // 1 (alg) => "abc"
+                "02", "81", "6164", // 2 (crit) => 1-arr ["d"]
+                "03", "63612f62", // 3 (content-type) => "a/b"
+                "04", "43", "010203", // 4 (kid) => 3-bstr
+                "05", "43", "010203", // 5 (iv) => 3-bstr
+                "07", "82", // 7 (sig) => 2-array
+                "83", "40", "a0", "43010203", // [3-arr for COSE_Signature]
+                "83", "40", "a0", "43030405", // [3-arr for COSE_Signature]
                 "1846", "1847", // 46 => 47  (note canonical ordering)
                 "6161", "1847", // "a" => 47
             ),
@@ -224,6 +267,16 @@ fn test_headers_decode_fail() {
                 "06", "4101", // 6 (partial-iv) => 1-bstr
             ),
             "expected only one of IV and partial IV",
+        ),
+        (
+            concat!(
+                "a2", // 2-map
+                "01", "63616263", // 1 (alg) => "abc"
+                "07", "82",       // 7 (sig) => 2-array
+                "63616263", // tstr (invalid)
+                "83", "40", "a0", "43010203", // [3-arr for COSE_Signature]
+            ),
+            "array or bstr value",
         ),
     ];
     for (headers_data, err_msg) in tests.iter() {
