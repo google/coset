@@ -570,7 +570,7 @@ fn test_cose_sign_tagged_decode_fail() {
 }
 
 #[test]
-fn test_cose_rfc8152_sign_decode() {
+fn test_rfc8152_cose_sign_decode() {
     // COSE_Sign structures from RFC 8152 section C.1.
     let tests = vec![
         (
@@ -982,7 +982,7 @@ fn test_cose_sign1_tagged_decode_fail() {
 }
 
 #[test]
-fn test_cose_rfc8152_sign1_decode() {
+fn test_rfc8152_cose_sign1_decode() {
     // COSE_Sign1 structures from RFC 8152 section C.2.
     let tests = vec![
         (
