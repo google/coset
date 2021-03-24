@@ -300,7 +300,7 @@ fn test_cose_sign_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "expected registered tag prefix",
+            "expected tag",
         ),
         (
             concat!(
@@ -311,13 +311,13 @@ fn test_cose_sign_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "expected registered tag prefix",
+            "TrailingData",
         ),
         (
             concat!(
                 "18",     // incomplete int
             ),
-            "expected registered tag prefix",
+            "EofWhileParsingValue",
         ),
     ];
     for (sign_data, err_msg) in tests.iter() {
@@ -492,7 +492,7 @@ fn test_cose_sign1_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "expected registered tag prefix",
+            "expected tag",
         ),
         (
             concat!(
@@ -503,13 +503,13 @@ fn test_cose_sign1_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "expected registered tag prefix",
+            "TrailingData",
         ),
         (
             concat!(
                 "12",     // incomplete int
             ),
-            "expected registered tag prefix",
+            "expected tag",
         ),
     ];
     for (sign_data, err_msg) in tests.iter() {

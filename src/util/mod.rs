@@ -44,7 +44,7 @@ where
 }
 
 /// Trait for types that can be converted to/from a [`cbor::Value`]
-pub(crate) trait AsCborValue: Sized {
+pub trait AsCborValue: Sized {
     fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E>;
     fn to_cbor_value(&self) -> cbor::Value;
 }

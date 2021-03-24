@@ -51,123 +51,40 @@ pub trait CborSerializable: Serialize + DeserializeOwned {
     }
 }
 
-/// Generate the CBOR prefix corresponding to a tag value.
-fn serialize_tag(tag: u64) -> Vec<u8> {
-    if tag < 24 {
-        vec![0xc0 | tag as u8]
-    } else if tag < 0x100 {
-        vec![0xd8, tag as u8]
-    } else if tag < 0x10000 {
-        vec![0xd9, ((tag >> 8) & 0xff) as u8, (tag & 0xff) as u8]
-    } else if tag < 0x100000000 {
-        vec![
-            0xda,
-            ((tag >> 24) & 0xff) as u8,
-            ((tag >> 16) & 0xff) as u8,
-            ((tag >> 8) & 0xff) as u8,
-            (tag & 0xff) as u8,
-        ]
-    } else {
-        vec![
-            0xdb,
-            ((tag >> 56) & 0xff) as u8,
-            ((tag >> 48) & 0xff) as u8,
-            ((tag >> 40) & 0xff) as u8,
-            ((tag >> 32) & 0xff) as u8,
-            ((tag >> 24) & 0xff) as u8,
-            ((tag >> 16) & 0xff) as u8,
-            ((tag >> 8) & 0xff) as u8,
-            (tag & 0xff) as u8,
-        ]
-    }
-}
-
-/// Check whether a prefix corresponds to a tag value. This function assumes
-/// that the length of the prefix has already been checked and will panic
-/// if this is not the case.
-#[inline]
-fn tag_prefix_correct(tag: u64, prefix: &[u8]) -> bool {
-    if tag < 24 {
-        prefix[0] == (0xc0 | tag as u8)
-    } else if tag < 0x100 {
-        prefix[0] == 0xd8 && prefix[1] == tag as u8
-    } else if tag < 0x10000 {
-        prefix[0] == 0xd9
-            && prefix[1] == ((tag >> 8) & 0xff) as u8
-            && prefix[2] == (tag & 0xff) as u8
-    } else if tag < 0x100000000 {
-        prefix[0] == 0xda
-            && prefix[1] == ((tag >> 24) & 0xff) as u8
-            && prefix[2] == ((tag >> 16) & 0xff) as u8
-            && prefix[3] == ((tag >> 8) & 0xff) as u8
-            && prefix[4] == (tag & 0xff) as u8
-    } else {
-        prefix[0] == 0xdb
-            && prefix[1] == ((tag >> 56) & 0xff) as u8
-            && prefix[2] == ((tag >> 48) & 0xff) as u8
-            && prefix[3] == ((tag >> 40) & 0xff) as u8
-            && prefix[4] == ((tag >> 32) & 0xff) as u8
-            && prefix[5] == ((tag >> 24) & 0xff) as u8
-            && prefix[6] == ((tag >> 16) & 0xff) as u8
-            && prefix[7] == ((tag >> 8) & 0xff) as u8
-            && prefix[8] == (tag & 0xff) as u8
-    }
-}
-
 /// Extension trait that adds tagged serialization/deserialization methods.
-pub trait TaggedCborSerializable: Serialize + DeserializeOwned {
+pub trait TaggedCborSerializable: AsCborValue {
     /// The associated tag value.
     const TAG: u64;
 
-    /// The length of the tag prefix.
-    const TAG_LENGTH: usize = if Self::TAG < 24 {
-        1
-    } else if Self::TAG < 0x100 {
-        1 + 1
-    } else if Self::TAG < 0x10000 {
-        1 + 2
-    } else if Self::TAG < 0x100000000 {
-        1 + 4
-    } else {
-        1 + 8
-    };
-
     /// Create an object instance by reading serialized CBOR data from [`std::io::Read`] instance,
     /// expecting an initial tag value.
-    fn from_tagged_reader<R: std::io::Read>(mut reader: R) -> cbor::Result<Self> {
-        let mut prefix = vec![0; Self::TAG_LENGTH];
-        if reader.read_exact(&mut prefix).is_err() {
-            return Err(serde::de::Error::invalid_type(
-                serde::de::Unexpected::Other("tag prefix"),
-                &"registered tag prefix",
-            ));
+    fn from_tagged_reader<R: std::io::Read>(reader: R) -> cbor::Result<Self> {
+        match cbor::from_reader::<cbor::Value, R>(reader)? {
+            cbor::Value::Tag(t, v) if t == Self::TAG => Self::from_cbor_value(*v),
+            v => cbor_type_error(&v, &"tag"),
         }
-        if !tag_prefix_correct(Self::TAG, &prefix) {
-            return Err(serde::de::Error::invalid_value(
-                serde::de::Unexpected::Other("tag prefix"),
-                &"registered tag prefix",
-            ));
-        }
-        cbor::from_reader::<Self, R>(reader)
     }
 
     /// Create an object instance from serialized CBOR data in a slice, expecting an initial
     /// tag value.
     fn from_tagged_slice(slice: &[u8]) -> cbor::Result<Self> {
-        Self::from_tagged_reader::<std::io::Cursor<&[u8]>>(std::io::Cursor::new(slice))
+        match cbor::from_slice::<cbor::Value>(slice)? {
+            cbor::Value::Tag(t, v) if t == Self::TAG => Self::from_cbor_value(*v),
+            v => cbor_type_error(&v, &"tag"),
+        }
     }
 
     /// Serialize this object to a vector, including initial tag.
     fn to_tagged_vec(&self) -> cbor::Result<Vec<u8>> {
-        let mut result = Vec::new();
-        self.to_tagged_writer(&mut result)?;
-        Ok(result)
+        cbor::to_vec(&cbor::Value::Tag(Self::TAG, Box::new(self.to_cbor_value())))
     }
 
     /// Serialize this object to a [`std::io::Write`] instance, including initial tag.
-    fn to_tagged_writer<W: std::io::Write>(&self, mut writer: W) -> cbor::Result<()> {
-        writer.write_all(&serialize_tag(Self::TAG))?;
-        cbor::to_writer(writer, self)
+    fn to_tagged_writer<W: std::io::Write>(&self, writer: W) -> cbor::Result<()> {
+        cbor::to_writer(
+            writer,
+            &cbor::Value::Tag(Self::TAG, Box::new(self.to_cbor_value())),
+        )
     }
 }
 
