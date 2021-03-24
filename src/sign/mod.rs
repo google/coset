@@ -114,6 +114,39 @@ impl<'de> Deserialize<'de> for CoseSignature {
     }
 }
 
+/// Builder for [`CoseSignature`] objects.
+#[derive(Default)]
+pub struct CoseSignatureBuilder(CoseSignature);
+
+impl CoseSignatureBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the protected header.
+    pub fn protected(mut self, header: Header) -> Self {
+        self.0.protected = header;
+        self
+    }
+
+    /// Set the unprotected header.
+    pub fn unprotected(mut self, header: Header) -> Self {
+        self.0.unprotected = header;
+        self
+    }
+
+    /// Set the signature.
+    pub fn signature(mut self, sig: Vec<u8>) -> Self {
+        self.0.signature = sig;
+        self
+    }
+
+    /// Build the complete [`CoseSignature`] object.
+    pub fn build(self) -> CoseSignature {
+        self.0
+    }
+}
+
 /// Signed payload with signatures.
 ///
 /// ```cdl
@@ -160,12 +193,14 @@ impl AsCborValue for CoseSign {
                             return Err(serde::de::Error::invalid_value(
                                 Unexpected::StructVariant,
                                 &"map for COSE_Signature",
-                            ))
+                            ));
                         }
                     }
                 }
             }
-            v => return cbor_type_error(&v, &"bstr"),
+            v => {
+                return cbor_type_error(&v, &"array of COSE_Signature");
+            }
         };
         sign.payload = match a.remove(2) {
             cbor::Value::Bytes(b) => Some(b),
@@ -228,6 +263,87 @@ impl Serialize for CoseSign {
 impl<'de> Deserialize<'de> for CoseSign {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
+    }
+}
+
+impl CoseSign {
+    /// Verify the indidated signature value, using `verifier` on the signature value and serialized
+    /// data (in that order).
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `which` is >= `self.signatures.len()`.
+    pub fn verify_signature<F, E>(&self, which: usize, aad: &[u8], verifier: F) -> Result<(), E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
+    {
+        let sig = &self.signatures[which];
+        let tbs_data = sig_structure_data(
+            SignatureContext::CoseSignature,
+            &self.protected,
+            Some(&sig.protected),
+            aad,
+            self.payload.as_ref().unwrap_or(&vec![]),
+        );
+        verifier(&sig.signature, &tbs_data)
+    }
+}
+
+/// Builder for [`CoseSign`] objects.
+#[derive(Default)]
+pub struct CoseSignBuilder(CoseSign);
+
+impl CoseSignBuilder {
+    /// Constructor.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the protected header.
+    pub fn protected(mut self, header: Header) -> Self {
+        self.0.protected = header;
+        self
+    }
+
+    /// Set the unprotected header.
+    pub fn unprotected(mut self, header: Header) -> Self {
+        self.0.unprotected = header;
+        self
+    }
+
+    /// Set the payload.
+    pub fn payload(mut self, payload: Vec<u8>) -> Self {
+        self.0.payload = Some(payload);
+        self
+    }
+
+    /// Add a signature value.
+    pub fn add_signature(mut self, sig: CoseSignature) -> Self {
+        self.0.signatures.push(sig);
+        self
+    }
+
+    /// Calculate the signature value, using `signer` to generate the signature bytes that will be
+    /// used to complete `sig`.  Any protected header values should be set before using this
+    /// method.
+    pub fn add_created_signature<F>(self, mut sig: CoseSignature, aad: &[u8], signer: F) -> Self
+    where
+        F: FnOnce(&[u8]) -> Vec<u8>,
+    {
+        let tbs_data = sig_structure_data(
+            SignatureContext::CoseSignature,
+            &self.0.protected,
+            Some(&sig.protected),
+            aad,
+            self.0.payload.as_ref().unwrap_or(&vec![]),
+        );
+        sig.signature = signer(&tbs_data);
+        self.add_signature(sig)
+    }
+
+    /// Build the complete [`CoseSign`] object.
+    pub fn build(self) -> CoseSign {
+        self.0
     }
 }
 
@@ -329,4 +445,139 @@ impl<'de> Deserialize<'de> for CoseSign1 {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
     }
+}
+
+impl CoseSign1 {
+    /// Verify the signature value, using `verifier` on the signature value and serialized data (in
+    /// that order).
+    pub fn verify_signature<F, E>(&self, aad: &[u8], verifier: F) -> Result<(), E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
+    {
+        let tbs_data = sig_structure_data(
+            SignatureContext::CoseSign1,
+            &self.protected,
+            None,
+            aad,
+            self.payload.as_ref().unwrap_or(&vec![]),
+        );
+        verifier(&self.signature, &tbs_data)
+    }
+}
+
+/// Builder for [`CoseSign1`] objects.
+#[derive(Default)]
+pub struct CoseSign1Builder(CoseSign1);
+
+impl CoseSign1Builder {
+    /// Constructor.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the protected header.
+    pub fn protected(mut self, header: Header) -> Self {
+        self.0.protected = header;
+        self
+    }
+
+    /// Set the unprotected header.
+    pub fn unprotected(mut self, header: Header) -> Self {
+        self.0.unprotected = header;
+        self
+    }
+
+    /// Set the payload.
+    pub fn payload(mut self, payload: Vec<u8>) -> Self {
+        self.0.payload = Some(payload);
+        self
+    }
+
+    /// Set the signature value directly.
+    pub fn signature(mut self, sig: Vec<u8>) -> Self {
+        self.0.signature = sig;
+        self
+    }
+
+    /// Calculate the signature value, using `signer` to generate the signature bytes.  Any
+    /// protected header values should be set before using this method.
+    pub fn create_signature<F>(self, aad: &[u8], signer: F) -> Self
+    where
+        F: FnOnce(&[u8]) -> Vec<u8>,
+    {
+        let tbs_data = sig_structure_data(
+            SignatureContext::CoseSign1,
+            &self.0.protected,
+            None,
+            aad,
+            self.0.payload.as_ref().unwrap_or(&vec![]),
+        );
+        let sig_data = signer(&tbs_data);
+        self.signature(sig_data)
+    }
+
+    /// Build the complete [`CoseSign1`] object.
+    pub fn build(self) -> CoseSign1 {
+        self.0
+    }
+}
+
+/// Possible signature contexts.
+#[derive(Clone, Copy)]
+pub enum SignatureContext {
+    CoseSignature,
+    CoseSign1,
+    CounterSignature,
+}
+
+impl SignatureContext {
+    /// Return the context string as per RFC 8152 section 4.4.
+    fn text(&self) -> &'static str {
+        match self {
+            SignatureContext::CoseSignature => "Signature",
+            SignatureContext::CoseSign1 => "Signature1",
+            SignatureContext::CounterSignature => "CounterSignature",
+        }
+    }
+}
+
+/// Create a binary blob that will be signed.
+///
+/// ```cddl
+///   Sig_structure = [
+///       context : "Signature" / "Signature1" / "CounterSignature",
+///       body_protected : empty_or_serialized_map,
+///       ? sign_protected : empty_or_serialized_map,
+///       external_aad : bstr,
+///       payload : bstr
+///   ]
+/// ```
+pub fn sig_structure_data(
+    context: SignatureContext,
+    body: &Header,
+    sign: Option<&Header>,
+    aad: &[u8],
+    payload: &[u8],
+) -> Vec<u8> {
+    let mut arr = Vec::<cbor::Value>::new();
+    arr.push(cbor::Value::Text(context.text().to_owned()));
+    if body.is_empty() {
+        arr.push(cbor::Value::Bytes(vec![]));
+    } else {
+        arr.push(cbor::Value::Bytes(
+            body.to_vec().expect("failed to serialize header"), // safe: always serializable
+        ));
+    }
+    if let Some(sign) = sign {
+        if sign.is_empty() {
+            arr.push(cbor::Value::Bytes(vec![]));
+        } else {
+            arr.push(cbor::Value::Bytes(
+                sign.to_vec().expect("failed to serialize header"), // safe: always serializable
+            ));
+        }
+    }
+    arr.push(cbor::Value::Bytes(aad.to_vec()));
+    arr.push(cbor::Value::Bytes(payload.to_vec()));
+    cbor::to_vec(&cbor::Value::Array(arr)).expect("failed to serialize Sig_structure") // safe: always serializable
 }
