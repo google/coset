@@ -25,6 +25,8 @@ pub mod iana;
 
 mod common;
 pub use common::*;
+mod encrypt;
+pub use encrypt::*;
 mod header;
 pub use header::*;
 mod key;
