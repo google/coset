@@ -160,7 +160,7 @@ fn test_headers_decode_fail() {
                 "a1", // 1-map
                 "02", "4101", // 2 (crit) => bstr (invalid value type)
             ),
-            "expected arr",
+            "expected array value",
         ),
         (
             concat!(
@@ -168,6 +168,13 @@ fn test_headers_decode_fail() {
                 "02", "81", "4101", // 2 (crit) => [bstr] (invalid value type)
             ),
             "expected int/tstr",
+        ),
+        (
+            concat!(
+                "a1", // 1-map
+                "02", "80", // 2 (crit) => []
+            ),
+            "expected non-empty array",
         ),
         (
             concat!(
@@ -203,6 +210,13 @@ fn test_headers_decode_fail() {
                 "03", "62", "6162" // 3 (content-type) => invalid value "ab"
             ),
             "expected text of form type/subtype",
+        ),
+        (
+            concat!(
+                "a1", // 1-map
+                "03", "60", // 3 (content-type) => invalid value ""
+            ),
+            "expected non-empty string",
         ),
         (
             concat!(
