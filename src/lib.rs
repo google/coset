@@ -31,5 +31,7 @@ mod header;
 pub use header::*;
 mod key;
 pub use key::*;
+mod mac;
+pub use mac::*;
 mod sign;
 pub use sign::*;
