@@ -66,36 +66,14 @@ impl AsCborValue for CoseSignature {
         };
 
         sig.unprotected = Header::from_cbor_value(a.remove(1))?;
-
-        let prot_data = match a.remove(0) {
-            cbor::Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, &"bstr encoded map"),
-        };
-        if !prot_data.is_empty() {
-            sig.protected = match Header::from_slice(&prot_data) {
-                Ok(h) => h,
-                Err(_e) => {
-                    return Err(serde::de::Error::invalid_value(
-                        Unexpected::StructVariant,
-                        &"header struct",
-                    ));
-                }
-            };
-        }
+        sig.protected = Header::from_cbor_bstr(a.remove(0))?;
 
         Ok(sig)
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
         let mut v = Vec::<cbor::Value>::new();
-        let protected_data = if self.protected.is_empty() {
-            vec![]
-        } else {
-            self.protected
-                .to_vec()
-                .expect("failed to serialize protected headers") // safe: Header always serializable
-        };
-        v.push(cbor::Value::Bytes(protected_data));
+        v.push(self.protected.to_cbor_bstr());
         v.push(self.unprotected.to_cbor_value());
         v.push(cbor::Value::Bytes(self.signature.clone()));
         cbor::Value::Array(v)
@@ -209,36 +187,14 @@ impl AsCborValue for CoseSign {
         };
 
         sign.unprotected = Header::from_cbor_value(a.remove(1))?;
-
-        let prot_data = match a.remove(0) {
-            cbor::Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, &"bstr encoded map"),
-        };
-        if !prot_data.is_empty() {
-            sign.protected = match Header::from_slice(&prot_data) {
-                Ok(h) => h,
-                Err(_e) => {
-                    return Err(serde::de::Error::invalid_value(
-                        Unexpected::StructVariant,
-                        &"header struct",
-                    ));
-                }
-            };
-        }
+        sign.protected = Header::from_cbor_bstr(a.remove(0))?;
 
         Ok(sign)
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
         let mut v = Vec::<cbor::Value>::new();
-        let protected_data = if self.protected.is_empty() {
-            vec![]
-        } else {
-            self.protected
-                .to_vec()
-                .expect("failed to serialize protected headers") // safe: Header always serializable
-        };
-        v.push(cbor::Value::Bytes(protected_data));
+        v.push(self.protected.to_cbor_bstr());
         v.push(self.unprotected.to_cbor_value());
         match &self.payload {
             Some(b) => v.push(cbor::Value::Bytes(b.clone())),
@@ -395,36 +351,14 @@ impl AsCborValue for CoseSign1 {
         };
 
         sign.unprotected = Header::from_cbor_value(a.remove(1))?;
-
-        let prot_data = match a.remove(0) {
-            cbor::Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, &"bstr encoded map"),
-        };
-        if !prot_data.is_empty() {
-            sign.protected = match Header::from_slice(&prot_data) {
-                Ok(h) => h,
-                Err(_e) => {
-                    return Err(serde::de::Error::invalid_value(
-                        Unexpected::StructVariant,
-                        &"header struct",
-                    ));
-                }
-            };
-        }
+        sign.protected = Header::from_cbor_bstr(a.remove(0))?;
 
         Ok(sign)
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
         let mut v = Vec::<cbor::Value>::new();
-        let protected_data = if self.protected.is_empty() {
-            vec![]
-        } else {
-            self.protected
-                .to_vec()
-                .expect("failed to serialize protected headers") // safe: Header always serializable
-        };
-        v.push(cbor::Value::Bytes(protected_data));
+        v.push(self.protected.to_cbor_bstr());
         v.push(self.unprotected.to_cbor_value());
         match &self.payload {
             Some(b) => v.push(cbor::Value::Bytes(b.clone())),

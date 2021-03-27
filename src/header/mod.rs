@@ -20,7 +20,7 @@ use crate::{
     iana,
     iana::EnumI128,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, CoseSignature, Label,
+    Algorithm, CborSerializable, CoseSignature, Label,
 };
 use serde::{de::Unexpected, Deserialize, Serialize, Serializer};
 use serde_cbor as cbor;
@@ -72,6 +72,31 @@ pub struct Header {
 }
 
 impl Header {
+    /// Constructor from a [`cbor::Value`] that holds a `bstr` encoded header.
+    #[inline]
+    pub fn from_cbor_bstr<E: serde::de::Error>(val: cbor::Value) -> Result<Self, E> {
+        let data = match val {
+            cbor::Value::Bytes(b) => b,
+            v => return cbor_type_error(&v, &"bstr encoded map"),
+        };
+        if data.is_empty() {
+            return Ok(Self::default());
+        }
+        Header::from_slice(&data).map_err(|_e| {
+            serde::de::Error::invalid_value(Unexpected::StructVariant, &"header struct")
+        })
+    }
+
+    /// Convert this header to a `bstr` encoded map, as a [`cbor::Value`].
+    #[inline]
+    pub fn to_cbor_bstr(&self) -> cbor::Value {
+        cbor::Value::Bytes(if self.is_empty() {
+            vec![]
+        } else {
+            self.to_vec().expect("failed to serialize header") // safe: Header always serializable
+        })
+    }
+
     /// Indicate whether the `Header` is empty.
     pub fn is_empty(&self) -> bool {
         self.alg.is_none()
