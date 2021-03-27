@@ -22,7 +22,7 @@ use crate::{
     util::{cbor_type_error, AsCborValue},
     Header,
 };
-use serde::{de::Unexpected, Deserialize, Serialize, Serializer};
+use serde::de::Unexpected;
 use serde_cbor as cbor;
 
 #[cfg(test)]
@@ -80,49 +80,17 @@ impl AsCborValue for CoseSignature {
     }
 }
 
-impl Serialize for CoseSignature {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.to_cbor_value().serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for CoseSignature {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
-    }
-}
+cbor_serialize!(CoseSignature);
 
 /// Builder for [`CoseSignature`] objects.
 #[derive(Default)]
 pub struct CoseSignatureBuilder(CoseSignature);
 
 impl CoseSignatureBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Set the protected header.
-    pub fn protected(mut self, header: Header) -> Self {
-        self.0.protected = header;
-        self
-    }
-
-    /// Set the unprotected header.
-    pub fn unprotected(mut self, header: Header) -> Self {
-        self.0.unprotected = header;
-        self
-    }
-
-    /// Set the signature.
-    pub fn signature(mut self, sig: Vec<u8>) -> Self {
-        self.0.signature = sig;
-        self
-    }
-
-    /// Build the complete [`CoseSignature`] object.
-    pub fn build(self) -> CoseSignature {
-        self.0
-    }
+    builder! {CoseSignature}
+    builder_set! {protected: Header}
+    builder_set! {unprotected: Header}
+    builder_set! {signature: Vec<u8>}
 }
 
 /// Signed payload with signatures.
@@ -210,17 +178,7 @@ impl AsCborValue for CoseSign {
     }
 }
 
-impl Serialize for CoseSign {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.to_cbor_value().serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for CoseSign {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
-    }
-}
+cbor_serialize!(CoseSign);
 
 impl CoseSign {
     /// Verify the indidated signature value, using `verifier` on the signature value and serialized
@@ -250,22 +208,9 @@ impl CoseSign {
 pub struct CoseSignBuilder(CoseSign);
 
 impl CoseSignBuilder {
-    /// Constructor.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Set the protected header.
-    pub fn protected(mut self, header: Header) -> Self {
-        self.0.protected = header;
-        self
-    }
-
-    /// Set the unprotected header.
-    pub fn unprotected(mut self, header: Header) -> Self {
-        self.0.unprotected = header;
-        self
-    }
+    builder! {CoseSign}
+    builder_set! {protected: Header}
+    builder_set! {unprotected: Header}
 
     /// Set the payload.
     pub fn payload(mut self, payload: Vec<u8>) -> Self {
@@ -295,11 +240,6 @@ impl CoseSignBuilder {
         );
         sig.signature = signer(&tbs_data);
         self.add_signature(sig)
-    }
-
-    /// Build the complete [`CoseSign`] object.
-    pub fn build(self) -> CoseSign {
-        self.0
     }
 }
 
@@ -369,17 +309,7 @@ impl AsCborValue for CoseSign1 {
     }
 }
 
-impl Serialize for CoseSign1 {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.to_cbor_value().serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for CoseSign1 {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
-    }
-}
+cbor_serialize!(CoseSign1);
 
 impl CoseSign1 {
     /// Verify the signature value, using `verifier` on the signature value and serialized data (in
@@ -404,32 +334,14 @@ impl CoseSign1 {
 pub struct CoseSign1Builder(CoseSign1);
 
 impl CoseSign1Builder {
-    /// Constructor.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Set the protected header.
-    pub fn protected(mut self, header: Header) -> Self {
-        self.0.protected = header;
-        self
-    }
-
-    /// Set the unprotected header.
-    pub fn unprotected(mut self, header: Header) -> Self {
-        self.0.unprotected = header;
-        self
-    }
+    builder! {CoseSign1}
+    builder_set! {protected: Header}
+    builder_set! {unprotected: Header}
+    builder_set! {signature: Vec<u8>}
 
     /// Set the payload.
     pub fn payload(mut self, payload: Vec<u8>) -> Self {
         self.0.payload = Some(payload);
-        self
-    }
-
-    /// Set the signature value directly.
-    pub fn signature(mut self, sig: Vec<u8>) -> Self {
-        self.0.signature = sig;
         self
     }
 
@@ -448,11 +360,6 @@ impl CoseSign1Builder {
         );
         let sig_data = signer(&tbs_data);
         self.signature(sig_data)
-    }
-
-    /// Build the complete [`CoseSign1`] object.
-    pub fn build(self) -> CoseSign1 {
-        self.0
     }
 }
 

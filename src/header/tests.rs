@@ -25,7 +25,7 @@ fn test_headers_encode() {
         (
             Header {
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
-                kid: vec![1, 2, 3],
+                key_id: vec![1, 2, 3],
                 partial_iv: vec![1, 2, 3],
                 ..Default::default()
             },
@@ -41,7 +41,7 @@ fn test_headers_encode() {
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
                 crit: vec![Label::Int(1)],
                 content_type: Some(ContentType::Assigned(iana::CoapContentFormat::CoseEncrypt0)),
-                kid: vec![1, 2, 3],
+                key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
                 rest: btreemap! {
                     Label::Int(0x46) => cbor::Value::Integer(0x47),
@@ -65,7 +65,7 @@ fn test_headers_encode() {
                 alg: Some(Algorithm::Text("abc".to_owned())),
                 crit: vec![Label::Text("d".to_owned())],
                 content_type: Some(ContentType::Text("a/b".to_owned())),
-                kid: vec![1, 2, 3],
+                key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
                 rest: btreemap! {
                     Label::Int(0x46) => cbor::Value::Integer(0x47),
@@ -95,7 +95,7 @@ fn test_headers_encode() {
                 alg: Some(Algorithm::Text("abc".to_owned())),
                 crit: vec![Label::Text("d".to_owned())],
                 content_type: Some(ContentType::Text("a/b".to_owned())),
-                kid: vec![1, 2, 3],
+                key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
                 rest: btreemap! {
                     Label::Int(0x46) => cbor::Value::Integer(0x47),
@@ -356,7 +356,7 @@ fn test_header_builder() {
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
                 crit: vec![Label::Int(1), Label::Text("abc".to_owned())],
                 content_type: Some(ContentType::Assigned(iana::CoapContentFormat::CoseEncrypt0)),
-                kid: vec![1, 2, 3],
+                key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
                 rest: btreemap! {
                     Label::Int(0x46) => cbor::Value::Integer(0x47),
@@ -379,7 +379,7 @@ fn test_header_builder() {
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
                 crit: vec![Label::Int(1), Label::Text("abc".to_owned())],
                 content_type: Some(ContentType::Text("type/subtype".to_owned())),
-                kid: vec![1, 2, 3],
+                key_id: vec![1, 2, 3],
                 partial_iv: vec![4, 5, 6],
                 ..Default::default()
             },

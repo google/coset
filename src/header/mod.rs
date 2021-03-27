@@ -22,7 +22,7 @@ use crate::{
     util::{cbor_type_error, AsCborValue},
     Algorithm, CborSerializable, CoseSignature, Label,
 };
-use serde::{de::Unexpected, Deserialize, Serialize, Serializer};
+use serde::de::Unexpected;
 use serde_cbor as cbor;
 use std::collections::{btree_map::Entry, BTreeMap};
 
@@ -60,7 +60,7 @@ pub struct Header {
     /// Content type of the payload
     pub content_type: Option<ContentType>,
     /// Key identifier.
-    pub kid: Vec<u8>,
+    pub key_id: Vec<u8>,
     /// Full initialization vector
     pub iv: Vec<u8>,
     /// Partial initialization vector
@@ -182,7 +182,7 @@ impl AsCborValue for Header {
                                 &"non-empty bstr",
                             ));
                         }
-                        headers.kid = v;
+                        headers.key_id = v;
                     }
                     v => return cbor_type_error(&v, &"bstr value"),
                 },
@@ -289,8 +289,8 @@ impl AsCborValue for Header {
         if let Some(content_type) = &self.content_type {
             map.insert(CONTENT_TYPE, content_type.to_cbor_value());
         }
-        if !self.kid.is_empty() {
-            map.insert(KID, cbor::Value::Bytes(self.kid.to_vec()));
+        if !self.key_id.is_empty() {
+            map.insert(KID, cbor::Value::Bytes(self.key_id.to_vec()));
         }
         if !self.iv.is_empty() {
             map.insert(IV, cbor::Value::Bytes(self.iv.to_vec()));
@@ -321,27 +321,16 @@ impl AsCborValue for Header {
     }
 }
 
-impl Serialize for Header {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.to_cbor_value().serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for Header {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
-    }
-}
+cbor_serialize!(Header);
 
 /// Builder for [`Header`] objects.
 #[derive(Default)]
 pub struct HeaderBuilder(Header);
 
 impl HeaderBuilder {
-    /// Create new `HeaderBuilder`.
-    pub fn new() -> Self {
-        Self::default()
-    }
+    builder! {Header}
+    builder_set! {key_id: Vec<u8>}
+
     /// Set the algorithm.
     pub fn algorithm(mut self, alg: iana::Algorithm) -> Self {
         self.0.alg = Some(Algorithm::Assigned(alg));
@@ -363,12 +352,6 @@ impl HeaderBuilder {
     /// Set the content type to a text value.
     pub fn content_type(mut self, content_type: String) -> Self {
         self.0.content_type = Some(ContentType::Text(content_type));
-        self
-    }
-
-    /// Set the key identifier.
-    pub fn key_id(mut self, kid: Vec<u8>) -> Self {
-        self.0.kid = kid;
         self
     }
 
@@ -411,10 +394,5 @@ impl HeaderBuilder {
     pub fn text_value(mut self, label: String, value: cbor::Value) -> Self {
         self.0.rest.insert(Label::Text(label), value);
         self
-    }
-
-    /// Build the [`Header`] instance.
-    pub fn build(self) -> Header {
-        self.0
     }
 }

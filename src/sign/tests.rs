@@ -49,7 +49,7 @@ fn test_cose_signature_encode() {
             CoseSignature {
                 protected: Header {
                     alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
-                    kid: vec![1, 2, 3],
+                    key_id: vec![1, 2, 3],
                     partial_iv: vec![1, 2, 3],
                     ..Default::default()
                 },
@@ -71,7 +71,7 @@ fn test_cose_signature_encode() {
             CoseSignature {
                 unprotected: Header {
                     alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
-                    kid: vec![1, 2, 3],
+                    key_id: vec![1, 2, 3],
                     partial_iv: vec![1, 2, 3],
                     ..Default::default()
                 },
@@ -203,7 +203,7 @@ fn test_cose_signature_builder() {
             CoseSignature {
                 protected: Header {
                     alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
-                    kid: vec![1, 2, 3],
+                    key_id: vec![1, 2, 3],
                     iv: vec![1, 2, 3],
                     ..Default::default()
                 },
@@ -225,7 +225,7 @@ fn test_cose_signature_builder() {
             CoseSignature {
                 unprotected: Header {
                     alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
-                    kid: vec![1, 2, 3],
+                    key_id: vec![1, 2, 3],
                     partial_iv: vec![1, 2, 3],
                     ..Default::default()
                 },

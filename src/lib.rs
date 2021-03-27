@@ -18,6 +18,7 @@
 
 #![deny(broken_intra_doc_links)]
 
+#[macro_use]
 pub(crate) mod util;
 
 pub mod iana;

@@ -58,7 +58,7 @@ fn test_cose_key_encode() {
         (
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
-                kid: vec![1, 2, 3],
+                key_id: vec![1, 2, 3],
                 ..Default::default()
             },
             concat!(
@@ -138,7 +138,7 @@ fn test_cose_key_encode() {
         (
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
-                kid: vec![1, 2, 3],
+                key_id: vec![1, 2, 3],
                 key_ops: btreeset! {
                     KeyOperation::Assigned(iana::KeyOperation::Encrypt),
                     KeyOperation::Assigned(iana::KeyOperation::Decrypt),
@@ -379,7 +379,7 @@ fn test_rfc8152_private_cose_key_decode() {
         (
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
-                kid: b"our-secret".to_vec(),
+                key_id: b"our-secret".to_vec(),
                 params: btreemap! {
                     Label::Int(iana::SymmetricKeyParameter::K as i128) =>
                         cbor::Value::Bytes(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap()),
@@ -411,7 +411,7 @@ fn test_rfc8152_private_cose_key_decode() {
         (
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
-                kid: b"our-secret2".to_vec(),
+                key_id: b"our-secret2".to_vec(),
                 params: btreemap! {
                     Label::Int(iana::SymmetricKeyParameter::K as i128) =>
                         cbor::Value::Bytes(hex::decode("849b5786457c1491be3a76dcea6c4271").unwrap()),
@@ -427,7 +427,7 @@ fn test_rfc8152_private_cose_key_decode() {
         (
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
-                kid: b"018c0ae5-4d9b-471b-bfd6-eef314bc7037".to_vec(),
+                key_id: b"018c0ae5-4d9b-471b-bfd6-eef314bc7037".to_vec(),
                 params: btreemap! {
                     Label::Int(iana::SymmetricKeyParameter::K as i128) =>
                         cbor::Value::Bytes(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap()),
@@ -646,7 +646,7 @@ fn test_key_builder() {
                 .build(),
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
-                kid: vec![4, 5],
+                key_id: vec![4, 5],
                 params: btreemap! {
                     Label::Int(iana::SymmetricKeyParameter::K as i128) =>
                         cbor::Value::Bytes(vec![1,2,3]),

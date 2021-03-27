@@ -61,3 +61,48 @@ pub fn expect_err<T, E: std::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
         err_msg
     );
 }
+
+/// Macro that emits implementations of `Serialize` and `Deserialize` for
+/// types that implement the [`AsCborValue`] trait.
+macro_rules! cbor_serialize {
+    ( $otype: ty ) => {
+        impl ::serde::Serialize for $otype {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                self.to_cbor_value().serialize(serializer)
+            }
+        }
+
+        impl<'de> ::serde::Deserialize<'de> for $otype {
+            fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
+            }
+        }
+    };
+}
+
+// Macros to reduce boilerplate when creating `CoseSomethingBuilder` structures.
+
+/// Add `new()` and `build()` methods to the builder.
+macro_rules! builder {
+    ( $otype: ty ) => {
+        /// Constructor for builder.
+        pub fn new() -> Self {
+            Self(<$otype>::default())
+        }
+        /// Build the completed object.
+        pub fn build(self) -> $otype {
+            self.0
+        }
+    };
+}
+
+/// Add a setter function for a field to the builder.
+macro_rules! builder_set {
+    ( $name:ident: $ftype:ty ) => {
+        /// Set the associated field.
+        pub fn $name(mut self, $name: $ftype) -> Self {
+            self.0.$name = $name;
+            self
+        }
+    };
+}

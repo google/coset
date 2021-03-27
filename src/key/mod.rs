@@ -23,7 +23,7 @@ use crate::{
     Algorithm, Label,
 };
 use maplit::btreemap;
-use serde::{de::Unexpected, Deserialize, Serialize, Serializer};
+use serde::de::Unexpected;
 use serde_cbor as cbor;
 use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
 
@@ -59,7 +59,7 @@ pub struct CoseKey {
     /// Key type identification.
     pub kty: KeyType,
     /// Key identification.
-    pub kid: Vec<u8>,
+    pub key_id: Vec<u8>,
     /// Key use restriction to this algorithm.
     pub alg: Option<Algorithm>,
     /// Restrict set of possible operations.
@@ -101,7 +101,7 @@ impl AsCborValue for CoseKey {
                                 &"non-empty bstr",
                             ));
                         }
-                        key.kid = v;
+                        key.key_id = v;
                     }
                     v => return cbor_type_error(&v, &"bstr value"),
                 },
@@ -171,8 +171,8 @@ impl AsCborValue for CoseKey {
     fn to_cbor_value(&self) -> cbor::Value {
         let mut map = BTreeMap::<cbor::Value, cbor::Value>::new();
         map.insert(KTY, self.kty.to_cbor_value());
-        if !self.kid.is_empty() {
-            map.insert(KID, cbor::Value::Bytes(self.kid.to_vec()));
+        if !self.key_id.is_empty() {
+            map.insert(KID, cbor::Value::Bytes(self.key_id.to_vec()));
         }
         if let Some(alg) = &self.alg {
             map.insert(ALG, alg.to_cbor_value());
@@ -201,22 +201,17 @@ impl AsCborValue for CoseKey {
     }
 }
 
-impl Serialize for CoseKey {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.to_cbor_value().serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for CoseKey {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
-    }
-}
+cbor_serialize!(CoseKey);
 
 /// Builder for [`CoseKey`] objects.
+#[derive(Default)]
 pub struct CoseKeyBuilder(CoseKey);
 
 impl CoseKeyBuilder {
+    builder! {CoseKey}
+    builder_set! {key_id: Vec<u8>}
+    builder_set! {base_iv: Vec<u8>}
+
     /// Constructor for an elliptic curve public key specified by `x` and `y` coordinates.
     pub fn new_ec2_pub_key(curve: iana::EllipticCurve, x: Vec<u8>, y: Vec<u8>) -> Self {
         Self(CoseKey {
@@ -271,12 +266,6 @@ impl CoseKeyBuilder {
         })
     }
 
-    /// Set the key identifier.
-    pub fn key_id(mut self, kid: Vec<u8>) -> Self {
-        self.0.kid = kid;
-        self
-    }
-
     /// Set the algorithm.
     pub fn algorithm(mut self, alg: iana::Algorithm) -> Self {
         self.0.alg = Some(Algorithm::Assigned(alg));
@@ -286,12 +275,6 @@ impl CoseKeyBuilder {
     /// Add a key operation.
     pub fn add_key_op(mut self, op: iana::KeyOperation) -> Self {
         self.0.key_ops.insert(KeyOperation::Assigned(op));
-        self
-    }
-
-    /// Set the base initialization vector.
-    pub fn base_iv(mut self, base_iv: Vec<u8>) -> Self {
-        self.0.base_iv = base_iv;
         self
     }
 
@@ -307,10 +290,5 @@ impl CoseKeyBuilder {
         }
         self.0.params.insert(Label::Int(label), value);
         self
-    }
-
-    /// Build the complete [`Key`] object.
-    pub fn build(self) -> CoseKey {
-        self.0
     }
 }
