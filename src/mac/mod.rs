@@ -139,12 +139,7 @@ impl CoseMacBuilder {
     builder_set! {protected: Header}
     builder_set! {unprotected: Header}
     builder_set! {tag: Vec<u8>}
-
-    /// Set the payload.
-    pub fn payload(mut self, payload: Vec<u8>) -> Self {
-        self.0.payload = Some(payload);
-        self
-    }
+    builder_set_optional! {payload: Vec<u8>}
 
     /// Add a [`CoseRecipient`].
     pub fn add_recipient(mut self, recipient: CoseRecipient) -> Self {
@@ -272,12 +267,7 @@ impl CoseMac0Builder {
     builder_set! {protected: Header}
     builder_set! {unprotected: Header}
     builder_set! {tag: Vec<u8>}
-
-    /// Set the payload.
-    pub fn payload(mut self, payload: Vec<u8>) -> Self {
-        self.0.payload = Some(payload);
-        self
-    }
+    builder_set_optional! {payload: Vec<u8>}
 
     /// Calculate the tag value, using `mac`. Any protected header values should be set
     /// before using this method, as should the `payload`.

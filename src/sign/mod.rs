@@ -211,12 +211,7 @@ impl CoseSignBuilder {
     builder! {CoseSign}
     builder_set! {protected: Header}
     builder_set! {unprotected: Header}
-
-    /// Set the payload.
-    pub fn payload(mut self, payload: Vec<u8>) -> Self {
-        self.0.payload = Some(payload);
-        self
-    }
+    builder_set_optional! {payload: Vec<u8>}
 
     /// Add a signature value.
     pub fn add_signature(mut self, sig: CoseSignature) -> Self {
@@ -338,12 +333,7 @@ impl CoseSign1Builder {
     builder_set! {protected: Header}
     builder_set! {unprotected: Header}
     builder_set! {signature: Vec<u8>}
-
-    /// Set the payload.
-    pub fn payload(mut self, payload: Vec<u8>) -> Self {
-        self.0.payload = Some(payload);
-        self
-    }
+    builder_set_optional! {payload: Vec<u8>}
 
     /// Calculate the signature value, using `signer` to generate the signature bytes.  Any
     /// protected header values should be set before using this method.

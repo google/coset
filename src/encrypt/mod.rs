@@ -143,12 +143,7 @@ impl CoseRecipientBuilder {
     builder! {CoseRecipient}
     builder_set! {protected: Header}
     builder_set! {unprotected: Header}
-
-    /// Set the ciphertext.
-    pub fn ciphertext(mut self, ciphertext: Vec<u8>) -> Self {
-        self.0.ciphertext = Some(ciphertext);
-        self
-    }
+    builder_set_optional! {ciphertext: Vec<u8>}
 
     /// Add a [`CoseRecipient`].
     pub fn add_recipient(mut self, recipient: CoseRecipient) -> Self {
@@ -291,12 +286,7 @@ impl CoseEncryptBuilder {
     builder! {CoseEncrypt}
     builder_set! {protected: Header}
     builder_set! {unprotected: Header}
-
-    /// Set the ciphertext.
-    pub fn ciphertext(mut self, ciphertext: Vec<u8>) -> Self {
-        self.0.ciphertext = Some(ciphertext);
-        self
-    }
+    builder_set_optional! {ciphertext: Vec<u8>}
 
     /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
     /// plaintext and combined AAD (in that order).  Any protected header values should be set
@@ -411,12 +401,7 @@ impl CoseEncrypt0Builder {
     builder! {CoseEncrypt0}
     builder_set! {protected: Header}
     builder_set! {unprotected: Header}
-
-    /// Set the ciphertext.
-    pub fn ciphertext(mut self, ciphertext: Vec<u8>) -> Self {
-        self.0.ciphertext = Some(ciphertext);
-        self
-    }
+    builder_set_optional! {ciphertext: Vec<u8>}
 
     /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
     /// plaintext and combined AAD (in that order).  Any protected header values should be set

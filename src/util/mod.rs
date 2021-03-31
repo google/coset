@@ -106,3 +106,14 @@ macro_rules! builder_set {
         }
     };
 }
+
+/// Add a setter function for an optional field to the builder.
+macro_rules! builder_set_optional {
+    ( $name:ident: $ftype:ty ) => {
+        /// Set the associated field.
+        pub fn $name(mut self, $name: $ftype) -> Self {
+            self.0.$name = Some($name);
+            self
+        }
+    };
+}
