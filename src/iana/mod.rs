@@ -282,6 +282,8 @@ iana_registry! {
         A192KW: -4,
         /// AES Key Wrap w/ 128-bit key
         A128KW: -3,
+        /// Reserved
+        Reserved: 0,
         /// AES-GCM mode w/ 128-bit key, 128-bit tag
         A128GCM: 1,
         /// AES-GCM mode w/ 192-bit key, 128-bit tag

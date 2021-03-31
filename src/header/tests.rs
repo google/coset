@@ -144,7 +144,7 @@ fn test_headers_decode_fail() {
         (
             concat!(
                 "a1", // 1-map
-                "01", "00", // 1 (alg) => invalid value
+                "01", "08", // 1 (alg) => invalid value
             ),
             "expected value in IANA or private use range",
         ),

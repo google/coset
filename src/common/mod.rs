@@ -91,6 +91,12 @@ pub trait TaggedCborSerializable: AsCborValue {
 /// Algorithm identifier.
 pub type Algorithm = crate::RegisteredLabelWithPrivate<iana::Algorithm>;
 
+impl Default for Algorithm {
+    fn default() -> Self {
+        Algorithm::Assigned(iana::Algorithm::Reserved)
+    }
+}
+
 /// A COSE label may be either a signed integer value or a string.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Label {
