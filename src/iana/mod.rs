@@ -42,6 +42,7 @@ macro_rules! iana_registry {
     ( $(#[$attr:meta])* $enum_name:ident {$($(#[$fattr:meta])* $name:ident: $val:expr,)* } ) => {
         #[allow(non_camel_case_types)]
         $(#[$attr])*
+        #[non_exhaustive]
         #[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
         pub enum $enum_name {
             $($(#[$fattr])* $name = $val,)*
