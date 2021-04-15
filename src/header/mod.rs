@@ -20,7 +20,7 @@ use crate::{
     iana,
     iana::EnumI128,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, CborSerializable, CoseSignature, Label,
+    Algorithm, CborSerializable, CoseSignature, Label, RegisteredLabel,
 };
 use serde::de::Unexpected;
 use serde_cbor as cbor;
@@ -55,8 +55,7 @@ pub struct Header {
     /// Cryptographic algorithm to use
     pub alg: Option<Algorithm>,
     /// Critical headers to be understood
-    // TODO: should this be something like `RegisteredLabel<iana::HeaderParameter>` ?
-    pub crit: Vec<Label>,
+    pub crit: Vec<RegisteredLabel<iana::HeaderParameter>>,
     /// Content type of the payload
     pub content_type: Option<ContentType>,
     /// Key identifier.
@@ -142,7 +141,9 @@ impl AsCborValue for Header {
                             ));
                         }
                         for v in a {
-                            headers.crit.push(Label::from_cbor_value(v)?);
+                            headers.crit.push(
+                                RegisteredLabel::<iana::HeaderParameter>::from_cbor_value(v)?,
+                            );
                         }
                     }
                     v => return cbor_type_error(&v, &"array value"),
@@ -338,7 +339,13 @@ impl HeaderBuilder {
     }
 
     /// Add a critical header.
-    pub fn add_critical(mut self, label: Label) -> Self {
+    pub fn add_critical(mut self, param: iana::HeaderParameter) -> Self {
+        self.0.crit.push(RegisteredLabel::Assigned(param));
+        self
+    }
+
+    /// Add a critical header.
+    pub fn add_critical_label(mut self, label: RegisteredLabel<iana::HeaderParameter>) -> Self {
         self.0.crit.push(label);
         self
     }
