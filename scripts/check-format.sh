@@ -82,8 +82,7 @@ errcount=0
 for f in "${CODE_FILES[@]}"; do
   check_license "$f"
   errcount=$((errcount + $?))
-  # TODO: enable once GitHub issues are available
-  # check_todo "$f"
+  check_todo "$f"
   errcount=$((errcount + $?))
   check_panic "$f"
   errcount=$((errcount + $?))
@@ -96,8 +95,7 @@ fi
 for f in "${MD_FILES[@]}"; do
   "$EMBEDMD" -d "$f"
   errcount=$((errcount + $?))
-  # TODO: enable once GitHub issues are available
-  # check_todo "$f"
+  check_todo "$f"
   errcount=$((errcount + $?))
   mdl "$f"
   errcount=$((errcount + $?))

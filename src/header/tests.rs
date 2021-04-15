@@ -300,7 +300,7 @@ fn test_headers_decode_fail() {
     }
 }
 
-// TODO: get serde_cbor to generate an error on duplicate keys in map
+// TODO(#1): get serde_cbor to generate an error on duplicate keys in map
 #[test]
 #[ignore]
 fn test_headers_decode_dup_fail() {
