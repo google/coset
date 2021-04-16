@@ -5,6 +5,7 @@ authors = ["David Drysdale <drysdale@google.com>"]
 edition = "2018"
 license = "Apache-2.0"
 description = "Set of types for supporting COSE"
+repository = "https://github.com/google/coset"
 keywords = ["cryptography", "cose"]
 categories = ["cryptography"]
 
