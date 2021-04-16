@@ -68,7 +68,7 @@ check_panic() {
   fi
   for needle in "panic!(" "unwrap(" "expect(" "unwrap_err(" "expect_err(" "unwrap_none(" "expect_none(" "unreachable!"; do
     local result
-    result=$(grep --with-filename --line-number "$needle" "$path" | grep --invert-match --regexp='safe:')
+    result=$(grep --with-filename --line-number "$needle" "$path" | grep --invert-match --regexp='safe:'| grep --invert-match --regexp=':[0-9]*://')
     if [[ -n $result ]]; then
       echo "Un-annotated panic code:"
       echo "$result"
