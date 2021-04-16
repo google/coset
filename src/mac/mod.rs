@@ -130,7 +130,7 @@ impl CoseMac {
     }
 }
 
-/// Builder for `CoseMac` objects.
+/// Builder for [`CoseMac`] objects.
 #[derive(Default)]
 pub struct CoseMacBuilder(CoseMac);
 
@@ -258,7 +258,7 @@ impl CoseMac0 {
     }
 }
 
-/// Builder for `CoseMac0` objects.
+/// Builder for [`CoseMac0`] objects.
 #[derive(Default)]
 pub struct CoseMac0Builder(CoseMac0);
 
