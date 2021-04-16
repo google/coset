@@ -21,7 +21,7 @@ use serde_cbor as cbor;
 #[cfg(test)]
 mod tests;
 
-/// Map a [`cbor::Value`] into a serde type error.
+/// Map a `serde_cbor::Value` into a serde type error.
 pub(crate) fn cbor_type_error<T, M, E>(v: &cbor::Value, msg: &M) -> Result<T, E>
 where
     M: serde::de::Expected,
@@ -43,7 +43,7 @@ where
     ))
 }
 
-/// Trait for types that can be converted to/from a [`cbor::Value`]
+/// Trait for types that can be converted to/from a `serde_cbor::Value`
 pub trait AsCborValue: Sized {
     fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E>;
     fn to_cbor_value(&self) -> cbor::Value;

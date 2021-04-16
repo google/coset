@@ -191,6 +191,7 @@ impl SuppPubInfoBuilder {
     builder_set_optional! {other: Vec<u8>}
 }
 
+/// Structure representing a a key derivation context.
 /// ```cdl
 ///  COSE_KDF_Context = [
 ///      AlgorithmID : int / tstr,
