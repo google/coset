@@ -399,6 +399,13 @@
 <span id="396">396</span>
 <span id="397">397</span>
 <span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright 2021 Google LLC</span>
 <span class="comment">//</span>
@@ -422,7 +429,7 @@
     <span class="ident">iana</span>,
     <span class="ident">iana</span>::<span class="ident">EnumI128</span>,
     <span class="ident">util</span>::{<span class="ident">cbor_type_error</span>, <span class="ident">AsCborValue</span>},
-    <span class="ident">Algorithm</span>, <span class="ident">CborSerializable</span>, <span class="ident">CoseSignature</span>, <span class="ident">Label</span>,
+    <span class="ident">Algorithm</span>, <span class="ident">CborSerializable</span>, <span class="ident">CoseSignature</span>, <span class="ident">Label</span>, <span class="ident">RegisteredLabel</span>,
 };
 <span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">de</span>::<span class="ident">Unexpected</span>;
 <span class="kw">use</span> <span class="ident">serde_cbor</span> <span class="kw">as</span> <span class="ident">cbor</span>;
@@ -457,8 +464,7 @@
     <span class="doccomment">/// Cryptographic algorithm to use</span>
     <span class="kw">pub</span> <span class="ident">alg</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Algorithm</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Critical headers to be understood</span>
-    <span class="comment">// TODO: should this be something like `RegisteredLabel&lt;iana::HeaderParameter&gt;` ?</span>
-    <span class="kw">pub</span> <span class="ident">crit</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Label</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">crit</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">RegisteredLabel</span><span class="op">&lt;</span><span class="ident">iana</span>::<span class="ident">HeaderParameter</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Content type of the payload</span>
     <span class="kw">pub</span> <span class="ident">content_type</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContentType</span><span class="op">&gt;</span>,
     <span class="doccomment">/// Key identifier.</span>
@@ -544,7 +550,9 @@
                             ));
                         }
                         <span class="kw">for</span> <span class="ident">v</span> <span class="kw">in</span> <span class="ident">a</span> {
-                            <span class="ident">headers</span>.<span class="ident">crit</span>.<span class="ident">push</span>(<span class="ident">Label</span>::<span class="ident">from_cbor_value</span>(<span class="ident">v</span>)<span class="question-mark">?</span>);
+                            <span class="ident">headers</span>.<span class="ident">crit</span>.<span class="ident">push</span>(
+                                <span class="ident">RegisteredLabel</span>::<span class="op">&lt;</span><span class="ident">iana</span>::<span class="ident">HeaderParameter</span><span class="op">&gt;</span>::<span class="ident">from_cbor_value</span>(<span class="ident">v</span>)<span class="question-mark">?</span>,
+                            );
                         }
                     }
                     <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="kw-2">&amp;</span><span class="string">&quot;array value&quot;</span>),
@@ -740,7 +748,13 @@
     }
 
     <span class="doccomment">/// Add a critical header.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_critical</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">label</span>: <span class="ident">Label</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_critical</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">param</span>: <span class="ident">iana</span>::<span class="ident">HeaderParameter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">self</span>.<span class="number">0</span>.<span class="ident">crit</span>.<span class="ident">push</span>(<span class="ident">RegisteredLabel</span>::<span class="ident">Assigned</span>(<span class="ident">param</span>));
+        <span class="self">self</span>
+    }
+
+    <span class="doccomment">/// Add a critical header.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_critical_label</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">label</span>: <span class="ident">RegisteredLabel</span><span class="op">&lt;</span><span class="ident">iana</span>::<span class="ident">HeaderParameter</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">crit</span>.<span class="ident">push</span>(<span class="ident">label</span>);
         <span class="self">self</span>
     }
