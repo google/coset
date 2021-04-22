@@ -19,8 +19,13 @@ use crate::{iana, util::expect_err, CborSerializable, Label};
 use maplit::btreemap;
 use serde_cbor as cbor;
 
+// The most negative integer value that can be encoded in CBOR is:
+//    0x3B (0b001_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
+// which is -18_446_744_073_709_551_616 (-1 - 18_446_744_073_709_551_615).
+const MOST_NEGATIVE_NINT: i128 = -18_446_744_073_709_551_616i128;
+
 #[test]
-fn test_headers_encode() {
+fn test_header_encode() {
     let tests = vec![
         (
             Header {
@@ -34,6 +39,17 @@ fn test_headers_encode() {
                 "01", "01", // 1 (alg) => A128GCM
                 "04", "43", "010203", // 4 (kid) => 3-bstr
                 "06", "43", "010203", // 6 (partial-iv) => 3-bstr
+            ),
+        ),
+        (
+            Header {
+                alg: Some(Algorithm::PrivateUse(MOST_NEGATIVE_NINT)),
+                ..Default::default()
+            },
+            concat!(
+                "a1", // 1-map
+                "01",
+                "3bffffffffffffffff", // 1 (alg) => -lots
             ),
         ),
         (
@@ -128,18 +144,18 @@ fn test_headers_encode() {
             ),
         ),
     ];
-    for (i, (headers, headers_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&headers).unwrap();
-        assert_eq!(*headers_data, hex::encode(&got), "case {}", i);
+    for (i, (header, header_data)) in tests.iter().enumerate() {
+        let got = cbor::ser::to_vec(&header).unwrap();
+        assert_eq!(*header_data, hex::encode(&got), "case {}", i);
 
         let got = Header::from_slice(&got).unwrap();
-        assert_eq!(*headers, got);
+        assert_eq!(*header, got);
         assert!(!got.is_empty());
     }
 }
 
 #[test]
-fn test_headers_decode_fail() {
+fn test_header_decode_fail() {
     let tests = vec![
         (
             concat!(
@@ -293,8 +309,8 @@ fn test_headers_decode_fail() {
             "array or bstr value",
         ),
     ];
-    for (headers_data, err_msg) in tests.iter() {
-        let data = hex::decode(headers_data).unwrap();
+    for (header_data, err_msg) in tests.iter() {
+        let data = hex::decode(header_data).unwrap();
         let result = Header::from_slice(&data);
         expect_err(result, err_msg);
     }
@@ -303,7 +319,7 @@ fn test_headers_decode_fail() {
 // TODO(#1): get serde_cbor to generate an error on duplicate keys in map
 #[test]
 #[ignore]
-fn test_headers_decode_dup_fail() {
+fn test_header_decode_dup_fail() {
     let tests = vec![
         (
             concat!(
@@ -324,11 +340,32 @@ fn test_headers_decode_dup_fail() {
             "expected unique map label",
         ),
     ];
-    for (headers_data, err_msg) in tests.iter() {
-        let data = hex::decode(headers_data).unwrap();
+    for (header_data, err_msg) in tests.iter() {
+        let data = hex::decode(header_data).unwrap();
         let result = Header::from_slice(&data);
         expect_err(result, err_msg);
     }
+}
+
+#[test]
+fn test_header_encode_int_out_of_range_fail() {
+    // Unfortunately, it is possible to build Rust COSE structures that hold values that
+    // cannot be serialized to CBOR -- serde_cbor uses i128 for integer values for convenience,
+    // but the serializable range is more like an i65 (!).
+    let header = HeaderBuilder::new()
+        .value(
+            0x10000000000000000i128,
+            cbor::Value::Text("boom!".to_owned()),
+        )
+        .build();
+    let result = cbor::ser::to_vec(&header);
+    expect_err(result, "stored in CBOR");
+
+    let mut header = Header::default();
+    // "What we do, is if we need that extra push over the cliff, you know what we do?"
+    header.alg = Some(Algorithm::PrivateUse(MOST_NEGATIVE_NINT - 1));
+    let result = cbor::ser::to_vec(&header);
+    expect_err(result, "stored in CBOR");
 }
 
 #[test]
