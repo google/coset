@@ -17,12 +17,13 @@
 //! COSE_KDF_Context functionality.
 
 use crate::{
+    cbor::{SimpleValue, Value},
     iana,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, Header,
+    Algorithm, CoseError, Header,
 };
-use serde::de::Unexpected;
-use serde_cbor as cbor;
+use alloc::{vec, vec::Vec};
+use core::convert::TryInto;
 
 #[cfg(test)]
 mod tests;
@@ -53,59 +54,62 @@ pub struct PartyInfo {
 impl crate::CborSerializable for PartyInfo {}
 
 impl AsCborValue for PartyInfo {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 3 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 3 items",
-            ));
+            return Err(CoseError::UnexpectedType("array", "array with 3 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
             other: match a.remove(2) {
-                cbor::Value::Null => None,
-                cbor::Value::Bytes(b) => Some(b),
-                v => return cbor_type_error(&v, &"bstr / nil"),
+                Value::Simple(SimpleValue::NullValue) => None,
+                Value::ByteString(b) => Some(b),
+                v => return cbor_type_error(&v, "bstr / nil"),
             },
             nonce: match a.remove(1) {
-                cbor::Value::Null => None,
-                cbor::Value::Bytes(b) => Some(Nonce::Bytes(b)),
-                cbor::Value::Integer(i) => Some(Nonce::Integer(i)),
-                v => return cbor_type_error(&v, &"bstr / int / nil"),
+                Value::Simple(SimpleValue::NullValue) => None,
+                Value::ByteString(b) => Some(Nonce::Bytes(b)),
+                Value::Unsigned(i) => Some(Nonce::Integer(i.into())),
+                Value::Negative(i) => Some(Nonce::Integer(i.into())),
+                v => return cbor_type_error(&v, "bstr / int / nil"),
             },
             identity: match a.remove(0) {
-                cbor::Value::Null => None,
-                cbor::Value::Bytes(b) => Some(b),
-                v => return cbor_type_error(&v, &"bstr / nil"),
+                Value::Simple(SimpleValue::NullValue) => None,
+                Value::ByteString(b) => Some(b),
+                v => return cbor_type_error(&v, "bstr / nil"),
             },
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        cbor::Value::Array(vec![
-            match &self.identity {
-                None => cbor::Value::Null,
-                Some(b) => cbor::Value::Bytes(b.clone()),
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        Ok(Value::Array(vec![
+            match self.identity {
+                None => Value::Simple(SimpleValue::NullValue),
+                Some(b) => Value::ByteString(b),
             },
-            match &self.nonce {
-                None => cbor::Value::Null,
-                Some(Nonce::Bytes(b)) => cbor::Value::Bytes(b.clone()),
-                Some(Nonce::Integer(i)) => cbor::Value::Integer(*i),
+            match self.nonce {
+                None => Value::Simple(SimpleValue::NullValue),
+                Some(Nonce::Bytes(b)) => Value::ByteString(b),
+                Some(Nonce::Integer(i)) if i < 0 => Value::Negative(
+                    i.try_into()
+                        .map_err(|_e| CoseError::UnexpectedType("i128", "u64"))?,
+                ),
+                Some(Nonce::Integer(i)) => Value::Unsigned(
+                    i.try_into()
+                        .map_err(|_e| CoseError::UnexpectedType("-i128", "i64"))?,
+                ),
             },
-            match &self.other {
-                None => cbor::Value::Null,
-                Some(b) => cbor::Value::Bytes(b.clone()),
+            match self.other {
+                None => Value::Simple(SimpleValue::NullValue),
+                Some(b) => Value::ByteString(b),
             },
-        ])
+        ]))
     }
 }
-
-cbor_serialize!(PartyInfo);
 
 /// Builder for [`PartyInfo`] objects.
 #[derive(Default)]
@@ -137,15 +141,15 @@ pub struct SuppPubInfo {
 impl crate::CborSerializable for SuppPubInfo {}
 
 impl AsCborValue for SuppPubInfo {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 2 && a.len() != 3 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 2 or 3 items",
+            return Err(CoseError::UnexpectedType(
+                "array",
+                "array with 2 or 3 items",
             ));
         }
 
@@ -154,8 +158,8 @@ impl AsCborValue for SuppPubInfo {
             other: {
                 if a.len() == 3 {
                     match a.remove(2) {
-                        cbor::Value::Bytes(b) => Some(b),
-                        v => return cbor_type_error(&v, &"bstr"),
+                        Value::ByteString(b) => Some(b),
+                        v => return cbor_type_error(&v, "bstr"),
                     }
                 } else {
                     None
@@ -163,25 +167,23 @@ impl AsCborValue for SuppPubInfo {
             },
             protected: Header::from_cbor_bstr(a.remove(1))?,
             key_data_length: match a.remove(0) {
-                cbor::Value::Integer(i) if i >= 0 && i <= u64::MAX.into() => i as u64,
-                v => return cbor_type_error(&v, &"uint"),
+                Value::Unsigned(i) => i,
+                v => return cbor_type_error(&v, "uint"),
             },
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
         let mut v = vec![
-            cbor::Value::Integer(self.key_data_length as i128),
-            self.protected.to_cbor_bstr(),
+            Value::Unsigned(self.key_data_length),
+            self.protected.cbor_bstr()?,
         ];
-        if let Some(other) = &self.other {
-            v.push(cbor::Value::Bytes(other.clone()));
+        if let Some(other) = self.other {
+            v.push(Value::ByteString(other));
         }
-        cbor::Value::Array(v)
+        Ok(Value::Array(v))
     }
 }
-
-cbor_serialize!(SuppPubInfo);
 
 /// Builder for [`SuppPubInfo`] objects.
 #[derive(Default)]
@@ -220,15 +222,15 @@ pub struct CoseKdfContext {
 impl crate::CborSerializable for CoseKdfContext {}
 
 impl AsCborValue for CoseKdfContext {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() < 4 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with at least 4 items",
+            return Err(CoseError::UnexpectedType(
+                "array",
+                "array with at least 4 items",
             ));
         }
 
@@ -236,8 +238,8 @@ impl AsCborValue for CoseKdfContext {
         let mut supp_priv_info = Vec::with_capacity(a.len() - 4);
         for i in (4..a.len()).rev() {
             let b = match a.remove(i) {
-                cbor::Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => b,
+                v => return cbor_type_error(&v, "bstr"),
             };
             supp_priv_info.push(b);
         }
@@ -252,21 +254,19 @@ impl AsCborValue for CoseKdfContext {
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
         let mut v = vec![
-            self.algorithm_id.to_cbor_value(),
-            self.party_u_info.to_cbor_value(),
-            self.party_v_info.to_cbor_value(),
-            self.supp_pub_info.to_cbor_value(),
+            self.algorithm_id.to_cbor_value()?,
+            self.party_u_info.to_cbor_value()?,
+            self.party_v_info.to_cbor_value()?,
+            self.supp_pub_info.to_cbor_value()?,
         ];
-        for supp_priv_info in &self.supp_priv_info {
-            v.push(cbor::Value::Bytes(supp_priv_info.clone()));
+        for supp_priv_info in self.supp_priv_info {
+            v.push(Value::ByteString(supp_priv_info));
         }
-        cbor::Value::Array(v)
+        Ok(Value::Array(v))
     }
 }
-
-cbor_serialize!(CoseKdfContext);
 
 /// Builder for [`CoseKdfContext`] objects.
 #[derive(Default)]

@@ -16,8 +16,13 @@
 
 use super::*;
 use crate::{
-    iana, util::expect_err, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
+    cbor::Value, iana, util::expect_err, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
     CoseSignatureBuilder, HeaderBuilder, TaggedCborSerializable,
+};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
 };
 
 #[test]
@@ -61,7 +66,7 @@ fn test_cose_recipient_decode() {
     ];
 
     for (i, (recipient, recipient_data)) in tests.iter().enumerate() {
-        let got = recipient.to_vec().unwrap();
+        let got = recipient.clone().to_vec().unwrap();
         assert_eq!(*recipient_data, hex::encode(&got), "case {}", i);
 
         let got = CoseRecipient::from_slice(&got).unwrap();
@@ -74,11 +79,11 @@ fn test_cose_recipient_decode_fail() {
     let tests = vec![
         (
             concat!(
-                "a2", // 2-map (should be tuple)
-                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
-                "a0", // 0-map
-                "40", // 0-bstr
-                "40", // 0-bstr
+                "a2",   // 2-map (should be tuple)
+                "40",   // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0",   // 0-map
+                "4161", // 1-bstr
+                "40",   // 0-bstr
             ),
             "expected array",
         ),
@@ -164,7 +169,7 @@ fn test_cose_encrypt_decode() {
     ];
 
     for (i, (encrypt, encrypt_data)) in tests.iter().enumerate() {
-        let got = encrypt.to_vec().unwrap();
+        let got = encrypt.clone().to_vec().unwrap();
         assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
 
         let got = CoseEncrypt::from_slice(&got).unwrap();
@@ -177,11 +182,11 @@ fn test_cose_encrypt_decode_fail() {
     let tests = vec![
         (
             concat!(
-                "a2", // 2-map (should be tuple)
-                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
-                "a0", // 0-map
-                "40", // 0-bstr
-                "40", // 0-bstr
+                "a2",   // 2-map (should be tuple)
+                "40",   // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0",   // 0-map
+                "4161", // 1-bstr
+                "40",   // 0-bstr
             ),
             "expected array",
         ),
@@ -276,7 +281,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                                        CoseKeyBuilder::new_ec2_pub_key_y_sign(iana::EllipticCurve::P_256,
                                                                               hex::decode("98f50a4ff6c05861c8860d13a638ea56c3f5ad7590bbfbf054e1c7b4d91d6280").unwrap(),
                                                                               true)
-                                       .build().to_cbor_value())
+                                       .build().to_cbor_value().unwrap())
                                 .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                 .build(),
                         )
@@ -316,7 +321,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                                    HeaderBuilder::new()
                                        .key_id(b"our-secret".to_vec())
                                        .value(iana::HeaderAlgorithmParameter::Salt as i128,
-                                              cbor::Value::Bytes(b"aabbccddeeffgghh".to_vec()))
+                                              Value::ByteString(b"aabbccddeeffgghh".to_vec()))
                                        .build())
                                .ciphertext(vec![])
                                .build())
@@ -365,7 +370,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                                               CoseKeyBuilder::new_ec2_pub_key_y_sign(iana::EllipticCurve::P_256,
                                                                                      hex::decode("98f50a4ff6c05861c8860d13a638ea56c3f5ad7590bbfbf054e1c7b4d91d6280").unwrap(),
                                                                                      true)
-                                              .build().to_cbor_value())
+                                              .build().to_cbor_value().unwrap())
                                        .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                        .build())
                         .ciphertext(vec![])
@@ -421,11 +426,11 @@ fn test_rfc8152_cose_encrypt_decode() {
                                             .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                             .value(
                                                 iana::HeaderAlgorithmParameter::StaticKeyId as i128,
-                                                cbor::Value::Bytes(b"peregrin.took@tuckborough.example".to_vec())
+                                                Value::ByteString(b"peregrin.took@tuckborough.example".to_vec())
                                             )
                                             .value(
                                                 iana::HeaderAlgorithmParameter::PartyUNonce as i128,
-                                                cbor::Value::Bytes(hex::decode("0101").unwrap())
+                                                Value::ByteString(hex::decode("0101").unwrap())
                                             )
                                             .build())
                                .ciphertext(hex::decode("41e0d76f579dbd0d936a662d54d8582037de2e366fde1c62").unwrap())
@@ -458,7 +463,7 @@ fn test_rfc8152_cose_encrypt_decode() {
     ];
 
     for (i, (encrypt, encrypt_data)) in tests.iter().enumerate() {
-        let got = encrypt.to_tagged_vec().unwrap();
+        let got = encrypt.clone().to_tagged_vec().unwrap();
         assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
 
         let got = CoseEncrypt::from_tagged_slice(&got).unwrap();
@@ -490,7 +495,7 @@ fn test_cose_encrypt0_decode() {
     ];
 
     for (i, (encrypt, encrypt_data)) in tests.iter().enumerate() {
-        let got = encrypt.to_vec().unwrap();
+        let got = encrypt.clone().to_vec().unwrap();
         assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
 
         let got = CoseEncrypt0::from_slice(&got).unwrap();
@@ -503,11 +508,11 @@ fn test_cose_encrypt0_decode_fail() {
     let tests = vec![
         (
             concat!(
-                "a2", // 2-map (should be tuple)
-                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
-                "a0", // 0-map
-                "40", // 0-bstr
-                "40", // 0-bstr
+                "a2",   // 2-map (should be tuple)
+                "40",   // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0",   // 0-map
+                "4100", // 1-bstr
+                "40",   // 0-bstr
             ),
             "expected array",
         ),
@@ -621,7 +626,7 @@ fn test_rfc8152_cose_encrypt0_decode() {
     ];
 
     for (i, (encrypt, encrypt_data)) in tests.iter().enumerate() {
-        let got = encrypt.to_tagged_vec().unwrap();
+        let got = encrypt.clone().to_tagged_vec().unwrap();
         assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
 
         let got = CoseEncrypt0::from_tagged_slice(&got).unwrap();

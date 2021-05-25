@@ -16,7 +16,7 @@
 
 use super::*;
 use crate::{iana, util::expect_err, CborSerializable, HeaderBuilder};
-use serde_cbor as cbor;
+use alloc::vec;
 
 #[test]
 fn test_context_encode() {
@@ -180,7 +180,7 @@ fn test_context_encode() {
         ),
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&key).unwrap();
+        let got = key.clone().to_vec().unwrap();
         assert_eq!(*key_data, hex::encode(&got), "case {}", i);
 
         let got = CoseKdfContext::from_slice(&got).unwrap();
@@ -217,7 +217,7 @@ fn test_context_decode_fail() {
                 "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
                 "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
             ),
-            "EofWhileParsingValue",
+            "IncompleteCborData",
         ),
         (
             concat!(

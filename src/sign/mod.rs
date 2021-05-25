@@ -17,13 +17,13 @@
 //! COSE_Sign* functionality.
 
 use crate::{
-    common::CborSerializable,
+    cbor,
+    cbor::{SimpleValue, Value},
     iana,
     util::{cbor_type_error, AsCborValue},
-    Header,
+    CborSerializable, CoseError, Header,
 };
-use serde::de::Unexpected;
-use serde_cbor as cbor;
+use alloc::{borrow::ToOwned, vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -46,39 +46,34 @@ pub struct CoseSignature {
 impl crate::CborSerializable for CoseSignature {}
 
 impl AsCborValue for CoseSignature {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 3 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 3 items",
-            ));
+            return Err(CoseError::UnexpectedType("array", "array with 3 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
             signature: match a.remove(2) {
-                cbor::Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => b,
+                v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: Header::from_cbor_bstr(a.remove(0))?,
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        cbor::Value::Array(vec![
-            self.protected.to_cbor_bstr(),
-            self.unprotected.to_cbor_value(),
-            cbor::Value::Bytes(self.signature.clone()),
-        ])
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        Ok(Value::Array(vec![
+            self.protected.cbor_bstr()?,
+            self.unprotected.to_cbor_value()?,
+            Value::ByteString(self.signature),
+        ]))
     }
 }
-
-cbor_serialize!(CoseSignature);
 
 /// Builder for [`CoseSignature`] objects.
 #[derive(Default)]
@@ -114,70 +109,65 @@ impl crate::TaggedCborSerializable for CoseSign {
 }
 
 impl AsCborValue for CoseSign {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 4 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 4 items",
-            ));
+            return Err(CoseError::UnexpectedType("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         let mut signatures = vec![];
         match a.remove(3) {
-            cbor::Value::Array(sigs) => {
+            Value::Array(sigs) => {
                 for sig in sigs.into_iter() {
-                    match CoseSignature::from_cbor_value::<E>(sig) {
+                    match CoseSignature::from_cbor_value(sig) {
                         Ok(s) => signatures.push(s),
                         Err(_e) => {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::StructVariant,
-                                &"map for COSE_Signature",
+                            return Err(CoseError::UnexpectedType(
+                                "non-signature",
+                                "map for COSE_Signature",
                             ));
                         }
                     }
                 }
             }
             v => {
-                return cbor_type_error(&v, &"array of COSE_Signature");
+                return cbor_type_error(&v, "array of COSE_Signature");
             }
         };
 
         Ok(Self {
             signatures,
             payload: match a.remove(2) {
-                cbor::Value::Bytes(b) => Some(b),
-                cbor::Value::Null => None,
-                v => return cbor_type_error(&v, &"bstr or nil"),
+                Value::ByteString(b) => Some(b),
+                Value::Simple(SimpleValue::NullValue) => None,
+                v => return cbor_type_error(&v, "bstr or nil"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: Header::from_cbor_bstr(a.remove(0))?,
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        cbor::Value::Array(vec![
-            self.protected.to_cbor_bstr(),
-            self.unprotected.to_cbor_value(),
-            match &self.payload {
-                Some(b) => cbor::Value::Bytes(b.clone()),
-                None => cbor::Value::Null,
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        let mut v = vec![
+            self.protected.cbor_bstr()?,
+            self.unprotected.to_cbor_value()?,
+            match self.payload {
+                Some(b) => Value::ByteString(b),
+                None => Value::Simple(SimpleValue::NullValue),
             },
-            cbor::Value::Array(
-                self.signatures
-                    .iter()
-                    .map(|sig| sig.to_cbor_value())
-                    .collect(),
-            ),
-        ])
+        ];
+        let mut arr = Vec::new();
+        for sig in self.signatures {
+            arr.push(sig.to_cbor_value()?);
+        }
+        v.push(Value::Array(arr));
+        Ok(Value::Array(v))
     }
 }
-
-cbor_serialize!(CoseSign);
 
 impl CoseSign {
     /// Verify the indidated signature value, using `verifier` on the signature value and serialized
@@ -199,8 +189,8 @@ impl CoseSign {
     fn tbs_data(&self, aad: &[u8], sig: &CoseSignature) -> Vec<u8> {
         sig_structure_data(
             SignatureContext::CoseSignature,
-            &self.protected,
-            Some(&sig.protected),
+            self.protected.clone(),
+            Some(sig.protected.clone()),
             aad,
             self.payload.as_ref().unwrap_or(&vec![]),
         )
@@ -276,48 +266,43 @@ impl crate::TaggedCborSerializable for CoseSign1 {
 }
 
 impl AsCborValue for CoseSign1 {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 4 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 4 items",
-            ));
+            return Err(CoseError::UnexpectedType("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
             signature: match a.remove(3) {
-                cbor::Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => b,
+                v => return cbor_type_error(&v, "bstr"),
             },
             payload: match a.remove(2) {
-                cbor::Value::Bytes(b) => Some(b),
-                cbor::Value::Null => None,
-                v => return cbor_type_error(&v, &"bstr or nil"),
+                Value::ByteString(b) => Some(b),
+                Value::Simple(SimpleValue::NullValue) => None,
+                v => return cbor_type_error(&v, "bstr or nil"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: Header::from_cbor_bstr(a.remove(0))?,
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        cbor::Value::Array(vec![
-            self.protected.to_cbor_bstr(),
-            self.unprotected.to_cbor_value(),
-            match &self.payload {
-                Some(b) => cbor::Value::Bytes(b.clone()),
-                None => cbor::Value::Null,
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        Ok(Value::Array(vec![
+            self.protected.cbor_bstr()?,
+            self.unprotected.to_cbor_value()?,
+            match self.payload {
+                Some(b) => Value::ByteString(b),
+                None => Value::Simple(SimpleValue::NullValue),
             },
-            cbor::Value::Bytes(self.signature.clone()),
-        ])
+            Value::ByteString(self.signature),
+        ]))
     }
 }
-
-cbor_serialize!(CoseSign1);
 
 impl CoseSign1 {
     /// Verify the signature value, using `verifier` on the signature value and serialized data (in
@@ -334,7 +319,7 @@ impl CoseSign1 {
     fn tbs_data(&self, aad: &[u8]) -> Vec<u8> {
         sig_structure_data(
             SignatureContext::CoseSign1,
-            &self.protected,
+            self.protected.clone(),
             None,
             aad,
             self.payload.as_ref().unwrap_or(&vec![]),
@@ -406,31 +391,33 @@ impl SignatureContext {
 /// ```
 pub fn sig_structure_data(
     context: SignatureContext,
-    body: &Header,
-    sign: Option<&Header>,
+    body: Header,
+    sign: Option<Header>,
     aad: &[u8],
     payload: &[u8],
 ) -> Vec<u8> {
     let mut arr = vec![
-        cbor::Value::Text(context.text().to_owned()),
+        Value::TextString(context.text().to_owned()),
         if body.is_empty() {
-            cbor::Value::Bytes(vec![])
+            Value::ByteString(vec![])
         } else {
-            cbor::Value::Bytes(
+            Value::ByteString(
                 body.to_vec().expect("failed to serialize header"), // safe: always serializable
             )
         },
     ];
     if let Some(sign) = sign {
         if sign.is_empty() {
-            arr.push(cbor::Value::Bytes(vec![]));
+            arr.push(Value::ByteString(vec![]));
         } else {
-            arr.push(cbor::Value::Bytes(
+            arr.push(Value::ByteString(
                 sign.to_vec().expect("failed to serialize header"), // safe: always serializable
             ));
         }
     }
-    arr.push(cbor::Value::Bytes(aad.to_vec()));
-    arr.push(cbor::Value::Bytes(payload.to_vec()));
-    cbor::to_vec(&cbor::Value::Array(arr)).expect("failed to serialize Sig_structure") // safe: always serializable
+    arr.push(Value::ByteString(aad.to_vec()));
+    arr.push(Value::ByteString(payload.to_vec()));
+    let mut data = Vec::new();
+    cbor::writer::write(Value::Array(arr), &mut data).unwrap(); // safe: always serializable
+    data
 }

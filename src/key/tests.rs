@@ -15,42 +15,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{iana, util::expect_err, CborSerializable};
-use maplit::{btreemap, btreeset};
-use serde_cbor as cbor;
-
-#[test]
-fn test_cbor_sort() {
-    // Pairs of objects with the "smaller" first.
-    // Comparing `cbor::Value`s should give the same answer as comparing
-    // the encoded versions according to RFC 8949 section 4.2.1.
-    // This is *different* than the canonical ordering defined in
-    // RFC 7049 section 3.9, where the primary sorting criterion
-    // is the length of the encoded form.
-    let pairs = vec![
-        (
-            cbor::Value::Integer(0x1234),
-            cbor::Value::Text("a".to_owned()),
-        ),
-        (
-            cbor::Value::Integer(0x1234),
-            cbor::Value::Text("ab".to_owned()),
-        ),
-        (cbor::Value::Integer(10), cbor::Value::Integer(-1)),
-        (cbor::Value::Integer(0x12), cbor::Value::Integer(0x1234)),
-        (cbor::Value::Integer(0x99), cbor::Value::Integer(0x1234)),
-        (cbor::Value::Integer(0x1234), cbor::Value::Integer(0x1235)),
-    ];
-    for (left, right) in pairs.into_iter() {
-        let value_cmp = left.cmp(&right);
-        let left_data = cbor::to_vec(&left).unwrap();
-        let right_data = cbor::to_vec(&right).unwrap();
-        let data_cmp = left_data.cmp(&right_data);
-
-        assert_eq!(value_cmp, std::cmp::Ordering::Less);
-        assert_eq!(data_cmp, std::cmp::Ordering::Less);
-    }
-}
+use crate::{cbor::Value, iana, util::expect_err, CborSerializable};
+use alloc::{borrow::ToOwned, vec};
 
 #[test]
 fn test_cose_key_encode() {
@@ -139,11 +105,13 @@ fn test_cose_key_encode() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 key_id: vec![1, 2, 3],
-                key_ops: btreeset! {
+                key_ops: vec![
                     KeyOperation::Assigned(iana::KeyOperation::Encrypt),
                     KeyOperation::Assigned(iana::KeyOperation::Decrypt),
                     KeyOperation::Text("abc".to_owned()),
-                },
+                ]
+                .into_iter()
+                .collect(),
                 ..Default::default()
             },
             concat!(
@@ -156,10 +124,10 @@ fn test_cose_key_encode() {
         (
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
-                params: btreemap! {
-                    Label::Int(0x46) => cbor::Value::Integer(0x47),
-                    Label::Int(0x66) => cbor::Value::Integer(0x67),
-                },
+                params: vec![
+                    (Label::Int(0x46), Value::Unsigned(0x47)),
+                    (Label::Int(0x66), Value::Unsigned(0x67)),
+                ],
                 ..Default::default()
             },
             concat!(
@@ -172,10 +140,10 @@ fn test_cose_key_encode() {
         (
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
-                params: btreemap! {
-                    Label::Text("a".to_owned()) => cbor::Value::Integer(0x67),
-                    Label::Int(0x1234) => cbor::Value::Integer(0x47),
-                },
+                params: vec![
+                    (Label::Int(0x1234), Value::Unsigned(0x47)),
+                    (Label::Text("a".to_owned()), Value::Unsigned(0x67)),
+                ],
                 ..Default::default()
             },
             concat!(
@@ -189,10 +157,10 @@ fn test_cose_key_encode() {
         (
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
-                params: btreemap! {
-                    Label::Int(0x66) => cbor::Value::Integer(0x67),
-                    Label::Text("a".to_owned()) => cbor::Value::Integer(0x47),
-                },
+                params: vec![
+                    (Label::Int(0x66), Value::Unsigned(0x67)),
+                    (Label::Text("a".to_owned()), Value::Unsigned(0x47)),
+                ],
                 ..Default::default()
             },
             concat!(
@@ -211,7 +179,7 @@ fn test_cose_key_encode() {
                     .unwrap(),
             )
             .algorithm(iana::Algorithm::ES256)
-            .param(-70000, cbor::Value::Null)
+            .param(-70000, Value::Simple(SimpleValue::NullValue))
             .build(),
             concat!(
                 "a60102032620012158206b4ad240073b",
@@ -224,19 +192,20 @@ fn test_cose_key_encode() {
         ),
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&key).unwrap();
+        let got = key.clone().to_vec().unwrap();
         assert_eq!(*key_data, hex::encode(&got), "case {}", i);
 
         let got = CoseKey::from_slice(&got).unwrap();
         assert_eq!(*key, got);
     }
+
     // Now combine all of the keys into a `CoseKeySet`
-    let keyset: CoseKeySet = tests.iter().map(|(l, _v)| l.clone()).collect();
+    let keyset = CoseKeySet(tests.iter().map(|(l, _v)| l.clone()).collect());
     let mut keyset_data: Vec<u8> = vec![0x80u8 + (tests.len() as u8)]; // assumes fewer than 24 keys
     for (_, key_data) in tests.iter() {
         keyset_data.extend_from_slice(&hex::decode(key_data).unwrap());
     }
-    let got = cbor::ser::to_vec(&keyset).unwrap();
+    let got = keyset.to_vec().unwrap();
     assert_eq!(hex::encode(keyset_data), hex::encode(got));
 }
 
@@ -305,7 +274,7 @@ fn test_rfc8152_public_cose_key_decode() {
         ),
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&key).unwrap();
+        let got = key.clone().to_vec().unwrap();
         assert_eq!(*key_data, hex::encode(&got), "case {}", i);
 
         let got = CoseKey::from_slice(&got).unwrap();
@@ -313,12 +282,12 @@ fn test_rfc8152_public_cose_key_decode() {
     }
 
     // Now combine all of the keys into a `CoseKeySet`
-    let keyset: CoseKeySet = tests.iter().map(|(l, _v)| l.clone()).collect();
+    let keyset = CoseKeySet(tests.iter().map(|(l, _v)| l.clone()).collect());
     let mut keyset_data: Vec<u8> = vec![0x80u8 + (tests.len() as u8)]; // assumes fewer than 24 keys
     for (_, key_data) in tests.iter() {
         keyset_data.extend_from_slice(&hex::decode(key_data).unwrap());
     }
-    let got = cbor::ser::to_vec(&keyset).unwrap();
+    let got = keyset.to_vec().unwrap();
     assert_eq!(hex::encode(keyset_data), hex::encode(got));
 }
 
@@ -380,10 +349,10 @@ fn test_rfc8152_private_cose_key_decode() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 key_id: b"our-secret".to_vec(),
-                params: btreemap! {
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) =>
-                        cbor::Value::Bytes(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap()),
-                },
+                params: vec![
+                    (Label::Int(iana::SymmetricKeyParameter::K as i128) ,
+                        Value::ByteString(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap())),
+                ],
                 ..Default::default()
             },
             concat!("a3",
@@ -412,10 +381,10 @@ fn test_rfc8152_private_cose_key_decode() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 key_id: b"our-secret2".to_vec(),
-                params: btreemap! {
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) =>
-                        cbor::Value::Bytes(hex::decode("849b5786457c1491be3a76dcea6c4271").unwrap()),
-                },
+                params: vec![(
+                    Label::Int(iana::SymmetricKeyParameter::K as i128) ,
+                        Value::ByteString(hex::decode("849b5786457c1491be3a76dcea6c4271").unwrap()),
+                )],
                 ..Default::default()
             },
             concat!("a3",
@@ -428,10 +397,10 @@ fn test_rfc8152_private_cose_key_decode() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 key_id: b"018c0ae5-4d9b-471b-bfd6-eef314bc7037".to_vec(),
-                params: btreemap! {
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) =>
-                        cbor::Value::Bytes(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap()),
-                },
+                params: vec![(
+                    Label::Int(iana::SymmetricKeyParameter::K as i128) ,
+                        Value::ByteString(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap()),
+                )],
                 ..Default::default()
             },
             concat!("a3",
@@ -442,7 +411,7 @@ fn test_rfc8152_private_cose_key_decode() {
         ),
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&key).unwrap();
+        let got = key.clone().to_vec().unwrap();
         assert_eq!(*key_data, hex::encode(&got), "case {}", i);
 
         let got = CoseKey::from_slice(&got).unwrap();
@@ -450,12 +419,12 @@ fn test_rfc8152_private_cose_key_decode() {
     }
 
     // Now combine all of the keys into a `CoseKeySet`
-    let keyset: CoseKeySet = tests.iter().map(|(l, _v)| l.clone()).collect();
+    let keyset = CoseKeySet(tests.iter().map(|(l, _v)| l.clone()).collect());
     let mut keyset_data: Vec<u8> = vec![0x80u8 + (tests.len() as u8)]; // assumes fewer than 24 keys
     for (_, key_data) in tests.iter() {
         keyset_data.extend_from_slice(&hex::decode(key_data).unwrap());
     }
-    let got = cbor::ser::to_vec(&keyset).unwrap();
+    let got = keyset.to_vec().unwrap();
     assert_eq!(hex::encode(keyset_data), hex::encode(got));
 }
 
@@ -466,7 +435,6 @@ fn test_cose_key_decode_fail() {
             concat!(
                 "82", // 2-tuple (invalid)
                 "01", "01", // 1 (kty) => OKP
-                "02", "43", "010203" // 2 (kid) => 3-bstr
             ),
             "expected map",
         ),
@@ -581,9 +549,7 @@ fn test_cose_key_decode_fail() {
     }
 }
 
-// TODO(#1): get serde_cbor to generate an error on duplicate keys in map
 #[test]
-#[ignore]
 fn test_cose_key_decode_dup_fail() {
     let tests = vec![
         (
@@ -593,7 +559,7 @@ fn test_cose_key_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "1866", "1847", // 66 => 47
             ),
-            "expected unique map label",
+            "OutOfOrderKey",
         ),
         (
             concat!(
@@ -602,7 +568,7 @@ fn test_cose_key_decode_dup_fail() {
                 "02", "41", "01", // 2 (kid) => 1-bstr
                 "01", "01", // 1 (kty) => OKP  (duplicate label)
             ),
-            "expected unique map label",
+            "OutOfOrderKey",
         ),
     ];
     for (key_data, err_msg) in tests.iter() {
@@ -613,16 +579,28 @@ fn test_cose_key_decode_dup_fail() {
 }
 
 #[test]
+fn test_cose_key_encode_dup_fail() {
+    let tests = vec![CoseKeyBuilder::new()
+        .param(10, Value::Unsigned(0))
+        .param(10, Value::Unsigned(0))
+        .build()];
+    for key in tests {
+        let result = key.clone().to_vec();
+        expect_err(result, "encode CBOR failure");
+    }
+}
+
+#[test]
 fn test_key_builder() {
     let tests = vec![
         (
             CoseKeyBuilder::new_symmetric_key(vec![1, 2, 3]).build(),
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
-                params: btreemap! {
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) =>
-                        cbor::Value::Bytes(vec![1,2,3]),
-                },
+                params: vec![(
+                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Value::ByteString(vec![1, 2, 3]),
+                )],
                 ..Default::default()
             },
         ),
@@ -633,10 +611,10 @@ fn test_key_builder() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
-                params: btreemap! {
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) =>
-                        cbor::Value::Bytes(vec![1,2,3]),
-                },
+                params: vec![(
+                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Value::ByteString(vec![1, 2, 3]),
+                )],
                 ..Default::default()
             },
         ),
@@ -647,10 +625,10 @@ fn test_key_builder() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 key_id: vec![4, 5],
-                params: btreemap! {
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) =>
-                        cbor::Value::Bytes(vec![1,2,3]),
-                },
+                params: vec![(
+                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Value::ByteString(vec![1, 2, 3]),
+                )],
                 ..Default::default()
             },
         ),
@@ -661,14 +639,16 @@ fn test_key_builder() {
                 .build(),
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
-                key_ops: btreeset! {
+                key_ops: vec![
                     KeyOperation::Assigned(iana::KeyOperation::Encrypt),
                     KeyOperation::Assigned(iana::KeyOperation::Decrypt),
-                },
-                params: btreemap! {
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) =>
-                        cbor::Value::Bytes(vec![1,2,3]),
-                },
+                ]
+                .into_iter()
+                .collect(),
+                params: vec![(
+                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Value::ByteString(vec![1, 2, 3]),
+                )],
                 ..Default::default()
             },
         ),
@@ -679,10 +659,10 @@ fn test_key_builder() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 base_iv: vec![4, 5],
-                params: btreemap! {
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) =>
-                        cbor::Value::Bytes(vec![1,2,3]),
-                },
+                params: vec![(
+                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Value::ByteString(vec![1, 2, 3]),
+                )],
                 ..Default::default()
             },
         ),
@@ -698,6 +678,6 @@ fn test_key_builder_core_param_panic() {
     // Attempting to set a core `KeyParameter` (in range [1,5]) via `.param()` panics.
     let _key =
         CoseKeyBuilder::new_ec2_pub_key(iana::EllipticCurve::P_256, vec![1, 2, 3], vec![2, 3, 4])
-            .param(1, cbor::Value::Null)
+            .param(1, Value::Simple(SimpleValue::NullValue))
             .build();
 }

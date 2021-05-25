@@ -16,7 +16,7 @@
 
 //! Set of types for supporting [CBOR Object Signing and Encryption (COSE)][COSE].
 //!
-//! Builds on the [`serde_cbor`](https://docs.rs/serde-cbor) crate for underlying [CBOR][CBOR] support.
+//! Builds on the [`sk-cbor`](https://docs.rs/sk-cbor) crate for underlying [CBOR][CBOR] support.
 //!
 //! ## Usage
 //!
@@ -60,7 +60,7 @@
 //!     "'{}' + '{}' => {}",
 //!     String::from_utf8_lossy(pt),
 //!     String::from_utf8_lossy(aad),
-//!     hex::encode(sign1.to_vec().unwrap())
+//!     hex::encode(&sign1_data)
 //! );
 //!
 //! // At the receiving end, deserialize the bytes back to a `CoseSign1` object.
@@ -93,7 +93,12 @@
 //! [COSE]: https://tools.ietf.org/html/rfc8152
 //! [CBOR]: https://tools.ietf.org/html/rfc7049
 
+#![no_std]
 #![deny(broken_intra_doc_links)]
+extern crate alloc;
+
+/// Re-export of the `sk-cbor` crate used for underlying CBOR encoding.
+pub use sk_cbor as cbor;
 
 #[macro_use]
 pub(crate) mod util;

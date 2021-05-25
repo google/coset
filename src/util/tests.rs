@@ -15,38 +15,28 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::util::expect_err;
-use maplit::btreemap;
-use serde::de::value::Error;
-use serde_cbor as cbor;
+use crate::{
+    cbor::values::{SimpleValue, Value},
+    util::expect_err,
+};
+use alloc::{borrow::ToOwned, boxed::Box, vec};
 
 #[test]
 fn test_cbor_type_error() {
-    let val = cbor::Value::Null;
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "unit value");
-    let val = cbor::Value::Bool(true);
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "boolean");
-    let val = cbor::Value::Integer(128);
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "integer");
-    let val = cbor::Value::Float(64.0);
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "float");
-    let val = cbor::Value::Bytes(vec![1, 2]);
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "byte array");
-    let val = cbor::Value::Text("string".to_owned());
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "string");
-    let val = cbor::Value::Array(vec![cbor::Value::Null]);
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "tuple variant");
-    let val = cbor::Value::Map(btreemap! {});
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "struct variant");
-    let val = cbor::Value::Tag(1, Box::new(cbor::Value::Null));
-    let e = cbor_type_error::<(), _, Error>(&val, &"a");
-    expect_err(e, "invalid type");
+    let cases = vec![
+        (Value::Simple(SimpleValue::NullValue), "null"),
+        (Value::Simple(SimpleValue::TrueValue), "true"),
+        (Value::Simple(SimpleValue::FalseValue), "false"),
+        (Value::Simple(SimpleValue::Undefined), "undefined"),
+        (Value::Unsigned(128), "uint"),
+        (Value::ByteString(vec![1, 2]), "bstr"),
+        (Value::TextString("string".to_owned()), "tstr"),
+        (Value::Array(vec![Value::Unsigned(0)]), "array"),
+        (Value::Map(vec![]), "map"),
+        (Value::Tag(1, Box::new(Value::Unsigned(0))), "tag"),
+    ];
+    for (val, want) in cases {
+        let e = cbor_type_error::<()>(&val, "a");
+        expect_err(e, want);
+    }
 }

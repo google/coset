@@ -15,7 +15,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 //! Example program demonstrating signature creation.
-
 use coset::{iana, CborSerializable};
 
 #[derive(Copy, Clone)]
@@ -62,7 +61,7 @@ fn main() {
         "'{}' + '{}' => {}",
         String::from_utf8_lossy(pt),
         String::from_utf8_lossy(aad),
-        hex::encode(sign1.to_vec().unwrap())
+        hex::encode(&sign1_data)
     );
 
     // At the receiving end, deserialize the bytes back to a `CoseSign1` object.

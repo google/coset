@@ -17,14 +17,13 @@
 //! COSE Headers functionality.
 
 use crate::{
+    cbor::values::Value,
     iana,
     iana::EnumI128,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, CborSerializable, CoseSignature, Label, RegisteredLabel,
+    Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel,
 };
-use serde::de::Unexpected;
-use serde_cbor as cbor;
-use std::collections::{btree_map::Entry, BTreeMap};
+use alloc::{string::String, vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -66,34 +65,34 @@ pub struct Header {
     pub partial_iv: Vec<u8>,
     /// Counter signature
     pub counter_signatures: Vec<CoseSignature>,
-    /// Any additional header values.
-    pub rest: BTreeMap<Label, cbor::Value>,
+    /// Any additional header (label,value) pairs.  If duplicate labels are present, CBOR-encoding
+    /// will fail.
+    pub rest: Vec<(Label, Value)>,
 }
 
 impl Header {
-    /// Constructor from a [`cbor::Value`] that holds a `bstr` encoded header.
+    /// Constructor from a [`Value`] that holds a `bstr` encoded header.
     #[inline]
-    pub fn from_cbor_bstr<E: serde::de::Error>(val: cbor::Value) -> Result<Self, E> {
+    pub fn from_cbor_bstr(val: Value) -> Result<Self, CoseError> {
         let data = match val {
-            cbor::Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, &"bstr encoded map"),
+            Value::ByteString(b) => b,
+            v => return cbor_type_error(&v, "bstr encoded map"),
         };
         if data.is_empty() {
             return Ok(Self::default());
         }
-        Header::from_slice(&data).map_err(|_e| {
-            serde::de::Error::invalid_value(Unexpected::StructVariant, &"header struct")
-        })
+        Header::from_slice(&data)
     }
 
-    /// Convert this header to a `bstr` encoded map, as a [`cbor::Value`].
+    /// Convert this header to a `bstr` encoded map, as a [`Value`], consuming the object along the
+    /// way.
     #[inline]
-    pub fn to_cbor_bstr(&self) -> cbor::Value {
-        cbor::Value::Bytes(if self.is_empty() {
+    pub fn cbor_bstr(self) -> Result<Value, CoseError> {
+        Ok(Value::ByteString(if self.is_empty() {
             vec![]
         } else {
-            self.to_vec().expect("failed to serialize header") // safe: Header always serializable
-        })
+            self.to_vec()?
+        }))
     }
 
     /// Indicate whether the `Header` is empty.
@@ -111,20 +110,19 @@ impl Header {
 
 impl crate::CborSerializable for Header {}
 
-const ALG: cbor::Value = cbor::Value::Integer(iana::HeaderParameter::Alg as i128);
-const CRIT: cbor::Value = cbor::Value::Integer(iana::HeaderParameter::Crit as i128);
-const CONTENT_TYPE: cbor::Value = cbor::Value::Integer(iana::HeaderParameter::ContentType as i128);
-const KID: cbor::Value = cbor::Value::Integer(iana::HeaderParameter::Kid as i128);
-const IV: cbor::Value = cbor::Value::Integer(iana::HeaderParameter::Iv as i128);
-const PARTIAL_IV: cbor::Value = cbor::Value::Integer(iana::HeaderParameter::PartialIv as i128);
-const COUNTER_SIG: cbor::Value =
-    cbor::Value::Integer(iana::HeaderParameter::CounterSignature as i128);
+const ALG: Value = Value::Unsigned(iana::HeaderParameter::Alg as u64);
+const CRIT: Value = Value::Unsigned(iana::HeaderParameter::Crit as u64);
+const CONTENT_TYPE: Value = Value::Unsigned(iana::HeaderParameter::ContentType as u64);
+const KID: Value = Value::Unsigned(iana::HeaderParameter::Kid as u64);
+const IV: Value = Value::Unsigned(iana::HeaderParameter::Iv as u64);
+const PARTIAL_IV: Value = Value::Unsigned(iana::HeaderParameter::PartialIv as u64);
+const COUNTER_SIG: Value = Value::Unsigned(iana::HeaderParameter::CounterSignature as u64);
 
 impl AsCborValue for Header {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let m = match value {
-            cbor::Value::Map(m) => m,
-            v => return cbor_type_error(&v, &"map"),
+            Value::Map(m) => m,
+            v => return cbor_type_error(&v, "map"),
         };
 
         let mut headers = Self::default();
@@ -133,11 +131,11 @@ impl AsCborValue for Header {
                 x if x == ALG => headers.alg = Some(Algorithm::from_cbor_value(value)?),
 
                 x if x == CRIT => match value {
-                    cbor::Value::Array(a) => {
+                    Value::Array(a) => {
                         if a.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::TupleVariant,
-                                &"non-empty array",
+                            return Err(CoseError::UnexpectedType(
+                                "empty array",
+                                "non-empty array",
                             ));
                         }
                         for v in a {
@@ -146,79 +144,67 @@ impl AsCborValue for Header {
                             );
                         }
                     }
-                    v => return cbor_type_error(&v, &"array value"),
+                    v => return cbor_type_error(&v, "array value"),
                 },
 
                 x if x == CONTENT_TYPE => {
                     headers.content_type = Some(ContentType::from_cbor_value(value)?);
                     if let Some(ContentType::Text(text)) = &headers.content_type {
                         if text.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::Str(text),
-                                &"non-empty string",
-                            ));
+                            return Err(CoseError::UnexpectedType("empty tstr", "non-empty tstr"));
                         }
                         if text.trim() != text {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::Str(text),
-                                &"no leading/trailing whitespace",
+                            return Err(CoseError::UnexpectedType(
+                                "leading/trailing whitespace",
+                                "no leading/trailing whitespace",
                             ));
                         }
                         // Basic check that the content type is of form type/subtype.
                         // We don't check the precise definition though (RFC 6838 s4.2)
                         if text.matches('/').count() != 1 {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::Str(text),
-                                &"text of form type/subtype",
+                            return Err(CoseError::UnexpectedType(
+                                "arbitrary text",
+                                "text of form type/subtype",
                             ));
                         }
                     }
                 }
 
                 x if x == KID => match value {
-                    cbor::Value::Bytes(v) => {
+                    Value::ByteString(v) => {
                         if v.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::Bytes(&v),
-                                &"non-empty bstr",
-                            ));
+                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
                         }
                         headers.key_id = v;
                     }
-                    v => return cbor_type_error(&v, &"bstr value"),
+                    v => return cbor_type_error(&v, "bstr value"),
                 },
 
                 x if x == IV => match value {
-                    cbor::Value::Bytes(v) => {
+                    Value::ByteString(v) => {
                         if v.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::Bytes(&v),
-                                &"non-empty bstr",
-                            ));
+                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
                         }
                         headers.iv = v;
                     }
-                    v => return cbor_type_error(&v, &"bstr value"),
+                    v => return cbor_type_error(&v, "bstr value"),
                 },
 
                 x if x == PARTIAL_IV => match value {
-                    cbor::Value::Bytes(v) => {
+                    Value::ByteString(v) => {
                         if v.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::Bytes(&v),
-                                &"non-empty bstr",
-                            ));
+                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
                         }
                         headers.partial_iv = v;
                     }
-                    v => return cbor_type_error(&v, &"bstr value"),
+                    v => return cbor_type_error(&v, "bstr value"),
                 },
                 x if x == COUNTER_SIG => match value {
-                    cbor::Value::Array(sig_or_sigs) => {
+                    Value::Array(sig_or_sigs) => {
                         if sig_or_sigs.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::TupleVariant,
-                                &"non-empty array",
+                            return Err(CoseError::UnexpectedType(
+                                "empty sig array",
+                                "non-empty sig array",
                             ));
                         }
                         // The encoding of counter signature[s] is pesky:
@@ -229,100 +215,84 @@ impl AsCborValue for Header {
                         // - If it's a bstr, sig_or_sigs is a single signature.
                         // - If it's an array, sig_or_sigs is an array of signatures
                         match &sig_or_sigs[0] {
-                            cbor::Value::Bytes(_) => {
-                                headers
-                                    .counter_signatures
-                                    .push(CoseSignature::from_cbor_value(cbor::Value::Array(
-                                        sig_or_sigs,
-                                    ))?)
-                            }
-                            cbor::Value::Array(_) => {
+                            Value::ByteString(_) => headers
+                                .counter_signatures
+                                .push(CoseSignature::from_cbor_value(Value::Array(sig_or_sigs))?),
+                            Value::Array(_) => {
                                 for sig in sig_or_sigs.into_iter() {
                                     headers
                                         .counter_signatures
                                         .push(CoseSignature::from_cbor_value(sig)?);
                                 }
                             }
-                            v => return cbor_type_error(v, &"array or bstr value"),
+                            v => return cbor_type_error(v, "array or bstr value"),
                         }
                     }
-                    v => return cbor_type_error(&v, &"array value"),
+                    v => return cbor_type_error(&v, "array value"),
                 },
 
                 l => {
                     let label = Label::from_cbor_value(l)?;
-                    match headers.rest.entry(label) {
-                        Entry::Occupied(_) => {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::StructVariant,
-                                &"unique map label",
-                            ));
-                        }
-                        Entry::Vacant(ve) => {
-                            ve.insert(value);
-                        }
-                    }
+                    headers.rest.push((label, value));
                 }
             }
             // RFC 8152 section 3.1: "The 'Initialization Vector' and 'Partial Initialization
             // Vector' parameters MUST NOT both be present in the same security layer."
             if !headers.iv.is_empty() && !headers.partial_iv.is_empty() {
-                return Err(serde::de::Error::invalid_value(
-                    Unexpected::StructVariant,
-                    &"only one of IV and partial IV",
+                return Err(CoseError::UnexpectedType(
+                    "IV and partial-IV specified",
+                    "only one of IV and partial IV",
                 ));
             }
         }
         Ok(headers)
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        let mut map = BTreeMap::<cbor::Value, cbor::Value>::new();
-        if let Some(alg) = &self.alg {
-            map.insert(ALG, alg.to_cbor_value());
+    fn to_cbor_value(mut self) -> Result<Value, CoseError> {
+        let mut map = Vec::<(Value, Value)>::new();
+        if let Some(alg) = self.alg {
+            map.push((ALG, alg.to_cbor_value()?));
         }
         if !self.crit.is_empty() {
-            map.insert(
-                CRIT,
-                cbor::Value::Array(self.crit.iter().map(|c| c.to_cbor_value()).collect()),
-            );
+            let mut arr = Vec::new();
+            for c in self.crit {
+                arr.push(c.to_cbor_value()?);
+            }
+            map.push((CRIT, Value::Array(arr)));
         }
-        if let Some(content_type) = &self.content_type {
-            map.insert(CONTENT_TYPE, content_type.to_cbor_value());
+        if let Some(content_type) = self.content_type {
+            map.push((CONTENT_TYPE, content_type.to_cbor_value()?));
         }
         if !self.key_id.is_empty() {
-            map.insert(KID, cbor::Value::Bytes(self.key_id.to_vec()));
+            map.push((KID, Value::ByteString(self.key_id)));
         }
         if !self.iv.is_empty() {
-            map.insert(IV, cbor::Value::Bytes(self.iv.to_vec()));
+            map.push((IV, Value::ByteString(self.iv)));
         }
         if !self.partial_iv.is_empty() {
-            map.insert(PARTIAL_IV, cbor::Value::Bytes(self.partial_iv.to_vec()));
+            map.push((PARTIAL_IV, Value::ByteString(self.partial_iv)));
         }
         if !self.counter_signatures.is_empty() {
             if self.counter_signatures.len() == 1 {
                 // A single counter signature is encoded differently.
-                map.insert(COUNTER_SIG, self.counter_signatures[0].to_cbor_value());
-            } else {
-                map.insert(
+                map.push((
                     COUNTER_SIG,
-                    cbor::Value::Array(
-                        self.counter_signatures
-                            .iter()
-                            .map(|s| s.to_cbor_value())
-                            .collect(),
-                    ),
-                );
+                    self.counter_signatures.remove(0).to_cbor_value()?,
+                ));
+            } else {
+                let mut arr = Vec::new();
+                for cs in self.counter_signatures {
+                    arr.push(cs.to_cbor_value()?);
+                }
+                map.push((COUNTER_SIG, Value::Array(arr)));
             }
         }
-        for (label, value) in &self.rest {
-            map.insert(label.to_cbor_value(), value.clone());
+        for (label, value) in self.rest.into_iter() {
+            map.push((label.to_cbor_value()?, value));
         }
-        cbor::Value::Map(map)
+        Ok(Value::Map(map))
     }
 }
-
-cbor_serialize!(Header);
 
 /// Builder for [`Header`] objects.
 #[derive(Default)]
@@ -382,24 +352,25 @@ impl HeaderBuilder {
         self
     }
 
-    /// Set a header label:value pair.
+    /// Set a header label:value pair. If duplicate labels are added to a [`Header`],
+    /// subsequent attempts to CBOR-encode the header will fail.
     ///
     /// # Panics
     ///
     /// This function will panic if it used to set a header label from the range [1, 6].
-    pub fn value(mut self, label: i128, value: cbor::Value) -> Self {
+    pub fn value(mut self, label: i128, value: Value) -> Self {
         if label >= iana::HeaderParameter::Alg.to_i128()
             && label <= iana::HeaderParameter::CounterSignature.to_i128()
         {
             panic!("value() method used to set core header parameter"); // safe: invalid input
         }
-        self.0.rest.insert(Label::Int(label), value);
+        self.0.rest.push((Label::Int(label), value));
         self
     }
 
     /// Set a header label:value pair where the `label` is text.
-    pub fn text_value(mut self, label: String, value: cbor::Value) -> Self {
-        self.0.rest.insert(Label::Text(label), value);
+    pub fn text_value(mut self, label: String, value: Value) -> Self {
+        self.0.rest.push((Label::Text(label), value));
         self
     }
 }

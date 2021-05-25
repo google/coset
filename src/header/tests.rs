@@ -15,14 +15,25 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{iana, util::expect_err, CborSerializable, Label};
-use maplit::btreemap;
-use serde_cbor as cbor;
+use crate::{
+    cbor::values::{SimpleValue, Value},
+    iana,
+    util::expect_err,
+    CborSerializable, Label,
+};
+use alloc::{borrow::ToOwned, vec};
 
 // The most negative integer value that can be encoded in CBOR is:
 //    0x3B (0b001_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
 // which is -18_446_744_073_709_551_616 (-1 - 18_446_744_073_709_551_615).
-const MOST_NEGATIVE_NINT: i128 = -18_446_744_073_709_551_616i128;
+//
+// However, the underlying sk-cbor crate encodes negative integers as:
+//    Value::Negative(i64)
+// meaning that the most negative integer available in practice is
+//    i64::MIN = -9_223_372_036_854_775_808
+// which is 0x8000000000000000 in hex, and which CBOR-encodes as:
+//    0x3b 0x7fffffffffffffff
+const MOST_NEGATIVE_NINT: i128 = i64::MIN as i128;
 
 #[test]
 fn test_header_encode() {
@@ -49,7 +60,7 @@ fn test_header_encode() {
             concat!(
                 "a1", // 1-map
                 "01",
-                "3bffffffffffffffff", // 1 (alg) => -lots
+                "3b7fffffffffffffff", // 1 (alg) => -lots
             ),
         ),
         (
@@ -59,10 +70,10 @@ fn test_header_encode() {
                 content_type: Some(ContentType::Assigned(iana::CoapContentFormat::CoseEncrypt0)),
                 key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
-                rest: btreemap! {
-                    Label::Int(0x46) => cbor::Value::Integer(0x47),
-                    Label::Int(0x66) => cbor::Value::Integer(0x67),
-                },
+                rest: vec![
+                    (Label::Int(0x46), Value::Unsigned(0x47)),
+                    (Label::Int(0x66), Value::Unsigned(0x67)),
+                ],
                 ..Default::default()
             },
             concat!(
@@ -83,10 +94,10 @@ fn test_header_encode() {
                 content_type: Some(ContentType::Text("a/b".to_owned())),
                 key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
-                rest: btreemap! {
-                    Label::Int(0x46) => cbor::Value::Integer(0x47),
-                    Label::Text("a".to_owned()) => cbor::Value::Integer(0x47),
-                },
+                rest: vec![
+                    (Label::Int(0x46), Value::Unsigned(0x47)),
+                    (Label::Text("a".to_owned()), Value::Unsigned(0x47)),
+                ],
                 counter_signatures: vec![CoseSignature {
                     signature: vec![1, 2, 3],
                     ..Default::default()
@@ -113,10 +124,10 @@ fn test_header_encode() {
                 content_type: Some(ContentType::Text("a/b".to_owned())),
                 key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
-                rest: btreemap! {
-                    Label::Int(0x46) => cbor::Value::Integer(0x47),
-                    Label::Text("a".to_owned()) => cbor::Value::Integer(0x47),
-                },
+                rest: vec![
+                    (Label::Int(0x46), Value::Unsigned(0x47)),
+                    (Label::Text("a".to_owned()), Value::Unsigned(0x47)),
+                ],
                 counter_signatures: vec![
                     CoseSignature {
                         signature: vec![1, 2, 3],
@@ -143,9 +154,19 @@ fn test_header_encode() {
                 "6161", "1847", // "a" => 47
             ),
         ),
+        (
+            HeaderBuilder::new()
+                .add_critical(iana::HeaderParameter::Alg)
+                .add_critical(iana::HeaderParameter::Alg)
+                .build(),
+            concat!(
+                "a1", // 1-map
+                "02", "820101", // crit => 2-arr [1, 1]
+            ),
+        ),
     ];
     for (i, (header, header_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&header).unwrap();
+        let got = header.clone().to_vec().unwrap();
         assert_eq!(*header_data, hex::encode(&got), "case {}", i);
 
         let got = Header::from_slice(&got).unwrap();
@@ -176,7 +197,7 @@ fn test_header_decode_fail() {
                 "a1", // 1-map
                 "02", "4101", // 2 (crit) => bstr (invalid value type)
             ),
-            "expected array value",
+            "expected array",
         ),
         (
             concat!(
@@ -232,7 +253,7 @@ fn test_header_decode_fail() {
                 "a1", // 1-map
                 "03", "60", // 3 (content-type) => invalid value ""
             ),
-            "expected non-empty string",
+            "expected non-empty tstr",
         ),
         (
             concat!(
@@ -288,7 +309,7 @@ fn test_header_decode_fail() {
                 "a1", // 1-map
                 "07", "80", // 7 (counter-sig) => 0-arr
             ),
-            "expected non-empty array",
+            "expected non-empty sig array",
         ),
         (
             concat!(
@@ -316,9 +337,7 @@ fn test_header_decode_fail() {
     }
 }
 
-// TODO(#1): get serde_cbor to generate an error on duplicate keys in map
 #[test]
-#[ignore]
 fn test_header_decode_dup_fail() {
     let tests = vec![
         (
@@ -328,7 +347,7 @@ fn test_header_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "1866", "1847", // 66 => 47
             ),
-            "expected unique map label",
+            "OutOfOrderKey",
         ),
         (
             concat!(
@@ -337,7 +356,7 @@ fn test_header_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "01", "01", // 1 (alg) => A128GCM (duplicate label)
             ),
-            "expected unique map label",
+            "OutOfOrderKey",
         ),
     ];
     for (header_data, err_msg) in tests.iter() {
@@ -348,26 +367,53 @@ fn test_header_decode_dup_fail() {
 }
 
 #[test]
+fn test_header_encode_dup_fail() {
+    let tests = vec![
+        Header {
+            alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
+            crit: vec![RegisteredLabel::Assigned(iana::HeaderParameter::Alg)],
+            content_type: Some(ContentType::Assigned(iana::CoapContentFormat::CoseEncrypt0)),
+            key_id: vec![1, 2, 3],
+            iv: vec![1, 2, 3],
+            rest: vec![
+                (Label::Int(0x46), Value::Unsigned(0x47)),
+                (Label::Int(0x46), Value::Unsigned(0x67)),
+            ],
+            ..Default::default()
+        },
+        HeaderBuilder::new()
+            .text_value("doop".to_owned(), Value::Unsigned(1))
+            .text_value("doop".to_owned(), Value::Unsigned(2))
+            .build(),
+    ];
+    for header in tests {
+        let result = header.clone().to_vec();
+        expect_err(result, "encode CBOR failure");
+    }
+}
+
+#[test]
 fn test_header_encode_int_out_of_range_fail() {
-    // Unfortunately, it is possible to build Rust COSE structures that hold values that
-    // cannot be serialized to CBOR -- serde_cbor uses i128 for integer values for convenience,
-    // but the serializable range is more like an i65 (!).
+    // Unfortunately, it is possible to build Rust COSE structures that hold values that cannot be
+    // serialized to CBOR -- we use i128 for integer values for convenience, but the
+    // serializable range is more like an i65 (!) in theory and [i64::MIN, u64::MAX] in
+    // practice.
     let header = HeaderBuilder::new()
         .value(
             0x10000000000000000i128,
-            cbor::Value::Text("boom!".to_owned()),
+            Value::TextString("boom!".to_owned()),
         )
         .build();
-    let result = cbor::ser::to_vec(&header);
-    expect_err(result, "stored in CBOR");
+    let result = header.to_vec();
+    expect_err(result, "expected u64");
 
     let header = Header {
         // "What we do, is if we need that extra push over the cliff, you know what we do?"
         alg: Some(Algorithm::PrivateUse(MOST_NEGATIVE_NINT - 1)),
         ..Default::default()
     };
-    let result = cbor::ser::to_vec(&header);
-    expect_err(result, "stored in CBOR");
+    let result = header.to_vec();
+    expect_err(result, "expected i64");
 }
 
 #[test]
@@ -388,8 +434,8 @@ fn test_header_builder() {
                 .key_id(vec![1, 2, 3])
                 .partial_iv(vec![4, 5, 6]) // removed by .iv() call
                 .iv(vec![1, 2, 3])
-                .value(0x46, cbor::Value::Integer(0x47))
-                .value(0x66, cbor::Value::Integer(0x67))
+                .value(0x46, Value::Unsigned(0x47))
+                .value(0x66, Value::Unsigned(0x67))
                 .build(),
             Header {
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
@@ -400,10 +446,10 @@ fn test_header_builder() {
                 content_type: Some(ContentType::Assigned(iana::CoapContentFormat::CoseEncrypt0)),
                 key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
-                rest: btreemap! {
-                    Label::Int(0x46) => cbor::Value::Integer(0x47),
-                    Label::Int(0x66) => cbor::Value::Integer(0x67),
-                },
+                rest: vec![
+                    (Label::Int(0x46), Value::Unsigned(0x47)),
+                    (Label::Int(0x66), Value::Unsigned(0x67)),
+                ],
                 ..Default::default()
             },
         ),
@@ -439,5 +485,7 @@ fn test_header_builder() {
 #[should_panic]
 fn test_header_builder_core_param_panic() {
     // Attempting to set a core header parameter (in range [1,7]) via `.param()` panics.
-    let _hdr = HeaderBuilder::new().value(1, cbor::Value::Null).build();
+    let _hdr = HeaderBuilder::new()
+        .value(1, Value::Simple(SimpleValue::NullValue))
+        .build();
 }

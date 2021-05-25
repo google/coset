@@ -16,10 +16,14 @@
 
 use super::*;
 use crate::{
-    iana, util::expect_err, Algorithm, CborSerializable, ContentType, HeaderBuilder,
-    RegisteredLabel, TaggedCborSerializable,
+    cbor::values::Value, iana, util::expect_err, Algorithm, CborSerializable, ContentType,
+    HeaderBuilder, RegisteredLabel, TaggedCborSerializable,
 };
-use serde_cbor as cbor;
+use alloc::{
+    format,
+    string::{String, ToString},
+    vec,
+};
 
 #[test]
 fn test_cose_signature_encode() {
@@ -90,7 +94,7 @@ fn test_cose_signature_encode() {
         ),
     ];
     for (i, (sig, sig_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&sig).unwrap();
+        let got = sig.clone().to_vec().unwrap();
         assert_eq!(*sig_data, hex::encode(&got), "case {}", i);
 
         let got = CoseSignature::from_slice(&got).unwrap();
@@ -165,7 +169,7 @@ fn test_cose_signature_decode_fail() {
                 "a0",       // 0-map
                 "43616263", // 0-bstr
             ),
-            "expected header struct",
+            "expected int/tstr",
         ),
     ];
     for (sig_data, err_msg) in tests.iter() {
@@ -348,33 +352,18 @@ fn test_cose_sign_encode() {
         ),
     ];
     for (i, (sign, sign_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&sign).unwrap();
+        let got = sign.clone().to_vec().unwrap();
         assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
 
         let got = CoseSign::from_slice(&got).unwrap();
         assert_eq!(*sign, got);
 
         // Repeat with tagged variant.
-        let got = sign.to_tagged_vec().unwrap();
+        let got = sign.clone().to_tagged_vec().unwrap();
         let tagged_sign_data = format!("d862{}", sign_data);
         assert_eq!(tagged_sign_data, hex::encode(&got), "tagged case {}", i);
 
         let got = CoseSign::from_tagged_slice(&got).unwrap();
-        assert_eq!(*sign, got);
-
-        // Also exercise the `Read` / `Write` versions.
-        let mut got = vec![];
-        sign.to_writer(&mut got).unwrap();
-        assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
-
-        let got = CoseSign::from_reader(std::io::Cursor::new(&got)).unwrap();
-        assert_eq!(*sign, got);
-
-        let mut got = vec![];
-        sign.to_tagged_writer(&mut got).unwrap();
-        assert_eq!(tagged_sign_data, hex::encode(&got), "case {}", i);
-
-        let got = CoseSign::from_tagged_reader(std::io::Cursor::new(&got)).unwrap();
         assert_eq!(*sign, got);
     }
 }
@@ -476,7 +465,7 @@ fn test_cose_sign_decode_fail() {
                 "43616263", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "expected header struct",
+            "expected int/tstr",
         ),
     ];
     for (sign_data, err_msg) in tests.iter() {
@@ -553,13 +542,13 @@ fn test_cose_sign_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "TrailingData",
+            "ExtraneousData",
         ),
         (
             concat!(
                 "18",     // incomplete int
             ),
-            "EofWhileParsingValue",
+            "IncompleteCborData",
         ),
     ];
     for (sign_data, err_msg) in tests.iter() {
@@ -680,7 +669,7 @@ fn test_rfc8152_cose_sign_decode() {
         (
             CoseSignBuilder::new()
                 .protected(HeaderBuilder::new()
-                           .text_value("reserved".to_owned(), cbor::Value::Bool(false))
+                           .text_value("reserved".to_owned(), Value::Simple(SimpleValue::FalseValue))
                            .add_critical_label(RegisteredLabel::Text("reserved".to_owned()))
                            .build())
                 .payload(b"This is the content.".to_vec())
@@ -713,8 +702,14 @@ fn test_rfc8152_cose_sign_decode() {
     ];
 
     for (i, (sign, sign_data)) in tests.iter().enumerate() {
-        let got = sign.to_tagged_vec().unwrap();
-        assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
+        let got = sign.clone().to_tagged_vec().unwrap();
+        assert_eq!(
+            *sign_data,
+            hex::encode(&got),
+            "case {}: encode {:?}",
+            i,
+            sign
+        );
 
         let got = CoseSign::from_tagged_slice(&got).unwrap();
         assert_eq!(*sign, got);
@@ -789,14 +784,14 @@ fn test_cose_sign1_encode() {
         ),
     ];
     for (i, (sign, sign_data)) in tests.iter().enumerate() {
-        let got = cbor::ser::to_vec(&sign).unwrap();
+        let got = sign.clone().to_vec().unwrap();
         assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
 
         let got = CoseSign1::from_slice(&got).unwrap();
         assert_eq!(*sign, got);
 
         // Repeat with tagged variant.
-        let got = sign.to_tagged_vec().unwrap();
+        let got = sign.clone().to_tagged_vec().unwrap();
         let want_hex = format!("d2{}", sign_data);
         assert_eq!(want_hex, hex::encode(&got), "tagged case {}", i);
 
@@ -888,7 +883,7 @@ fn test_cose_sign1_decode_fail() {
                 "43616263", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "expected header struct",
+            "expected int/tstr",
         ),
     ];
     for (sign_data, err_msg) in tests.iter() {
@@ -965,7 +960,7 @@ fn test_cose_sign1_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "TrailingData",
+            "ExtraneousData",
         ),
         (
             concat!(
@@ -1006,7 +1001,7 @@ fn test_rfc8152_cose_sign1_decode() {
     ];
 
     for (i, (sign, sign_data)) in tests.iter().enumerate() {
-        let got = sign.to_tagged_vec().unwrap();
+        let got = sign.clone().to_tagged_vec().unwrap();
         assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
 
         let got = CoseSign1::from_tagged_slice(&got).unwrap();

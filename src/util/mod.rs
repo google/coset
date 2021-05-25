@@ -16,42 +16,46 @@
 
 //! Common internal utilities.
 
-use serde_cbor as cbor;
+use crate::{
+    cbor::values::{SimpleValue, Value},
+    CoseError,
+};
 
 #[cfg(test)]
 mod tests;
 
-/// Map a `serde_cbor::Value` into a serde type error.
-pub(crate) fn cbor_type_error<T, M, E>(v: &cbor::Value, msg: &M) -> Result<T, E>
-where
-    M: serde::de::Expected,
-    E: serde::de::Error,
-{
-    Err(serde::de::Error::invalid_type(
-        match v {
-            cbor::Value::Integer(i) => serde::de::Unexpected::Signed(*i as i64),
-            cbor::Value::Text(t) => serde::de::Unexpected::Str(t),
-            cbor::Value::Null => serde::de::Unexpected::Unit,
-            cbor::Value::Bool(b) => serde::de::Unexpected::Bool(*b),
-            cbor::Value::Float(f) => serde::de::Unexpected::Float(*f),
-            cbor::Value::Bytes(b) => serde::de::Unexpected::Bytes(b),
-            cbor::Value::Array(_) => serde::de::Unexpected::TupleVariant,
-            cbor::Value::Map(_) => serde::de::Unexpected::StructVariant,
-            _ => serde::de::Unexpected::Other("invalid type"),
+/// Return an error indicating that an unexpected CBOR type was encountered.
+pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T, CoseError> {
+    let got = match value {
+        Value::Unsigned(_) => "uint",
+        Value::Negative(_) => "nint",
+        Value::ByteString(_) => "bstr",
+        Value::TextString(_) => "tstr",
+        Value::Array(_) => "array",
+        Value::Map(_) => "map",
+        Value::Tag(_, _) => "tag",
+        Value::Simple(s) => match s {
+            SimpleValue::FalseValue => "false",
+            SimpleValue::TrueValue => "true",
+            SimpleValue::NullValue => "null",
+            SimpleValue::Undefined => "undefined",
         },
-        msg,
-    ))
+    };
+    Err(CoseError::UnexpectedType(got, want))
 }
 
-/// Trait for types that can be converted to/from a `serde_cbor::Value`
+/// Trait for types that can be converted to/from a [`Value`].
 pub trait AsCborValue: Sized {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E>;
-    fn to_cbor_value(&self) -> cbor::Value;
+    /// Convert a [`Value`] into an instance of the type.
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError>;
+    /// Convert the object into a [`Value`], consuming it along the way.
+    fn to_cbor_value(self) -> Result<Value, CoseError>;
 }
 
 /// Check for an expected error.
 #[cfg(test)]
-pub fn expect_err<T, E: std::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
+pub fn expect_err<T, E: core::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
+    use alloc::format;
     assert!(result.is_err(), "expected error containing '{}'", err_msg);
     let err = result.err();
     assert!(
@@ -60,24 +64,6 @@ pub fn expect_err<T, E: std::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
         err,
         err_msg
     );
-}
-
-/// Macro that emits implementations of `Serialize` and `Deserialize` for
-/// types that implement the [`AsCborValue`] trait.
-macro_rules! cbor_serialize {
-    ( $otype: ty ) => {
-        impl ::serde::Serialize for $otype {
-            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                self.to_cbor_value().serialize(serializer)
-            }
-        }
-
-        impl<'de> ::serde::Deserialize<'de> for $otype {
-            fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-                Self::from_cbor_value(cbor::Value::deserialize(deserializer)?)
-            }
-        }
-    };
 }
 
 // Macros to reduce boilerplate when creating `CoseSomethingBuilder` structures.
