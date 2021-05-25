@@ -18,7 +18,6 @@
 
 use crate::{
     common::CborSerializable,
-    iana,
     util::{cbor_type_error, AsCborValue},
     Header,
 };
@@ -199,8 +198,9 @@ pub struct CoseEncrypt {
 
 impl crate::CborSerializable for CoseEncrypt {}
 
+#[cfg(feature = "tags")]
 impl crate::TaggedCborSerializable for CoseEncrypt {
-    const TAG: u64 = iana::CborTag::CoseEncrypt as u64;
+    const TAG: u64 = crate::iana::CborTag::CoseEncrypt as u64;
 }
 
 impl AsCborValue for CoseEncrypt {
@@ -328,8 +328,9 @@ pub struct CoseEncrypt0 {
 
 impl crate::CborSerializable for CoseEncrypt0 {}
 
+#[cfg(feature = "tags")]
 impl crate::TaggedCborSerializable for CoseEncrypt0 {
-    const TAG: u64 = iana::CborTag::CoseEncrypt0 as u64;
+    const TAG: u64 = crate::iana::CborTag::CoseEncrypt0 as u64;
 }
 
 impl AsCborValue for CoseEncrypt0 {

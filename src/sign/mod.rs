@@ -18,7 +18,6 @@
 
 use crate::{
     common::CborSerializable,
-    iana,
     util::{cbor_type_error, AsCborValue},
     Header,
 };
@@ -112,8 +111,10 @@ pub struct CoseSign {
 }
 
 impl crate::CborSerializable for CoseSign {}
+
+#[cfg(feature = "tags")]
 impl crate::TaggedCborSerializable for CoseSign {
-    const TAG: u64 = iana::CborTag::CoseSign as u64;
+    const TAG: u64 = crate::iana::CborTag::CoseSign as u64;
 }
 
 impl AsCborValue for CoseSign {
@@ -257,8 +258,10 @@ pub struct CoseSign1 {
 }
 
 impl crate::CborSerializable for CoseSign1 {}
+
+#[cfg(feature = "tags")]
 impl crate::TaggedCborSerializable for CoseSign1 {
-    const TAG: u64 = iana::CborTag::CoseSign1 as u64;
+    const TAG: u64 = crate::iana::CborTag::CoseSign1 as u64;
 }
 
 impl AsCborValue for CoseSign1 {

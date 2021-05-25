@@ -52,16 +52,23 @@ pub trait AsCborValue: Sized {
 /// Check for an expected error.
 #[cfg(test)]
 pub fn expect_err<T, E: core::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
-    #[cfg(not(feature = "std"))]
-    use alloc::format;
     assert!(result.is_err(), "expected error containing '{}'", err_msg);
-    let err = result.err();
-    assert!(
-        format!("{:?}", err).contains(err_msg),
-        "unexpected error {:?}, doesn't contain '{}'",
-        err,
-        err_msg
-    );
+
+    // Error messages are only available from serde_cbor if the `std` feature is
+    // enabled (and `tags` implies `std`).
+    #[cfg(any(feature = "std", feature = "tags"))]
+    {
+        #[cfg(not(feature = "std"))]
+        use alloc::format;
+
+        let err = result.err();
+        assert!(
+            format!("{:?}", err).contains(err_msg),
+            "unexpected error {:?}, doesn't contain '{}'",
+            err,
+            err_msg
+        );
+    }
 }
 
 /// Macro that emits implementations of `Serialize` and `Deserialize` for

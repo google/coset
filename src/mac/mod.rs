@@ -17,7 +17,6 @@
 //! COSE_Mac functionality.
 
 use crate::{
-    iana,
     util::{cbor_type_error, AsCborValue},
     CborSerializable, CoseRecipient, Header,
 };
@@ -49,8 +48,9 @@ pub struct CoseMac {
 
 impl crate::CborSerializable for CoseMac {}
 
+#[cfg(feature = "tags")]
 impl crate::TaggedCborSerializable for CoseMac {
-    const TAG: u64 = iana::CborTag::CoseMac as u64;
+    const TAG: u64 = crate::iana::CborTag::CoseMac as u64;
 }
 
 impl AsCborValue for CoseMac {
@@ -188,8 +188,9 @@ pub struct CoseMac0 {
 
 impl crate::CborSerializable for CoseMac0 {}
 
+#[cfg(feature = "tags")]
 impl crate::TaggedCborSerializable for CoseMac0 {
-    const TAG: u64 = iana::CborTag::CoseMac0 as u64;
+    const TAG: u64 = crate::iana::CborTag::CoseMac0 as u64;
 }
 
 impl AsCborValue for CoseMac0 {

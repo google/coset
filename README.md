@@ -18,6 +18,14 @@ example](examples/signature.rs) for documentation on how to use the code.
 This crate supports `no_std`, but uses the `alloc` crate.  The `std` feature enables methods that use `std::io::Read`
 and `std::io::Write`.
 
+## Features
+
+This crate includes two features.
+
+- `std` enables methods for serialization that use `std::io::Read` and `std::io::Write`, and consequently uses `std`.
+- `tags` enables serialization of tagged CBOR structures. Enabling this feature requires `std` support in the
+  `serde_cbor` dependency.
+
 ## Working on the Code
 
 Local coding conventions are enforced by the [continuous integration jobs](.github/workflows) and include:

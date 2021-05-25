@@ -15,10 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{
-    iana, util::expect_err, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
-    CoseSignatureBuilder, HeaderBuilder, TaggedCborSerializable,
-};
+use crate::{iana, util::expect_err, ContentType, CoseRecipientBuilder, HeaderBuilder};
 use alloc::{string::String, vec, vec::Vec};
 
 #[test]
@@ -242,9 +239,13 @@ fn test_cose_encrypt_decode_fail() {
         expect_err(result, err_msg);
     }
 }
+
+#[cfg(feature = "tags")]
 #[test]
 fn test_rfc8152_cose_encrypt_decode() {
-    // COSE_Encrypt structures from RFC 8152 section C.3.
+    use crate::{CoseKeyBuilder, CoseSignatureBuilder, TaggedCborSerializable};
+
+    // Tagged COSE_Encrypt structures from RFC 8152 section C.3.
     let tests: Vec<(CoseEncrypt, &'static str)> = vec![
         (
             CoseEncryptBuilder::new()
@@ -555,8 +556,11 @@ fn test_cose_encrypt0_decode_fail() {
     }
 }
 
+#[cfg(feature = "tags")]
 #[test]
 fn test_rfc8152_cose_encrypt0_decode() {
+    use crate::TaggedCborSerializable;
+
     // COSE_Encrypt0 structures from RFC 8152 section C.4.
     let tests: Vec<(CoseEncrypt0, &'static str)> = vec![
         (

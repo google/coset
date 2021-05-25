@@ -15,10 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{
-    util::expect_err, CborSerializable, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
-    HeaderBuilder, TaggedCborSerializable,
-};
+use crate::{util::expect_err, CborSerializable, ContentType, HeaderBuilder};
 use alloc::{string::String, vec, vec::Vec};
 
 #[test]
@@ -143,9 +140,12 @@ fn test_cose_mac_decode_fail() {
     }
 }
 
+#[cfg(feature = "tags")]
 #[test]
 fn test_rfc8152_cose_mac_decode() {
-    // COSE_Mac structures from RFC 8152 section C.5.
+    use crate::{iana, CoseKeyBuilder, CoseRecipientBuilder, TaggedCborSerializable};
+
+    // Tagged COSE_Mac structures from RFC 8152 section C.5.
     let tests: Vec<(CoseMac, &'static str)> = vec![
         (
             CoseMacBuilder::new()
@@ -452,9 +452,12 @@ fn test_cose_mac0_decode_fail() {
     }
 }
 
+#[cfg(feature = "tags")]
 #[test]
 fn test_rfc8152_cose_mac0_decode() {
-    // COSE_Mac0 structures from RFC 8152 section C.5.
+    use crate::{iana, TaggedCborSerializable};
+
+    // Tagged COSE_Mac0 structures from RFC 8152 section C.5.
     let tests: Vec<(CoseMac0, &'static str)> = vec![(
         CoseMac0Builder::new()
             .protected(

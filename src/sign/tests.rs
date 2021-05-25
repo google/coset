@@ -15,11 +15,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{
-    iana, util::expect_err, Algorithm, CborSerializable, ContentType, HeaderBuilder,
-    RegisteredLabel, TaggedCborSerializable,
-};
-use alloc::{format, string::String, vec};
+use crate::{iana, util::expect_err, Algorithm, CborSerializable, ContentType, HeaderBuilder};
+use alloc::{string::String, vec};
 use serde_cbor as cbor;
 
 #[test]
@@ -355,14 +352,6 @@ fn test_cose_sign_encode() {
         let got = CoseSign::from_slice(&got).unwrap();
         assert_eq!(*sign, got);
 
-        // Repeat with tagged variant.
-        let got = sign.to_tagged_vec().unwrap();
-        let tagged_sign_data = format!("d862{}", sign_data);
-        assert_eq!(tagged_sign_data, hex::encode(&got), "tagged case {}", i);
-
-        let got = CoseSign::from_tagged_slice(&got).unwrap();
-        assert_eq!(*sign, got);
-
         #[cfg(feature = "std")]
         {
             // Also exercise the `Read` / `Write` versions.
@@ -372,13 +361,30 @@ fn test_cose_sign_encode() {
 
             let got = CoseSign::from_reader(std::io::Cursor::new(&got)).unwrap();
             assert_eq!(*sign, got);
+        }
 
-            let mut got = vec![];
-            sign.to_tagged_writer(&mut got).unwrap();
-            assert_eq!(tagged_sign_data, hex::encode(&got), "case {}", i);
+        #[cfg(feature = "tags")]
+        {
+            use crate::TaggedCborSerializable;
+            use alloc::format;
 
-            let got = CoseSign::from_tagged_reader(std::io::Cursor::new(&got)).unwrap();
+            // Repeat with tagged variant.
+            let got = sign.to_tagged_vec().unwrap();
+            let tagged_sign_data = format!("d862{}", sign_data);
+            assert_eq!(tagged_sign_data, hex::encode(&got), "tagged case {}", i);
+
+            let got = CoseSign::from_tagged_slice(&got).unwrap();
             assert_eq!(*sign, got);
+
+            #[cfg(feature = "std")]
+            {
+                let mut got = vec![];
+                sign.to_tagged_writer(&mut got).unwrap();
+                assert_eq!(tagged_sign_data, hex::encode(&got), "case {}", i);
+
+                let got = CoseSign::from_tagged_reader(std::io::Cursor::new(&got)).unwrap();
+                assert_eq!(*sign, got);
+            }
         }
     }
 }
@@ -490,8 +496,10 @@ fn test_cose_sign_decode_fail() {
     }
 }
 
+#[cfg(feature = "tags")]
 #[test]
 fn test_cose_sign_tagged_decode_fail() {
+    use crate::TaggedCborSerializable;
     let tests = vec![
         (
             concat!(
@@ -573,9 +581,11 @@ fn test_cose_sign_tagged_decode_fail() {
     }
 }
 
+#[cfg(feature = "tags")]
 #[test]
 fn test_rfc8152_cose_sign_decode() {
-    // COSE_Sign structures from RFC 8152 section C.1.
+    use crate::TaggedCborSerializable;
+    // Tagged COSE_Sign structures from RFC 8152 section C.1.
     let tests = vec![
         (
             CoseSignBuilder::new()
@@ -685,7 +695,7 @@ fn test_rfc8152_cose_sign_decode() {
             CoseSignBuilder::new()
                 .protected(HeaderBuilder::new()
                            .text_value("reserved".to_owned(), cbor::Value::Bool(false))
-                           .add_critical_label(RegisteredLabel::Text("reserved".to_owned()))
+                           .add_critical_label(crate::RegisteredLabel::Text("reserved".to_owned()))
                            .build())
                 .payload(b"This is the content.".to_vec())
                 .add_signature(
@@ -799,13 +809,19 @@ fn test_cose_sign1_encode() {
         let got = CoseSign1::from_slice(&got).unwrap();
         assert_eq!(*sign, got);
 
-        // Repeat with tagged variant.
-        let got = sign.to_tagged_vec().unwrap();
-        let want_hex = format!("d2{}", sign_data);
-        assert_eq!(want_hex, hex::encode(&got), "tagged case {}", i);
+        #[cfg(feature = "tags")]
+        {
+            use crate::TaggedCborSerializable;
+            use alloc::format;
 
-        let got = CoseSign1::from_tagged_slice(&got).unwrap();
-        assert_eq!(*sign, got);
+            // Repeat with tagged variant.
+            let got = sign.to_tagged_vec().unwrap();
+            let want_hex = format!("d2{}", sign_data);
+            assert_eq!(want_hex, hex::encode(&got), "tagged case {}", i);
+
+            let got = CoseSign1::from_tagged_slice(&got).unwrap();
+            assert_eq!(*sign, got);
+        }
     }
 }
 
@@ -902,8 +918,10 @@ fn test_cose_sign1_decode_fail() {
     }
 }
 
+#[cfg(feature = "tags")]
 #[test]
 fn test_cose_sign1_tagged_decode_fail() {
+    use crate::TaggedCborSerializable;
     let tests = vec![
         (
             concat!(
@@ -985,9 +1003,12 @@ fn test_cose_sign1_tagged_decode_fail() {
     }
 }
 
+#[cfg(feature = "tags")]
 #[test]
 fn test_rfc8152_cose_sign1_decode() {
-    // COSE_Sign1 structures from RFC 8152 section C.2.
+    use crate::TaggedCborSerializable;
+
+    // Tagged COSE_Sign1 structures from RFC 8152 section C.2.
     let tests = vec![
         (
             CoseSign1Builder::new()

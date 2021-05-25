@@ -10,13 +10,17 @@ keywords = ["cryptography", "cose"]
 categories = ["cryptography"]
 
 [features]
-default = []
-std = []
+default = ["tags"]
+std = ["serde_cbor/std"]
+tags = ["serde_cbor/tags"]
 
 [dependencies]
-serde_cbor = { version = "^0.11.1", features = ["std", "tags"] }
-serde = { version = "^1.0.126", features = ["derive"] }
+serde_cbor = { version = "^0.11.1", default-features = false, features = ["alloc"] }
+serde = { version = "^1.0.126", default-features = false, features = [ "derive"] }
 
 [dev-dependencies]
 hex = "^0.4.2"
 maplit = "^1.0"
+
+[patch.crates-io]
+serde_cbor = { git = "https://github.com/daviddrysdale/cbor", branch = "value-alloc" }

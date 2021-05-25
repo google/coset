@@ -21,7 +21,7 @@ use crate::{
     iana::{EnumI128, WithPrivateRange},
     util::{cbor_type_error, AsCborValue},
 };
-use alloc::{boxed::Box, string::String, vec::Vec};
+use alloc::{string::String, vec::Vec};
 use core::cmp::Ordering;
 use serde::{de::DeserializeOwned, Deserialize, Serialize, Serializer};
 use serde_cbor as cbor;
@@ -55,6 +55,7 @@ pub trait CborSerializable: Serialize + DeserializeOwned {
 }
 
 /// Extension trait that adds tagged serialization/deserialization methods.
+#[cfg(feature = "tags")]
 pub trait TaggedCborSerializable: AsCborValue {
     /// The associated tag value.
     const TAG: u64;
@@ -80,7 +81,10 @@ pub trait TaggedCborSerializable: AsCborValue {
 
     /// Serialize this object to a vector, including initial tag.
     fn to_tagged_vec(&self) -> cbor::Result<Vec<u8>> {
-        cbor::to_vec(&cbor::Value::Tag(Self::TAG, Box::new(self.to_cbor_value())))
+        cbor::to_vec(&cbor::Value::Tag(
+            Self::TAG,
+            alloc::boxed::Box::new(self.to_cbor_value()),
+        ))
     }
 
     /// Serialize this object to a [`std::io::Write`] instance, including initial tag.
@@ -88,7 +92,7 @@ pub trait TaggedCborSerializable: AsCborValue {
     fn to_tagged_writer<W: std::io::Write>(&self, writer: W) -> cbor::Result<()> {
         cbor::to_writer(
             writer,
-            &cbor::Value::Tag(Self::TAG, Box::new(self.to_cbor_value())),
+            &cbor::Value::Tag(Self::TAG, alloc::boxed::Box::new(self.to_cbor_value())),
         )
     }
 }
