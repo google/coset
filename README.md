@@ -6,12 +6,16 @@
 
 This crate holds a set of Rust types for working with CBOR Object Signing and Encryption (COSE) objects, as defined in
 [RFC 8152](https://tools.ietf.org/html/rfc8152).  It builds on the core [CBOR](https://tools.ietf.org/html/rfc7049)
-parsing functionality from the [`serde_cbor` crate](https://docs.rs/serde_cbor).
+parsing functionality from the [`sk-cbor` crate](https://docs.rs/sk-cbor).
 
 See [crate docs](https://google.github.io/coset/rust/coset/index.html), or the [signature
 example](examples/signature.rs) for documentation on how to use the code.
 
 **This repo is under construction** and so details of the API and the code may change without warning.
+
+## `no_std` Support
+
+This crate supports `no_std`, but uses the `alloc` crate.
 
 ## Working on the Code
 

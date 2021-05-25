@@ -16,8 +16,13 @@
 
 use super::*;
 use crate::{
-    util::expect_err, CborSerializable, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
-    HeaderBuilder, TaggedCborSerializable,
+    cbor::values::Value, util::expect_err, CborSerializable, ContentType, CoseKeyBuilder,
+    CoseRecipientBuilder, HeaderBuilder, TaggedCborSerializable,
+};
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
 };
 
 #[test]
@@ -47,7 +52,7 @@ fn test_cose_mac_decode() {
         ),
     ];
     for (i, (mac, mac_data)) in tests.iter().enumerate() {
-        let got = mac.to_vec().unwrap();
+        let got = mac.clone().to_vec().unwrap();
         assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
 
         let got = CoseMac::from_slice(&got).unwrap();
@@ -60,11 +65,11 @@ fn test_cose_mac_decode_fail() {
     let tests = vec![
         (
             concat!(
-                "a2", // 2-map (should be tuple)
-                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
-                "a0", // 0-map
-                "40", // 0-bstr
-                "40", // 0-bstr
+                "a2",   // 2-map (should be tuple)
+                "40",   // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0",   // 0-map
+                "4100", // 1-bstr
+                "40",   // 0-bstr
             ),
             "expected array",
         ),
@@ -75,7 +80,6 @@ fn test_cose_mac_decode_fail() {
                 "a0", // 0-map
                 "40", // 0-bstr
                 "40", // 0-bstr
-                "80", // 0-arr
             ),
             "expected array with 5 items",
         ),
@@ -202,11 +206,11 @@ fn test_rfc8152_cose_mac_decode() {
                                 .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                 .value(
                                     iana::HeaderAlgorithmParameter::StaticKeyId as i128,
-                                    cbor::Value::Bytes(b"peregrin.took@tuckborough.example".to_vec())
+                                    Value::ByteString(b"peregrin.took@tuckborough.example".to_vec())
                                 )
                                 .value(
                                     iana::HeaderAlgorithmParameter::PartyUNonce as i128,
-                                    cbor::Value::Bytes(hex::decode("4d8553e7e74f3c6a3a9dd3ef286a8195cbf8a23d19558ccfec7d34b824f42d92bd06bd2c7f0271f0214e141fb779ae2856abf585a58368b017e7f2a9e5ce4db5").unwrap())
+                                    Value::ByteString(hex::decode("4d8553e7e74f3c6a3a9dd3ef286a8195cbf8a23d19558ccfec7d34b824f42d92bd06bd2c7f0271f0214e141fb779ae2856abf585a58368b017e7f2a9e5ce4db5").unwrap())
                                 )
                                 .build(),
                         )
@@ -284,7 +288,7 @@ fn test_rfc8152_cose_mac_decode() {
                                        CoseKeyBuilder::new_ec2_pub_key_y_sign(iana::EllipticCurve::P_521,
                                                                               hex::decode("0043b12669acac3fd27898ffba0bcd2e6c366d53bc4db71f909a759304acfb5e18cdc7ba0b13ff8c7636271a6924b1ac63c02688075b55ef2d613574e7dc242f79c3").unwrap(),
                                                                               true)
-                                       .build().to_cbor_value())
+                                       .build().to_cbor_value().unwrap())
                                 .key_id(b"bilbo.baggins@hobbiton.example".to_vec())
                                 .build(),
                         )
@@ -341,7 +345,7 @@ fn test_rfc8152_cose_mac_decode() {
     ];
 
     for (i, (mac, mac_data)) in tests.iter().enumerate() {
-        let got = mac.to_tagged_vec().unwrap();
+        let got = mac.clone().to_tagged_vec().unwrap();
         assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
 
         let got = CoseMac::from_tagged_slice(&got).unwrap();
@@ -374,7 +378,7 @@ fn test_cose_mac0_decode() {
         ),
     ];
     for (i, (mac, mac_data)) in tests.iter().enumerate() {
-        let got = mac.to_vec().unwrap();
+        let got = mac.clone().to_vec().unwrap();
         assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
 
         let got = CoseMac0::from_slice(&got).unwrap();
@@ -386,11 +390,11 @@ fn test_cose_mac0_decode_fail() {
     let tests = vec![
         (
             concat!(
-                "a2", // 2-map (should be tuple)
-                "40", // 0-bstr (special case for empty protected headers, rather than 41a0)
-                "a0", // 0-map
-                "40", // 0-bstr
-                "40", // 0-bstr
+                "a2",   // 2-map (should be tuple)
+                "40",   // 0-bstr (special case for empty protected headers, rather than 41a0)
+                "a0",   // 0-map
+                "4100", // 0-bstr
+                "40",   // 0-bstr
             ),
             "expected array",
         ),
@@ -478,7 +482,7 @@ fn test_rfc8152_cose_mac0_decode() {
     )];
 
     for (i, (mac, mac_data)) in tests.iter().enumerate() {
-        let got = mac.to_tagged_vec().unwrap();
+        let got = mac.clone().to_tagged_vec().unwrap();
         assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
 
         let got = CoseMac0::from_tagged_slice(&got).unwrap();

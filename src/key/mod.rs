@@ -17,15 +17,13 @@
 //! COSE_Key functionality.
 
 use crate::{
+    cbor::values::{SimpleValue, Value},
     iana,
     iana::EnumI128,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, Label,
+    Algorithm, CoseError, Label,
 };
-use maplit::btreemap;
-use serde::de::Unexpected;
-use serde_cbor as cbor;
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
+use alloc::{collections::BTreeSet, vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -41,6 +39,33 @@ impl Default for KeyType {
 
 /// Key operation.
 pub type KeyOperation = crate::RegisteredLabel<iana::KeyOperation>;
+
+/// A collection of [`CoseKey`] objects.
+pub struct CoseKeySet(pub Vec<CoseKey>);
+
+impl crate::CborSerializable for CoseKeySet {}
+
+impl AsCborValue for CoseKeySet {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+        let a = match value {
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
+        };
+        let mut keys = Vec::new();
+        for v in a {
+            keys.push(CoseKey::from_cbor_value(v)?);
+        }
+        Ok(Self(keys))
+    }
+
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        let mut arr = Vec::new();
+        for k in self.0 {
+            arr.push(k.to_cbor_value()?);
+        }
+        Ok(Value::Array(arr))
+    }
+}
 
 /// Structure representing a cryptographic key.
 ///
@@ -66,26 +91,24 @@ pub struct CoseKey {
     pub key_ops: BTreeSet<KeyOperation>,
     /// Base IV to be xor-ed with partial IVs.
     pub base_iv: Vec<u8>,
-    /// Any additional parameter values.
-    pub params: BTreeMap<Label, cbor::Value>,
+    /// Any additional parameter (label,value) pairs.  If duplicate labels are present,
+    /// CBOR-encoding will fail.
+    pub params: Vec<(Label, Value)>,
 }
-
-/// A collection of [`CoseKey`] objects.
-pub type CoseKeySet = Vec<CoseKey>;
 
 impl crate::CborSerializable for CoseKey {}
 
-const KTY: cbor::Value = cbor::Value::Integer(iana::KeyParameter::Kty as i128);
-const KID: cbor::Value = cbor::Value::Integer(iana::KeyParameter::Kid as i128);
-const ALG: cbor::Value = cbor::Value::Integer(iana::KeyParameter::Alg as i128);
-const KEY_OPS: cbor::Value = cbor::Value::Integer(iana::KeyParameter::KeyOps as i128);
-const BASE_IV: cbor::Value = cbor::Value::Integer(iana::KeyParameter::BaseIv as i128);
+const KTY: Value = Value::Unsigned(iana::KeyParameter::Kty as u64);
+const KID: Value = Value::Unsigned(iana::KeyParameter::Kid as u64);
+const ALG: Value = Value::Unsigned(iana::KeyParameter::Alg as u64);
+const KEY_OPS: Value = Value::Unsigned(iana::KeyParameter::KeyOps as u64);
+const BASE_IV: Value = Value::Unsigned(iana::KeyParameter::BaseIv as u64);
 
 impl AsCborValue for CoseKey {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let m = match value {
-            cbor::Value::Map(m) => m,
-            v => return cbor_type_error(&v, &"map"),
+            Value::Map(m) => m,
+            v => return cbor_type_error(&v, "map"),
         };
 
         let mut key = Self::default();
@@ -94,114 +117,88 @@ impl AsCborValue for CoseKey {
                 x if x == KTY => key.kty = KeyType::from_cbor_value(value)?,
 
                 x if x == KID => match value {
-                    cbor::Value::Bytes(v) => {
+                    Value::ByteString(v) => {
                         if v.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::Bytes(&v),
-                                &"non-empty bstr",
-                            ));
+                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
                         }
                         key.key_id = v;
                     }
-                    v => return cbor_type_error(&v, &"bstr value"),
+                    v => return cbor_type_error(&v, "bstr value"),
                 },
 
                 x if x == ALG => key.alg = Some(Algorithm::from_cbor_value(value)?),
 
                 x if x == KEY_OPS => match value {
-                    cbor::Value::Array(key_ops) => {
+                    Value::Array(key_ops) => {
                         for key_op in key_ops.into_iter() {
                             if !key.key_ops.insert(KeyOperation::from_cbor_value(key_op)?) {
-                                return Err(serde::de::Error::invalid_value(
-                                    Unexpected::TupleVariant,
-                                    &"unique array label",
+                                return Err(CoseError::UnexpectedType(
+                                    "repeated array entry",
+                                    "unique array label",
                                 ));
                             }
                         }
                         if key.key_ops.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::TupleVariant,
-                                &"non-empty array",
+                            return Err(CoseError::UnexpectedType(
+                                "empty array",
+                                "non-empty array",
                             ));
                         }
                     }
-                    v => return cbor_type_error(&v, &"array value"),
+                    v => return cbor_type_error(&v, "array value"),
                 },
 
                 x if x == BASE_IV => match value {
-                    cbor::Value::Bytes(v) => {
+                    Value::ByteString(v) => {
                         if v.is_empty() {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::Bytes(&v),
-                                &"non-empty bstr",
-                            ));
+                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
                         }
                         key.base_iv = v;
                     }
-                    v => return cbor_type_error(&v, &"bstr value"),
+                    v => return cbor_type_error(&v, "bstr value"),
                 },
 
                 l => {
                     let label = Label::from_cbor_value(l)?;
-                    match key.params.entry(label) {
-                        Entry::Occupied(_) => {
-                            return Err(serde::de::Error::invalid_value(
-                                Unexpected::StructVariant,
-                                &"unique map label",
-                            ));
-                        }
-                        Entry::Vacant(ve) => {
-                            ve.insert(value);
-                        }
-                    }
+                    key.params.push((label, value));
                 }
             }
         }
         // Check that key type has been set.
         if key.kty == KeyType::Assigned(iana::KeyType::Reserved) {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::StructVariant,
-                &"mandatory kty label",
+            return Err(CoseError::UnexpectedType(
+                "no kty label",
+                "mandatory kty label",
             ));
         }
 
         Ok(key)
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        let mut map = BTreeMap::<cbor::Value, cbor::Value>::new();
-        map.insert(KTY, self.kty.to_cbor_value());
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        let mut map: Vec<(Value, Value)> = vec![(KTY, self.kty.to_cbor_value()?)];
         if !self.key_id.is_empty() {
-            map.insert(KID, cbor::Value::Bytes(self.key_id.to_vec()));
+            map.push((KID, Value::ByteString(self.key_id)));
         }
-        if let Some(alg) = &self.alg {
-            map.insert(ALG, alg.to_cbor_value());
+        if let Some(alg) = self.alg {
+            map.push((ALG, alg.to_cbor_value()?));
         }
         if !self.key_ops.is_empty() {
-            map.insert(
-                KEY_OPS,
-                cbor::Value::Array(
-                    self.key_ops
-                        .iter()
-                        .map(|op| match op {
-                            KeyOperation::Assigned(i) => cbor::Value::Integer(*i as i128),
-                            KeyOperation::Text(t) => cbor::Value::Text(t.to_owned()),
-                        })
-                        .collect(),
-                ),
-            );
+            let mut arr = Vec::new();
+            for op in self.key_ops {
+                arr.push(op.to_cbor_value()?);
+            }
+            map.push((KEY_OPS, Value::Array(arr)));
         }
         if !self.base_iv.is_empty() {
-            map.insert(BASE_IV, cbor::Value::Bytes(self.base_iv.to_vec()));
+            map.push((BASE_IV, Value::ByteString(self.base_iv)));
         }
-        for (label, value) in &self.params {
-            map.insert(label.to_cbor_value(), value.clone());
+        for (label, value) in self.params {
+            map.push((label.to_cbor_value()?, value));
         }
-        cbor::Value::Map(map)
+        Ok(Value::Map(map))
     }
 }
-
-cbor_serialize!(CoseKey);
 
 /// Builder for [`CoseKey`] objects.
 #[derive(Default)]
@@ -216,11 +213,20 @@ impl CoseKeyBuilder {
     pub fn new_ec2_pub_key(curve: iana::EllipticCurve, x: Vec<u8>, y: Vec<u8>) -> Self {
         Self(CoseKey {
             kty: KeyType::Assigned(iana::KeyType::EC2),
-            params: btreemap! {
-                Label::Int(iana::Ec2KeyParameter::Crv as i128) => cbor::Value::Integer(curve as i128),
-                Label::Int(iana::Ec2KeyParameter::X as i128) => cbor::Value::Bytes(x),
-                Label::Int(iana::Ec2KeyParameter::Y as i128) => cbor::Value::Bytes(y),
-            },
+            params: vec![
+                (
+                    Label::Int(iana::Ec2KeyParameter::Crv as i128),
+                    Value::Unsigned(curve as u64),
+                ),
+                (
+                    Label::Int(iana::Ec2KeyParameter::X as i128),
+                    Value::ByteString(x),
+                ),
+                (
+                    Label::Int(iana::Ec2KeyParameter::Y as i128),
+                    Value::ByteString(y),
+                ),
+            ],
             ..Default::default()
         })
     }
@@ -230,11 +236,23 @@ impl CoseKeyBuilder {
     pub fn new_ec2_pub_key_y_sign(curve: iana::EllipticCurve, x: Vec<u8>, y_sign: bool) -> Self {
         Self(CoseKey {
             kty: KeyType::Assigned(iana::KeyType::EC2),
-            params: btreemap! {
-                Label::Int(iana::Ec2KeyParameter::Crv as i128) => cbor::Value::Integer(curve as i128),
-                Label::Int(iana::Ec2KeyParameter::X as i128) => cbor::Value::Bytes(x),
-                Label::Int(iana::Ec2KeyParameter::Y as i128) => cbor::Value::Bool(y_sign),
-            },
+            params: vec![
+                (
+                    Label::Int(iana::Ec2KeyParameter::Crv as i128),
+                    Value::Unsigned(curve as u64),
+                ),
+                (
+                    Label::Int(iana::Ec2KeyParameter::X as i128),
+                    Value::ByteString(x),
+                ),
+                (
+                    Label::Int(iana::Ec2KeyParameter::Y as i128),
+                    match y_sign {
+                        true => Value::Simple(SimpleValue::TrueValue),
+                        false => Value::Simple(SimpleValue::FalseValue),
+                    },
+                ),
+            ],
             ..Default::default()
         })
     }
@@ -248,10 +266,10 @@ impl CoseKeyBuilder {
         d: Vec<u8>,
     ) -> Self {
         let mut builder = Self::new_ec2_pub_key(curve, x, y);
-        builder.0.params.insert(
+        builder.0.params.push((
             Label::Int(iana::Ec2KeyParameter::D as i128),
-            cbor::Value::Bytes(d),
-        );
+            Value::ByteString(d),
+        ));
         builder
     }
 
@@ -259,9 +277,10 @@ impl CoseKeyBuilder {
     pub fn new_symmetric_key(k: Vec<u8>) -> Self {
         Self(CoseKey {
             kty: KeyType::Assigned(iana::KeyType::Symmetric),
-            params: btreemap! {
-                Label::Int(iana::SymmetricKeyParameter::K as i128) => cbor::Value::Bytes(k),
-            },
+            params: vec![(
+                Label::Int(iana::SymmetricKeyParameter::K as i128),
+                Value::ByteString(k),
+            )],
             ..Default::default()
         })
     }
@@ -284,11 +303,11 @@ impl CoseKeyBuilder {
     ///
     /// This function will panic if it used to set a parameter label from the [`iana::KeyParameter`]
     /// range.
-    pub fn param(mut self, label: i128, value: cbor::Value) -> Self {
+    pub fn param(mut self, label: i128, value: Value) -> Self {
         if iana::KeyParameter::from_i128(label).is_some() {
             panic!("param() method used to set KeyParameter"); // safe: invalid input
         }
-        self.0.params.insert(Label::Int(label), value);
+        self.0.params.push((Label::Int(label), value));
         self
     }
 }

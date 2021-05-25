@@ -16,6 +16,8 @@
 
 use super::*;
 use crate::util::expect_err;
+use alloc::{borrow::ToOwned, vec};
+use core::cmp::Ordering;
 
 #[test]
 fn test_label_encode() {
@@ -26,18 +28,10 @@ fn test_label_encode() {
     ];
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
-        let got = label.to_vec().unwrap();
+        let got = label.clone().to_vec().unwrap();
         assert_eq!(*label_data, hex::encode(&got), "case {}", i);
 
         let got = Label::from_slice(&got).unwrap();
-        assert_eq!(*label, got);
-
-        // Also exercise the `Read` / `Write` versions.
-        let mut got = vec![];
-        label.to_writer(&mut got).unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
-
-        let got = Label::from_reader(std::io::Cursor::new(&got)).unwrap();
         assert_eq!(*label, got);
     }
 }
@@ -48,27 +42,55 @@ fn test_label_sort() {
     let pairs = vec![
         (Label::Int(0x1234), Label::Text("a".to_owned())),
         (Label::Int(0x1234), Label::Text("ab".to_owned())),
+        (Label::Int(0), Label::Text("ab".to_owned())),
+        (Label::Int(-1), Label::Text("ab".to_owned())),
+        (Label::Int(0), Label::Int(10)),
+        (Label::Int(0), Label::Int(-10)),
         (Label::Int(10), Label::Int(-1)),
+        (Label::Int(-1), Label::Int(-2)),
         (Label::Int(0x12), Label::Int(0x1234)),
         (Label::Int(0x99), Label::Int(0x1234)),
         (Label::Int(0x1234), Label::Int(0x1235)),
+        (Label::Text("a".to_owned()), Label::Text("ab".to_owned())),
+        (Label::Text("aa".to_owned()), Label::Text("ab".to_owned())),
     ];
     for (left, right) in pairs.into_iter() {
         let value_cmp = left.cmp(&right);
         let value_partial_cmp = left.partial_cmp(&right);
-        let left_data = cbor::to_vec(&left).unwrap();
-        let right_data = cbor::to_vec(&right).unwrap();
+        let left_data = left.clone().to_vec().unwrap();
+        let right_data = right.clone().to_vec().unwrap();
         let data_cmp = left_data.cmp(&right_data);
+        let reverse_cmp = right.cmp(&left);
+        let equal_cmp = left.cmp(&left);
 
-        assert_eq!(value_cmp, std::cmp::Ordering::Less);
-        assert_eq!(value_partial_cmp, Some(std::cmp::Ordering::Less));
-        assert_eq!(data_cmp, std::cmp::Ordering::Less);
+        assert_eq!(value_cmp, Ordering::Less, "{:?} < {:?}", left, right);
+        assert_eq!(
+            value_partial_cmp,
+            Some(Ordering::Less),
+            "{:?} < {:?}",
+            left,
+            right
+        );
+        assert_eq!(
+            data_cmp,
+            Ordering::Less,
+            "{:?}={} < {:?}={}",
+            left,
+            hex::encode(&left_data),
+            right,
+            hex::encode(&right_data)
+        );
+        assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
+        assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
     }
 }
 
 #[test]
 fn test_label_decode_fail() {
-    let tests = vec![("43010203", "expected int/tstr"), ("", "EofWhileParsing")];
+    let tests = vec![
+        ("43010203", "expected int/tstr"),
+        ("", "IncompleteCborData"),
+    ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
         let result = Label::from_slice(&data);
@@ -84,18 +106,10 @@ fn test_registered_label_encode() {
     ];
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
-        let got = label.to_vec().unwrap();
+        let got = label.clone().to_vec().unwrap();
         assert_eq!(*label_data, hex::encode(&got), "case {}", i);
 
         let got = RegisteredLabel::from_slice(&got).unwrap();
-        assert_eq!(*label, got);
-
-        // Also exercise the `Read` / `Write` versions.
-        let mut got = vec![];
-        label.to_writer(&mut got).unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
-
-        let got = RegisteredLabel::from_reader(std::io::Cursor::new(&got)).unwrap();
         assert_eq!(*label, got);
     }
 }
@@ -124,13 +138,31 @@ fn test_registered_label_sort() {
     for (left, right) in pairs.into_iter() {
         let value_cmp = left.cmp(&right);
         let value_partial_cmp = left.partial_cmp(&right);
-        let left_data = cbor::to_vec(&left).unwrap();
-        let right_data = cbor::to_vec(&right).unwrap();
+        let left_data = left.clone().to_vec().unwrap();
+        let right_data = right.clone().to_vec().unwrap();
         let data_cmp = left_data.cmp(&right_data);
+        let reverse_cmp = right.cmp(&left);
+        let equal_cmp = left.cmp(&left);
 
-        assert_eq!(value_cmp, std::cmp::Ordering::Less);
-        assert_eq!(value_partial_cmp, Some(std::cmp::Ordering::Less));
-        assert_eq!(data_cmp, std::cmp::Ordering::Less);
+        assert_eq!(value_cmp, Ordering::Less, "{:?} < {:?}", left, right);
+        assert_eq!(
+            value_partial_cmp,
+            Some(Ordering::Less),
+            "{:?} < {:?}",
+            left,
+            right
+        );
+        assert_eq!(
+            data_cmp,
+            Ordering::Less,
+            "{:?}={} < {:?}={}",
+            left,
+            hex::encode(&left_data),
+            right,
+            hex::encode(&right_data)
+        );
+        assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
+        assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
     }
 }
 
@@ -138,7 +170,7 @@ fn test_registered_label_sort() {
 fn test_registered_label_decode_fail() {
     let tests = vec![
         ("43010203", "expected int/tstr"),
-        ("", "EofWhileParsing"),
+        ("", "IncompleteCborData"),
         ("09", "expected recognized IANA value"),
     ];
     for (label_data, err_msg) in tests.iter() {
@@ -166,57 +198,64 @@ fn test_registered_label_with_private_encode() {
     ];
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
-        let got = label.to_vec().unwrap();
+        let got = label.clone().to_vec().unwrap();
         assert_eq!(*label_data, hex::encode(&got), "case {}", i);
 
         let got = RegisteredLabelWithPrivate::from_slice(&got).unwrap();
-        assert_eq!(*label, got);
-
-        // Also exercise the `Read` / `Write` versions.
-        let mut got = vec![];
-        label.to_writer(&mut got).unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
-
-        let got = RegisteredLabelWithPrivate::from_reader(std::io::Cursor::new(&got)).unwrap();
         assert_eq!(*label, got);
     }
 }
 
 #[test]
 fn test_registered_label_with_private_sort() {
+    use RegisteredLabelWithPrivate::{Assigned, PrivateUse, Text};
     // Pairs of `RegisteredLabelWithPrivate`s with the "smaller" first.
     let pairs = vec![
+        (Assigned(iana::Algorithm::A192GCM), Text("a".to_owned())),
+        (Assigned(iana::Algorithm::WalnutDSA), Text("ab".to_owned())),
         (
-            RegisteredLabelWithPrivate::Assigned(iana::Algorithm::A192GCM),
-            RegisteredLabelWithPrivate::Text("a".to_owned()),
+            Assigned(iana::Algorithm::AES_CCM_16_64_128),
+            Assigned(iana::Algorithm::A128KW),
         ),
         (
-            RegisteredLabelWithPrivate::Assigned(iana::Algorithm::WalnutDSA),
-            RegisteredLabelWithPrivate::Text("ab".to_owned()),
+            Assigned(iana::Algorithm::A192GCM),
+            Assigned(iana::Algorithm::AES_CCM_16_64_128),
         ),
         (
-            RegisteredLabelWithPrivate::Assigned(iana::Algorithm::AES_CCM_16_64_128),
-            RegisteredLabelWithPrivate::Assigned(iana::Algorithm::A128KW),
+            Assigned(iana::Algorithm::AES_CCM_16_64_128),
+            PrivateUse(-70_000),
         ),
-        (
-            RegisteredLabelWithPrivate::Assigned(iana::Algorithm::A192GCM),
-            RegisteredLabelWithPrivate::Assigned(iana::Algorithm::AES_CCM_16_64_128),
-        ),
-        (
-            RegisteredLabelWithPrivate::Assigned(iana::Algorithm::AES_CCM_16_64_128),
-            RegisteredLabelWithPrivate::PrivateUse(-70_000),
-        ),
+        (PrivateUse(-70_000), PrivateUse(-70_001)),
+        (PrivateUse(-70_000), Text("a".to_owned())),
     ];
     for (left, right) in pairs.into_iter() {
         let value_cmp = left.cmp(&right);
         let value_partial_cmp = left.partial_cmp(&right);
-        let left_data = cbor::to_vec(&left).unwrap();
-        let right_data = cbor::to_vec(&right).unwrap();
+        let left_data = left.clone().to_vec().unwrap();
+        let right_data = right.clone().to_vec().unwrap();
         let data_cmp = left_data.cmp(&right_data);
+        let reverse_cmp = right.cmp(&left);
+        let equal_cmp = left.cmp(&left);
 
-        assert_eq!(value_cmp, std::cmp::Ordering::Less);
-        assert_eq!(value_partial_cmp, Some(std::cmp::Ordering::Less));
-        assert_eq!(data_cmp, std::cmp::Ordering::Less);
+        assert_eq!(value_cmp, Ordering::Less, "{:?} < {:?}", left, right);
+        assert_eq!(
+            value_partial_cmp,
+            Some(Ordering::Less),
+            "{:?} < {:?}",
+            left,
+            right
+        );
+        assert_eq!(
+            data_cmp,
+            Ordering::Less,
+            "{:?}={} < {:?}={}",
+            left,
+            hex::encode(&left_data),
+            right,
+            hex::encode(&right_data)
+        );
+        assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
+        assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
     }
 }
 
@@ -224,7 +263,7 @@ fn test_registered_label_with_private_sort() {
 fn test_registered_label_with_private_decode_fail() {
     let tests = vec![
         ("43010203", "expected int/tstr"),
-        ("", "EofWhileParsing"),
+        ("", "IncompleteCborData"),
         ("09", "expected value in IANA or private use range"),
     ];
     for (label_data, err_msg) in tests.iter() {

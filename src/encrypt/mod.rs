@@ -17,13 +17,14 @@
 //! COSE_Encrypt functionality.
 
 use crate::{
+    cbor,
+    cbor::values::{SimpleValue, Value},
     common::CborSerializable,
     iana,
     util::{cbor_type_error, AsCborValue},
-    Header,
+    CoseError, Header,
 };
-use serde::de::Unexpected;
-use serde_cbor as cbor;
+use alloc::{borrow::ToOwned, vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -48,15 +49,15 @@ pub struct CoseRecipient {
 impl crate::CborSerializable for CoseRecipient {}
 
 impl AsCborValue for CoseRecipient {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 3 && a.len() != 4 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 3 or 4 items",
+            return Err(CoseError::UnexpectedType(
+                "array",
+                "array with 3 or 4 items",
             ));
         }
 
@@ -64,46 +65,46 @@ impl AsCborValue for CoseRecipient {
         let mut recipients = Vec::new();
         if a.len() == 4 {
             match a.remove(3) {
-                cbor::Value::Array(a) => {
+                Value::Array(a) => {
                     for val in a {
                         recipients.push(CoseRecipient::from_cbor_value(val)?);
                     }
                 }
-                v => return cbor_type_error(&v, &"array"),
+                v => return cbor_type_error(&v, "array"),
             }
         }
 
         Ok(Self {
             recipients,
             ciphertext: match a.remove(2) {
-                cbor::Value::Bytes(b) => Some(b),
-                cbor::Value::Null => None,
-                v => return cbor_type_error(&v, &"bstr / null"),
+                Value::ByteString(b) => Some(b),
+                Value::Simple(SimpleValue::NullValue) => None,
+                v => return cbor_type_error(&v, "bstr / null"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: Header::from_cbor_bstr(a.remove(0))?,
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
         let mut v = vec![
-            self.protected.to_cbor_bstr(),
-            self.unprotected.to_cbor_value(),
-            match &self.ciphertext {
-                None => cbor::Value::Null,
-                Some(b) => cbor::Value::Bytes(b.clone()),
+            self.protected.cbor_bstr()?,
+            self.unprotected.to_cbor_value()?,
+            match self.ciphertext {
+                None => Value::Simple(SimpleValue::NullValue),
+                Some(b) => Value::ByteString(b),
             },
         ];
         if !self.recipients.is_empty() {
-            v.push(cbor::Value::Array(
-                self.recipients.iter().map(|r| r.to_cbor_value()).collect(),
-            ));
+            let mut arr = Vec::new();
+            for r in self.recipients {
+                arr.push(r.to_cbor_value()?);
+            }
+            v.push(Value::Array(arr));
         }
-        cbor::Value::Array(v)
+        Ok(Value::Array(v))
     }
 }
-
-cbor_serialize!(CoseRecipient);
 
 impl CoseRecipient {
     /// Decrypt the `ciphertext` value, using `cipher` to decrypt the cipher text and
@@ -129,7 +130,7 @@ impl CoseRecipient {
             | EncryptionContext::RecRecipient => {}
             _ => panic!("unsupported encryption context {:?}", context), // safe: documented
         }
-        let aad = enc_structure_data(context, &self.protected, external_aad);
+        let aad = enc_structure_data(context, self.protected.clone(), external_aad);
         cipher(ct, &aad)
     }
 }
@@ -205,7 +206,7 @@ impl CoseRecipientBuilder {
             | EncryptionContext::RecRecipient => {}
             _ => panic!("unsupported encryption context {:?}", context), // safe: documented
         }
-        enc_structure_data(context, &self.0.protected, external_aad)
+        enc_structure_data(context, self.0.protected.clone(), external_aad)
     }
 }
 
@@ -233,55 +234,53 @@ impl crate::TaggedCborSerializable for CoseEncrypt {
 }
 
 impl AsCborValue for CoseEncrypt {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 4 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 4 items",
-            ));
+            return Err(CoseError::UnexpectedType("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         let mut recipients = Vec::new();
         match a.remove(3) {
-            cbor::Value::Array(a) => {
+            Value::Array(a) => {
                 for val in a {
                     recipients.push(CoseRecipient::from_cbor_value(val)?);
                 }
             }
-            v => return cbor_type_error(&v, &"array"),
+            v => return cbor_type_error(&v, "array"),
         }
-
         Ok(Self {
             recipients,
             ciphertext: match a.remove(2) {
-                cbor::Value::Bytes(b) => Some(b),
-                cbor::Value::Null => None,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => Some(b),
+                Value::Simple(SimpleValue::NullValue) => None,
+                v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: Header::from_cbor_bstr(a.remove(0))?,
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        cbor::Value::Array(vec![
-            self.protected.to_cbor_bstr(),
-            self.unprotected.to_cbor_value(),
-            match &self.ciphertext {
-                None => cbor::Value::Null,
-                Some(b) => cbor::Value::Bytes(b.clone()),
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        let mut arr = Vec::new();
+        for r in self.recipients {
+            arr.push(r.to_cbor_value()?);
+        }
+        Ok(Value::Array(vec![
+            self.protected.cbor_bstr()?,
+            self.unprotected.to_cbor_value()?,
+            match self.ciphertext {
+                None => Value::Simple(SimpleValue::NullValue),
+                Some(b) => Value::ByteString(b),
             },
-            cbor::Value::Array(self.recipients.iter().map(|r| r.to_cbor_value()).collect()),
-        ])
+            Value::Array(arr),
+        ]))
     }
 }
-
-cbor_serialize!(CoseEncrypt);
 
 impl CoseEncrypt {
     /// Decrypt the `ciphertext` value, using `cipher` to decrypt the cipher text and
@@ -297,7 +296,7 @@ impl CoseEncrypt {
         let ct = self.ciphertext.as_ref().unwrap(/* safe: documented */);
         let aad = enc_structure_data(
             EncryptionContext::CoseEncrypt,
-            &self.protected,
+            self.protected.clone(),
             external_aad,
         );
         cipher(ct, &aad)
@@ -323,7 +322,7 @@ impl CoseEncryptBuilder {
     {
         let aad = enc_structure_data(
             EncryptionContext::CoseEncrypt,
-            &self.0.protected,
+            self.0.protected.clone(),
             external_aad,
         );
         self.ciphertext(cipher(plaintext, &aad))
@@ -343,7 +342,7 @@ impl CoseEncryptBuilder {
     {
         let aad = enc_structure_data(
             EncryptionContext::CoseEncrypt,
-            &self.0.protected,
+            self.0.protected.clone(),
             external_aad,
         );
         Ok(self.ciphertext(cipher(plaintext, &aad)?))
@@ -378,43 +377,39 @@ impl crate::TaggedCborSerializable for CoseEncrypt0 {
 }
 
 impl AsCborValue for CoseEncrypt0 {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 3 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 3 items",
-            ));
+            return Err(CoseError::UnexpectedType("array", "array with 3 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
             ciphertext: match a.remove(2) {
-                cbor::Value::Bytes(b) => Some(b),
-                cbor::Value::Null => None,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => Some(b),
+                Value::Simple(SimpleValue::NullValue) => None,
+                v => return cbor_type_error(&v, "bstr"),
             },
+
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: Header::from_cbor_bstr(a.remove(0))?,
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        cbor::Value::Array(vec![
-            self.protected.to_cbor_bstr(),
-            self.unprotected.to_cbor_value(),
-            match &self.ciphertext {
-                None => cbor::Value::Null,
-                Some(b) => cbor::Value::Bytes(b.clone()),
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        Ok(Value::Array(vec![
+            self.protected.cbor_bstr()?,
+            self.unprotected.to_cbor_value()?,
+            match self.ciphertext {
+                None => Value::Simple(SimpleValue::NullValue),
+                Some(b) => Value::ByteString(b),
             },
-        ])
+        ]))
     }
 }
-
-cbor_serialize!(CoseEncrypt0);
 
 impl CoseEncrypt0 {
     /// Decrypt the `ciphertext` value, using `cipher` to decrypt the cipher text and
@@ -430,7 +425,7 @@ impl CoseEncrypt0 {
         let ct = self.ciphertext.as_ref().unwrap(/* safe: documented */);
         let aad = enc_structure_data(
             EncryptionContext::CoseEncrypt0,
-            &self.protected,
+            self.protected.clone(),
             external_aad,
         );
         cipher(ct, &aad)
@@ -456,7 +451,7 @@ impl CoseEncrypt0Builder {
     {
         let aad = enc_structure_data(
             EncryptionContext::CoseEncrypt0,
-            &self.0.protected,
+            self.0.protected.clone(),
             external_aad,
         );
         self.ciphertext(cipher(plaintext, &aad))
@@ -476,7 +471,7 @@ impl CoseEncrypt0Builder {
     {
         let aad = enc_structure_data(
             EncryptionContext::CoseEncrypt0,
-            &self.0.protected,
+            self.0.protected.clone(),
             external_aad,
         );
         Ok(self.ciphertext(cipher(plaintext, &aad)?))
@@ -518,20 +513,23 @@ impl EncryptionContext {
 /// ```
 pub fn enc_structure_data(
     context: EncryptionContext,
-    protected: &Header,
+    protected: Header,
     external_aad: &[u8],
 ) -> Vec<u8> {
     let arr = vec![
-        cbor::Value::Text(context.text().to_owned()),
+        Value::TextString(context.text().to_owned()),
         if protected.is_empty() {
-            cbor::Value::Bytes(vec![])
+            Value::ByteString(vec![])
         } else {
-            cbor::Value::Bytes(
+            Value::ByteString(
                 protected.to_vec().expect("failed to serialize header"), /* safe: always
                                                                           * serializable */
             )
         },
-        cbor::Value::Bytes(external_aad.to_vec()),
+        Value::ByteString(external_aad.to_vec()),
     ];
-    cbor::to_vec(&cbor::Value::Array(arr)).expect("failed to serialize Enc_structure") // safe: always serializable
+
+    let mut data = Vec::new();
+    cbor::writer::write(Value::Array(arr), &mut data).unwrap(); // safe: always serializable
+    data
 }

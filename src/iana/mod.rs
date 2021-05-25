@@ -21,13 +21,11 @@
 //! - <https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml>
 //! - <https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats>
 
-use serde::{Deserialize, Serialize};
-
 #[cfg(test)]
 mod tests;
 
 /// Trait indicating an enum that can be constructed from `i128` values.
-pub trait EnumI128: Sized {
+pub trait EnumI128: Sized + Eq {
     fn from_i128(i: i128) -> Option<Self>;
     fn to_i128(&self) -> i128;
 }
@@ -43,7 +41,7 @@ macro_rules! iana_registry {
         #[allow(non_camel_case_types)]
         $(#[$attr])*
         #[non_exhaustive]
-        #[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+        #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
         pub enum $enum_name {
             $($(#[$fattr])* $name = $val,)*
         }

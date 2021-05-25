@@ -17,12 +17,13 @@
 //! COSE_Mac functionality.
 
 use crate::{
+    cbor,
+    cbor::values::{SimpleValue, Value},
     iana,
     util::{cbor_type_error, AsCborValue},
-    CborSerializable, CoseRecipient, Header,
+    CborSerializable, CoseError, CoseRecipient, Header,
 };
-use serde::de::Unexpected;
-use serde_cbor as cbor;
+use alloc::{borrow::ToOwned, vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -53,59 +54,59 @@ impl crate::TaggedCborSerializable for CoseMac {
 }
 
 impl AsCborValue for CoseMac {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 5 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 5 items",
-            ));
+            return Err(CoseError::UnexpectedType("array", "array with 5 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         let mut recipients = Vec::new();
         match a.remove(4) {
-            cbor::Value::Array(a) => {
+            Value::Array(a) => {
                 for val in a {
                     recipients.push(CoseRecipient::from_cbor_value(val)?);
                 }
             }
-            v => return cbor_type_error(&v, &"array"),
+            v => return cbor_type_error(&v, "array"),
         }
         Ok(Self {
             recipients,
             tag: match a.remove(3) {
-                cbor::Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => b,
+                v => return cbor_type_error(&v, "bstr"),
             },
             payload: match a.remove(2) {
-                cbor::Value::Bytes(b) => Some(b),
-                cbor::Value::Null => None,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => Some(b),
+                Value::Simple(SimpleValue::NullValue) => None,
+                v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: Header::from_cbor_bstr(a.remove(0))?,
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        cbor::Value::Array(vec![
-            self.protected.to_cbor_bstr(),
-            self.unprotected.to_cbor_value(),
-            match &self.payload {
-                None => cbor::Value::Null,
-                Some(b) => cbor::Value::Bytes(b.clone()),
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        let mut v = vec![
+            self.protected.cbor_bstr()?,
+            self.unprotected.to_cbor_value()?,
+            match self.payload {
+                None => Value::Simple(SimpleValue::NullValue),
+                Some(b) => Value::ByteString(b),
             },
-            cbor::Value::Bytes(self.tag.clone()),
-            cbor::Value::Array(self.recipients.iter().map(|r| r.to_cbor_value()).collect()),
-        ])
+            Value::ByteString(self.tag),
+        ];
+        let mut arr = Vec::new();
+        for r in self.recipients {
+            arr.push(r.to_cbor_value()?);
+        }
+        v.push(Value::Array(arr));
+        Ok(Value::Array(v))
     }
 }
-
-cbor_serialize!(CoseMac);
 
 impl CoseMac {
     /// Verify the `tag` value using the provided `mac` function, feeding it
@@ -131,7 +132,7 @@ impl CoseMac {
     fn tbm(&self, external_aad: &[u8]) -> Vec<u8> {
         mac_structure_data(
             MacContext::CoseMac,
-            &self.protected,
+            self.protected.clone(),
             external_aad,
             self.payload.as_ref().expect("payload missing"), // safe: documented
         )
@@ -209,48 +210,43 @@ impl crate::TaggedCborSerializable for CoseMac0 {
 }
 
 impl AsCborValue for CoseMac0 {
-    fn from_cbor_value<E: serde::de::Error>(value: cbor::Value) -> Result<Self, E> {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         let mut a = match value {
-            cbor::Value::Array(a) => a,
-            v => return cbor_type_error(&v, &"array"),
+            Value::Array(a) => a,
+            v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 4 {
-            return Err(serde::de::Error::invalid_value(
-                Unexpected::TupleVariant,
-                &"array with 4 items",
-            ));
+            return Err(CoseError::UnexpectedType("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
             tag: match a.remove(3) {
-                cbor::Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => b,
+                v => return cbor_type_error(&v, "bstr"),
             },
             payload: match a.remove(2) {
-                cbor::Value::Bytes(b) => Some(b),
-                cbor::Value::Null => None,
-                v => return cbor_type_error(&v, &"bstr"),
+                Value::ByteString(b) => Some(b),
+                Value::Simple(SimpleValue::NullValue) => None,
+                v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: Header::from_cbor_bstr(a.remove(0))?,
         })
     }
 
-    fn to_cbor_value(&self) -> cbor::Value {
-        cbor::Value::Array(vec![
-            self.protected.to_cbor_bstr(),
-            self.unprotected.to_cbor_value(),
-            match &self.payload {
-                None => cbor::Value::Null,
-                Some(b) => cbor::Value::Bytes(b.clone()),
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        Ok(Value::Array(vec![
+            self.protected.cbor_bstr()?,
+            self.unprotected.to_cbor_value()?,
+            match self.payload {
+                None => Value::Simple(SimpleValue::NullValue),
+                Some(b) => Value::ByteString(b),
             },
-            cbor::Value::Bytes(self.tag.clone()),
-        ])
+            Value::ByteString(self.tag),
+        ]))
     }
 }
-
-cbor_serialize!(CoseMac0);
 
 impl CoseMac0 {
     /// Verify the `tag` value using the provided `mac` function, feeding it
@@ -276,7 +272,7 @@ impl CoseMac0 {
     fn tbm(&self, external_aad: &[u8]) -> Vec<u8> {
         mac_structure_data(
             MacContext::CoseMac0,
-            &self.protected,
+            self.protected.clone(),
             external_aad,
             self.payload.as_ref().expect("payload missing"), // safe: documented
         )
@@ -352,22 +348,25 @@ impl MacContext {
 /// ```
 pub fn mac_structure_data(
     context: MacContext,
-    protected: &Header,
+    protected: Header,
     external_aad: &[u8],
     payload: &[u8],
 ) -> Vec<u8> {
     let arr = vec![
-        cbor::Value::Text(context.text().to_owned()),
+        Value::TextString(context.text().to_owned()),
         if protected.is_empty() {
-            cbor::Value::Bytes(vec![])
+            Value::ByteString(vec![])
         } else {
-            cbor::Value::Bytes(
+            Value::ByteString(
                 protected.to_vec().expect("failed to serialize header"), /* safe: always
                                                                           * serializable */
             )
         },
-        cbor::Value::Bytes(external_aad.to_vec()),
-        cbor::Value::Bytes(payload.to_vec()),
+        Value::ByteString(external_aad.to_vec()),
+        Value::ByteString(payload.to_vec()),
     ];
-    cbor::to_vec(&cbor::Value::Array(arr)).expect("failed to serialize Enc_structure") // safe: always serializable
+
+    let mut data = Vec::new();
+    cbor::writer::write(Value::Array(arr), &mut data).unwrap(); // safe: always serializable
+    data
 }
