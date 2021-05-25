@@ -19,6 +19,7 @@ use crate::{
     util::expect_err, CborSerializable, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
     HeaderBuilder, TaggedCborSerializable,
 };
+use alloc::{string::String, vec, vec::Vec};
 
 #[test]
 fn test_cose_mac_decode() {

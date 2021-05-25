@@ -22,6 +22,7 @@ use crate::{
     util::{cbor_type_error, AsCborValue},
     Header,
 };
+use alloc::{borrow::ToOwned, vec, vec::Vec};
 use serde::de::Unexpected;
 use serde_cbor as cbor;
 

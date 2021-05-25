@@ -19,6 +19,7 @@ use crate::{
     iana, util::expect_err, Algorithm, CborSerializable, ContentType, HeaderBuilder,
     RegisteredLabel, TaggedCborSerializable,
 };
+use alloc::{format, string::String, vec};
 use serde_cbor as cbor;
 
 #[test]
@@ -362,20 +363,23 @@ fn test_cose_sign_encode() {
         let got = CoseSign::from_tagged_slice(&got).unwrap();
         assert_eq!(*sign, got);
 
-        // Also exercise the `Read` / `Write` versions.
-        let mut got = vec![];
-        sign.to_writer(&mut got).unwrap();
-        assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
+        #[cfg(feature = "std")]
+        {
+            // Also exercise the `Read` / `Write` versions.
+            let mut got = vec![];
+            sign.to_writer(&mut got).unwrap();
+            assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseSign::from_reader(std::io::Cursor::new(&got)).unwrap();
-        assert_eq!(*sign, got);
+            let got = CoseSign::from_reader(std::io::Cursor::new(&got)).unwrap();
+            assert_eq!(*sign, got);
 
-        let mut got = vec![];
-        sign.to_tagged_writer(&mut got).unwrap();
-        assert_eq!(tagged_sign_data, hex::encode(&got), "case {}", i);
+            let mut got = vec![];
+            sign.to_tagged_writer(&mut got).unwrap();
+            assert_eq!(tagged_sign_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseSign::from_tagged_reader(std::io::Cursor::new(&got)).unwrap();
-        assert_eq!(*sign, got);
+            let got = CoseSign::from_tagged_reader(std::io::Cursor::new(&got)).unwrap();
+            assert_eq!(*sign, got);
+        }
     }
 }
 

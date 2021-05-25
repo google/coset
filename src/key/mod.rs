@@ -22,10 +22,13 @@ use crate::{
     util::{cbor_type_error, AsCborValue},
     Algorithm, Label,
 };
-use maplit::btreemap;
+use alloc::{
+    borrow::ToOwned,
+    collections::{btree_map::Entry, BTreeMap, BTreeSet},
+    vec::Vec,
+};
 use serde::de::Unexpected;
 use serde_cbor as cbor;
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
 
 #[cfg(test)]
 mod tests;
@@ -214,13 +217,22 @@ impl CoseKeyBuilder {
 
     /// Constructor for an elliptic curve public key specified by `x` and `y` coordinates.
     pub fn new_ec2_pub_key(curve: iana::EllipticCurve, x: Vec<u8>, y: Vec<u8>) -> Self {
+        let mut params = BTreeMap::new();
+        params.insert(
+            Label::Int(iana::Ec2KeyParameter::Crv as i128),
+            cbor::Value::Integer(curve as i128),
+        );
+        params.insert(
+            Label::Int(iana::Ec2KeyParameter::X as i128),
+            cbor::Value::Bytes(x),
+        );
+        params.insert(
+            Label::Int(iana::Ec2KeyParameter::Y as i128),
+            cbor::Value::Bytes(y),
+        );
         Self(CoseKey {
             kty: KeyType::Assigned(iana::KeyType::EC2),
-            params: btreemap! {
-                Label::Int(iana::Ec2KeyParameter::Crv as i128) => cbor::Value::Integer(curve as i128),
-                Label::Int(iana::Ec2KeyParameter::X as i128) => cbor::Value::Bytes(x),
-                Label::Int(iana::Ec2KeyParameter::Y as i128) => cbor::Value::Bytes(y),
-            },
+            params,
             ..Default::default()
         })
     }
@@ -228,13 +240,22 @@ impl CoseKeyBuilder {
     /// Constructor for an elliptic curve public key specified by `x` coordinate plus sign of `y`
     /// coordinate.
     pub fn new_ec2_pub_key_y_sign(curve: iana::EllipticCurve, x: Vec<u8>, y_sign: bool) -> Self {
+        let mut params = BTreeMap::new();
+        params.insert(
+            Label::Int(iana::Ec2KeyParameter::Crv as i128),
+            cbor::Value::Integer(curve as i128),
+        );
+        params.insert(
+            Label::Int(iana::Ec2KeyParameter::X as i128),
+            cbor::Value::Bytes(x),
+        );
+        params.insert(
+            Label::Int(iana::Ec2KeyParameter::Y as i128),
+            cbor::Value::Bool(y_sign),
+        );
         Self(CoseKey {
             kty: KeyType::Assigned(iana::KeyType::EC2),
-            params: btreemap! {
-                Label::Int(iana::Ec2KeyParameter::Crv as i128) => cbor::Value::Integer(curve as i128),
-                Label::Int(iana::Ec2KeyParameter::X as i128) => cbor::Value::Bytes(x),
-                Label::Int(iana::Ec2KeyParameter::Y as i128) => cbor::Value::Bool(y_sign),
-            },
+            params,
             ..Default::default()
         })
     }
@@ -257,11 +278,15 @@ impl CoseKeyBuilder {
 
     /// Constructor for a symmetric key specified by `k`.
     pub fn new_symmetric_key(k: Vec<u8>) -> Self {
+        let mut params = BTreeMap::new();
+        params.insert(
+            Label::Int(iana::SymmetricKeyParameter::K as i128),
+            cbor::Value::Bytes(k),
+        );
+
         Self(CoseKey {
             kty: KeyType::Assigned(iana::KeyType::Symmetric),
-            params: btreemap! {
-                Label::Int(iana::SymmetricKeyParameter::K as i128) => cbor::Value::Bytes(k),
-            },
+            params,
             ..Default::default()
         })
     }

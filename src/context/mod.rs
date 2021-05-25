@@ -21,6 +21,7 @@ use crate::{
     util::{cbor_type_error, AsCborValue},
     Algorithm, Header,
 };
+use alloc::vec::Vec;
 use serde::de::Unexpected;
 use serde_cbor as cbor;
 

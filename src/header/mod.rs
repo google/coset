@@ -22,9 +22,14 @@ use crate::{
     util::{cbor_type_error, AsCborValue},
     Algorithm, CborSerializable, CoseSignature, Label, RegisteredLabel,
 };
+use alloc::{
+    collections::{btree_map::Entry, BTreeMap},
+    string::String,
+    vec,
+    vec::Vec,
+};
 use serde::de::Unexpected;
 use serde_cbor as cbor;
-use std::collections::{btree_map::Entry, BTreeMap};
 
 #[cfg(test)]
 mod tests;

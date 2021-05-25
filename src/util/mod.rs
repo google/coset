@@ -51,7 +51,9 @@ pub trait AsCborValue: Sized {
 
 /// Check for an expected error.
 #[cfg(test)]
-pub fn expect_err<T, E: std::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
+pub fn expect_err<T, E: core::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
+    #[cfg(not(feature = "std"))]
+    use alloc::format;
     assert!(result.is_err(), "expected error containing '{}'", err_msg);
     let err = result.err();
     assert!(
