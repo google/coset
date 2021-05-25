@@ -16,7 +16,7 @@
 
 use super::*;
 use crate::util::expect_err;
-use maplit::btreemap;
+use alloc::{borrow::ToOwned, boxed::Box, collections::BTreeMap, vec};
 use serde::de::value::Error;
 use serde_cbor as cbor;
 
@@ -43,7 +43,7 @@ fn test_cbor_type_error() {
     let val = cbor::Value::Array(vec![cbor::Value::Null]);
     let e = cbor_type_error::<(), _, Error>(&val, &"a");
     expect_err(e, "tuple variant");
-    let val = cbor::Value::Map(btreemap! {});
+    let val = cbor::Value::Map(BTreeMap::new());
     let e = cbor_type_error::<(), _, Error>(&val, &"a");
     expect_err(e, "struct variant");
     let val = cbor::Value::Tag(1, Box::new(cbor::Value::Null));

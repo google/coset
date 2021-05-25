@@ -16,6 +16,7 @@
 
 use super::*;
 use crate::{iana, util::expect_err, CborSerializable, HeaderBuilder};
+use alloc::vec;
 use serde_cbor as cbor;
 
 #[test]

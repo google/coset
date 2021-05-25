@@ -93,7 +93,13 @@
 //! [COSE]: https://tools.ietf.org/html/rfc8152
 //! [CBOR]: https://tools.ietf.org/html/rfc7049
 
+#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(broken_intra_doc_links)]
+extern crate alloc;
+
+// Tests use a normal `std` environment, mostly for the convenience of being able to use maplit.
+#[cfg(test)]
+extern crate std;
 
 #[macro_use]
 pub(crate) mod util;

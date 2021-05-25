@@ -16,6 +16,8 @@
 
 use super::*;
 use crate::{iana, util::expect_err, CborSerializable};
+use alloc::vec;
+use core::cmp;
 use maplit::{btreemap, btreeset};
 use serde_cbor as cbor;
 
@@ -47,8 +49,8 @@ fn test_cbor_sort() {
         let right_data = cbor::to_vec(&right).unwrap();
         let data_cmp = left_data.cmp(&right_data);
 
-        assert_eq!(value_cmp, std::cmp::Ordering::Less);
-        assert_eq!(data_cmp, std::cmp::Ordering::Less);
+        assert_eq!(value_cmp, cmp::Ordering::Less);
+        assert_eq!(data_cmp, cmp::Ordering::Less);
     }
 }
 

@@ -21,9 +21,10 @@ use crate::{
     iana::{EnumI128, WithPrivateRange},
     util::{cbor_type_error, AsCborValue},
 };
+use alloc::{boxed::Box, string::String, vec::Vec};
+use core::cmp::Ordering;
 use serde::{de::DeserializeOwned, Deserialize, Serialize, Serializer};
 use serde_cbor as cbor;
-use std::cmp::Ordering;
 
 #[cfg(test)]
 mod tests;
@@ -31,6 +32,7 @@ mod tests;
 /// Extension trait that adds serialization/deserialization methods.
 pub trait CborSerializable: Serialize + DeserializeOwned {
     /// Create an object instance by reading serialized CBOR data from [`std::io::Read`] instance.
+    #[cfg(feature = "std")]
     fn from_reader<R: std::io::Read>(reader: R) -> cbor::Result<Self> {
         cbor::from_reader::<Self, R>(reader)
     }
@@ -46,6 +48,7 @@ pub trait CborSerializable: Serialize + DeserializeOwned {
     }
 
     /// Serialize this object to a [`std::io::Write`] instance.
+    #[cfg(feature = "std")]
     fn to_writer<W: std::io::Write>(&self, writer: W) -> cbor::Result<()> {
         cbor::to_writer(writer, self)
     }
@@ -58,6 +61,7 @@ pub trait TaggedCborSerializable: AsCborValue {
 
     /// Create an object instance by reading serialized CBOR data from [`std::io::Read`] instance,
     /// expecting an initial tag value.
+    #[cfg(feature = "std")]
     fn from_tagged_reader<R: std::io::Read>(reader: R) -> cbor::Result<Self> {
         match cbor::from_reader::<cbor::Value, R>(reader)? {
             cbor::Value::Tag(t, v) if t == Self::TAG => Self::from_cbor_value(*v),
@@ -80,6 +84,7 @@ pub trait TaggedCborSerializable: AsCborValue {
     }
 
     /// Serialize this object to a [`std::io::Write`] instance, including initial tag.
+    #[cfg(feature = "std")]
     fn to_tagged_writer<W: std::io::Write>(&self, writer: W) -> cbor::Result<()> {
         cbor::to_writer(
             writer,

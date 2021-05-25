@@ -19,6 +19,7 @@ use crate::{
     iana, util::expect_err, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
     CoseSignatureBuilder, HeaderBuilder, TaggedCborSerializable,
 };
+use alloc::{string::String, vec, vec::Vec};
 
 #[test]
 fn test_cose_recipient_decode() {

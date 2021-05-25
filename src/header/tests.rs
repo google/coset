@@ -16,6 +16,7 @@
 
 use super::*;
 use crate::{iana, util::expect_err, CborSerializable, Label};
+use alloc::{borrow::ToOwned, vec};
 use maplit::btreemap;
 use serde_cbor as cbor;
 

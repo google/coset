@@ -16,6 +16,8 @@
 
 use super::*;
 use crate::util::expect_err;
+use alloc::{borrow::ToOwned, vec};
+use core::cmp;
 
 #[test]
 fn test_label_encode() {
@@ -32,13 +34,16 @@ fn test_label_encode() {
         let got = Label::from_slice(&got).unwrap();
         assert_eq!(*label, got);
 
-        // Also exercise the `Read` / `Write` versions.
-        let mut got = vec![];
-        label.to_writer(&mut got).unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
+        #[cfg(feature = "std")]
+        {
+            // Also exercise the `Read` / `Write` versions.
+            let mut got = vec![];
+            label.to_writer(&mut got).unwrap();
+            assert_eq!(*label_data, hex::encode(&got), "case {}", i);
 
-        let got = Label::from_reader(std::io::Cursor::new(&got)).unwrap();
-        assert_eq!(*label, got);
+            let got = Label::from_reader(std::io::Cursor::new(&got)).unwrap();
+            assert_eq!(*label, got);
+        }
     }
 }
 
@@ -60,9 +65,9 @@ fn test_label_sort() {
         let right_data = cbor::to_vec(&right).unwrap();
         let data_cmp = left_data.cmp(&right_data);
 
-        assert_eq!(value_cmp, std::cmp::Ordering::Less);
-        assert_eq!(value_partial_cmp, Some(std::cmp::Ordering::Less));
-        assert_eq!(data_cmp, std::cmp::Ordering::Less);
+        assert_eq!(value_cmp, cmp::Ordering::Less);
+        assert_eq!(value_partial_cmp, Some(cmp::Ordering::Less));
+        assert_eq!(data_cmp, cmp::Ordering::Less);
     }
 }
 
@@ -90,13 +95,16 @@ fn test_registered_label_encode() {
         let got = RegisteredLabel::from_slice(&got).unwrap();
         assert_eq!(*label, got);
 
-        // Also exercise the `Read` / `Write` versions.
-        let mut got = vec![];
-        label.to_writer(&mut got).unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
+        #[cfg(feature = "std")]
+        {
+            // Also exercise the `Read` / `Write` versions.
+            let mut got = vec![];
+            label.to_writer(&mut got).unwrap();
+            assert_eq!(*label_data, hex::encode(&got), "case {}", i);
 
-        let got = RegisteredLabel::from_reader(std::io::Cursor::new(&got)).unwrap();
-        assert_eq!(*label, got);
+            let got = RegisteredLabel::from_reader(std::io::Cursor::new(&got)).unwrap();
+            assert_eq!(*label, got);
+        }
     }
 }
 
@@ -128,9 +136,9 @@ fn test_registered_label_sort() {
         let right_data = cbor::to_vec(&right).unwrap();
         let data_cmp = left_data.cmp(&right_data);
 
-        assert_eq!(value_cmp, std::cmp::Ordering::Less);
-        assert_eq!(value_partial_cmp, Some(std::cmp::Ordering::Less));
-        assert_eq!(data_cmp, std::cmp::Ordering::Less);
+        assert_eq!(value_cmp, cmp::Ordering::Less);
+        assert_eq!(value_partial_cmp, Some(cmp::Ordering::Less));
+        assert_eq!(data_cmp, cmp::Ordering::Less);
     }
 }
 
@@ -172,13 +180,16 @@ fn test_registered_label_with_private_encode() {
         let got = RegisteredLabelWithPrivate::from_slice(&got).unwrap();
         assert_eq!(*label, got);
 
-        // Also exercise the `Read` / `Write` versions.
-        let mut got = vec![];
-        label.to_writer(&mut got).unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
+        #[cfg(feature = "std")]
+        {
+            // Also exercise the `Read` / `Write` versions.
+            let mut got = vec![];
+            label.to_writer(&mut got).unwrap();
+            assert_eq!(*label_data, hex::encode(&got), "case {}", i);
 
-        let got = RegisteredLabelWithPrivate::from_reader(std::io::Cursor::new(&got)).unwrap();
-        assert_eq!(*label, got);
+            let got = RegisteredLabelWithPrivate::from_reader(std::io::Cursor::new(&got)).unwrap();
+            assert_eq!(*label, got);
+        }
     }
 }
 
@@ -214,9 +225,9 @@ fn test_registered_label_with_private_sort() {
         let right_data = cbor::to_vec(&right).unwrap();
         let data_cmp = left_data.cmp(&right_data);
 
-        assert_eq!(value_cmp, std::cmp::Ordering::Less);
-        assert_eq!(value_partial_cmp, Some(std::cmp::Ordering::Less));
-        assert_eq!(data_cmp, std::cmp::Ordering::Less);
+        assert_eq!(value_cmp, cmp::Ordering::Less);
+        assert_eq!(value_partial_cmp, Some(cmp::Ordering::Less));
+        assert_eq!(data_cmp, cmp::Ordering::Less);
     }
 }
 
