@@ -106,6 +106,7 @@ pub use ciborium as cbor;
 #[macro_use]
 pub(crate) mod util;
 
+pub mod cwt;
 #[macro_use]
 pub mod iana;
 

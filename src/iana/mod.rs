@@ -20,6 +20,7 @@
 //! - <https://www.iana.org/assignments/cose/cose.xhtml>
 //! - <https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml>
 //! - <https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats>
+//! - <https://www.iana.org/assignments/cwt/cwt.xhtml>
 
 #[cfg(test)]
 mod tests;
@@ -741,5 +742,56 @@ iana_registry! {
         VndOmaLwm2mJson: 11543,
         /// application/vnd.oma.lwm2m+cbor
         VndOmaLwm2mCbor: 11544,
+    }
+}
+
+iana_registry! {
+    /// CBOR Web Token (CWT) Claims
+    /// From IANA registry <https://www.iana.org/assignments/cwt/cwt.xhtml>
+    /// as of 2021-10-21.
+    CwtClaimName {
+        /// Health certificate ("hcert": map).
+        Hcert: -260,
+        /// Challenge nonce ("EUPHNonce": bstr).
+        EuphNonce: -259,
+        /// Signing prefix for multi-app restricted operating environment ("EATMAROEPrefix": bstr).
+        EatMaroePrefix: -258,
+        /// FIDO Device Onboarding EAT ("EAT-FDO": array).
+        EatFido: -257,
+        /// Reserved value.
+        Reserved: 0,
+        /// Issuer ("iss": tstr).
+        Iss: 1,
+        /// Subject ("sub": tstr)
+        Sub: 2,
+        /// Audience ("aud": tstr)
+        Aud: 3,
+        /// Expiration Time, as seconds since UNIX epoch ("exp": int/float)
+        Exp: 4,
+        /// Not Before, as seconds since UNIX epoch ("nbf": int/float)
+        Nbf: 5,
+        /// Issued at, as seconds since UNIX epoch ("iat": int/float)
+        Iat: 6,
+        /// CWT ID ("cti": bstr)
+        Cti: 7,
+        /// Confirmation ("cnf": map)
+        Cnf: 8,
+        /// Scope of an access token ("scope": bstr/tstr)
+        Scope: 9,
+        /// The ACE profile a token is supposed to be used with ("ace_profile": int)
+        AceProfile: 38,
+        /// The client-nonce sent to the AS by the RS via the client ("cnonce": bstr)
+        CNonce: 39,
+        /// The expiration time of a token measured from when it was received at the RS in seconds ("exi": int)
+        Exi: 40,
+    }
+}
+
+/// Integer values for CWT claims below this value are reserved for private use.
+pub const CWT_CLAIM_PRIVATE_USE_MAX: i64 = -65536;
+
+impl WithPrivateRange for CwtClaimName {
+    fn is_private(i: i64) -> bool {
+        i < CWT_CLAIM_PRIVATE_USE_MAX
     }
 }
