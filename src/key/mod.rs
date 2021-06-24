@@ -31,7 +31,7 @@ use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
 mod tests;
 
 /// Key type.
-type KeyType = crate::RegisteredLabel<iana::KeyType>;
+pub type KeyType = crate::RegisteredLabel<iana::KeyType>;
 
 impl Default for KeyType {
     fn default() -> Self {
@@ -40,7 +40,7 @@ impl Default for KeyType {
 }
 
 /// Key operation.
-type KeyOperation = crate::RegisteredLabel<iana::KeyOperation>;
+pub type KeyOperation = crate::RegisteredLabel<iana::KeyOperation>;
 
 /// Structure representing a cryptographic key.
 ///
