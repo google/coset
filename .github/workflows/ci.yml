@@ -75,6 +75,7 @@ jobs:
           override: true
           components: rustfmt, clippy
       - run: cargo clippy --all-features --all-targets
+      - run: git diff --exit-code
 
   doc:
     runs-on: ubuntu-latest
