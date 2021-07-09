@@ -24,18 +24,18 @@
 #[cfg(test)]
 mod tests;
 
-/// Trait indicating an enum that can be constructed from `i128` values.
-pub trait EnumI128: Sized + Eq {
-    fn from_i128(i: i128) -> Option<Self>;
-    fn to_i128(&self) -> i128;
+/// Trait indicating an enum that can be constructed from `i64` values.
+pub trait EnumI64: Sized + Eq {
+    fn from_i64(i: i64) -> Option<Self>;
+    fn to_i64(&self) -> i64;
 }
 
 /// Trait indicating an enum with a range of private values.
 pub trait WithPrivateRange {
-    fn is_private(i: i128) -> bool;
+    fn is_private(i: i64) -> bool;
 }
 
-/// Generate an enum with associated values, plus a `from_i128` method.
+/// Generate an enum with associated values, plus a `from_i64` method.
 macro_rules! iana_registry {
     ( $(#[$attr:meta])* $enum_name:ident {$($(#[$fattr:meta])* $name:ident: $val:expr,)* } ) => {
         #[allow(non_camel_case_types)]
@@ -45,16 +45,16 @@ macro_rules! iana_registry {
         pub enum $enum_name {
             $($(#[$fattr])* $name = $val,)*
         }
-        impl EnumI128 for $enum_name {
-            fn from_i128(i: i128) -> Option<Self> {
+        impl EnumI64 for $enum_name {
+            fn from_i64(i: i64) -> Option<Self> {
                 match i {
-                    $(x if x == Self::$name as i128 => Some(Self::$name),)*
+                    $(x if x == Self::$name as i64 => Some(Self::$name),)*
                     _ => None,
                 }
             }
             #[inline]
-            fn to_i128(&self) -> i128 {
-                *self as i128
+            fn to_i64(&self) -> i64 {
+                *self as i64
             }
         }
     }
@@ -132,10 +132,10 @@ iana_registry! {
 }
 
 /// Integer values for COSE header parameters below this value are reserved for private use.
-pub const HEADER_PARAMETER_PRIVATE_USE_MAX: i128 = -65536;
+pub const HEADER_PARAMETER_PRIVATE_USE_MAX: i64 = -65536;
 
 impl WithPrivateRange for HeaderParameter {
-    fn is_private(i: i128) -> bool {
+    fn is_private(i: i64) -> bool {
         i < HEADER_PARAMETER_PRIVATE_USE_MAX
     }
 }
@@ -329,10 +329,10 @@ iana_registry! {
 }
 
 /// Integer values for COSE algorithms below this value are reserved for private use.
-pub const ALGORITHM_PRIVATE_USE_MAX: i128 = -65536;
+pub const ALGORITHM_PRIVATE_USE_MAX: i64 = -65536;
 
 impl WithPrivateRange for Algorithm {
-    fn is_private(i: i128) -> bool {
+    fn is_private(i: i64) -> bool {
         i < ALGORITHM_PRIVATE_USE_MAX
     }
 }
@@ -580,10 +580,10 @@ iana_registry! {
 }
 
 /// Integer values for COSE elliptic curves below this value are reserved for private use.
-pub const ELLIPTIC_CURVE_PRIVATE_USE_MAX: i128 = -65536;
+pub const ELLIPTIC_CURVE_PRIVATE_USE_MAX: i64 = -65536;
 
 impl WithPrivateRange for EllipticCurve {
-    fn is_private(i: i128) -> bool {
+    fn is_private(i: i64) -> bool {
         i < ELLIPTIC_CURVE_PRIVATE_USE_MAX
     }
 }

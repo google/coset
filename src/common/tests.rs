@@ -272,3 +272,46 @@ fn test_registered_label_with_private_decode_fail() {
         expect_err(result, err_msg);
     }
 }
+
+// The most negative integer value that can be encoded in CBOR is:
+//    0x3B (0b001_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
+// which is -18_446_744_073_709_551_616 (-1 - 18_446_744_073_709_551_615).
+//
+// However, the underlying sk-cbor crate encodes negative integers as
+// `Value::Negative(i64)`, which cannot hold this value
+const CBOR_NINT_MIN_HEX: &str = "3bffffffffffffffff";
+
+// The largest positive integer value that can be encoded in CBOR is:
+//    0x1B (0b000_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
+// which is 18_446_744_073_709_551_615.
+//
+// This is supported by the underlying sk-cbor crate as `Value::Unsigned(u64)`
+// but the current crate uses `i64` everywhere for convenience, and so cannot
+// hold this value.
+const CBOR_INT_MAX_HEX: &str = "1bffffffffffffffff";
+
+#[test]
+fn test_large_label_decode_fail() {
+    let tests = vec![
+        (CBOR_NINT_MIN_HEX, "OutOfRangeIntegerValue"),
+        (CBOR_INT_MAX_HEX, "expected u63"),
+    ];
+    for (label_data, err_msg) in tests.iter() {
+        let data = hex::decode(label_data).unwrap();
+        let result = Label::from_slice(&data);
+        expect_err(result, err_msg);
+    }
+}
+
+#[test]
+fn test_large_registered_label_decode_fail() {
+    let tests = vec![
+        (CBOR_NINT_MIN_HEX, "OutOfRangeIntegerValue"),
+        (CBOR_INT_MAX_HEX, "expected u63"),
+    ];
+    for (label_data, err_msg) in tests.iter() {
+        let data = hex::decode(label_data).unwrap();
+        let result = RegisteredLabel::<crate::iana::HeaderParameter>::from_slice(&data);
+        expect_err(result, err_msg);
+    }
+}

@@ -277,7 +277,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                         )
                         .unprotected(
                             HeaderBuilder::new()
-                                .value(iana::HeaderAlgorithmParameter::EphemeralKey as i128,
+                                .value(iana::HeaderAlgorithmParameter::EphemeralKey as i64,
                                        CoseKeyBuilder::new_ec2_pub_key_y_sign(iana::EllipticCurve::P_256,
                                                                               hex::decode("98f50a4ff6c05861c8860d13a638ea56c3f5ad7590bbfbf054e1c7b4d91d6280").unwrap(),
                                                                               true)
@@ -320,7 +320,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                                .unprotected(
                                    HeaderBuilder::new()
                                        .key_id(b"our-secret".to_vec())
-                                       .value(iana::HeaderAlgorithmParameter::Salt as i128,
+                                       .value(iana::HeaderAlgorithmParameter::Salt as i64,
                                               Value::ByteString(b"aabbccddeeffgghh".to_vec()))
                                        .build())
                                .ciphertext(vec![])
@@ -366,7 +366,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                                        .build())
                                .unprotected(
                                    HeaderBuilder::new()
-                                       .value(iana::HeaderAlgorithmParameter::EphemeralKey as i128,
+                                       .value(iana::HeaderAlgorithmParameter::EphemeralKey as i64,
                                               CoseKeyBuilder::new_ec2_pub_key_y_sign(iana::EllipticCurve::P_256,
                                                                                      hex::decode("98f50a4ff6c05861c8860d13a638ea56c3f5ad7590bbfbf054e1c7b4d91d6280").unwrap(),
                                                                                      true)
@@ -425,11 +425,11 @@ fn test_rfc8152_cose_encrypt_decode() {
                                .unprotected(HeaderBuilder::new()
                                             .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                             .value(
-                                                iana::HeaderAlgorithmParameter::StaticKeyId as i128,
+                                                iana::HeaderAlgorithmParameter::StaticKeyId as i64,
                                                 Value::ByteString(b"peregrin.took@tuckborough.example".to_vec())
                                             )
                                             .value(
-                                                iana::HeaderAlgorithmParameter::PartyUNonce as i128,
+                                                iana::HeaderAlgorithmParameter::PartyUNonce as i64,
                                                 Value::ByteString(hex::decode("0101").unwrap())
                                             )
                                             .build())

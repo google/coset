@@ -76,7 +76,7 @@ impl AsCborValue for CoseSignature {
 }
 
 /// Builder for [`CoseSignature`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CoseSignatureBuilder(CoseSignature);
 
 impl CoseSignatureBuilder {
@@ -198,7 +198,7 @@ impl CoseSign {
 }
 
 /// Builder for [`CoseSign`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CoseSignBuilder(CoseSign);
 
 impl CoseSignBuilder {
@@ -328,7 +328,7 @@ impl CoseSign1 {
 }
 
 /// Builder for [`CoseSign1`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CoseSign1Builder(CoseSign1);
 
 impl CoseSign1Builder {

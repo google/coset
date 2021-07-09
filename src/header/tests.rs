@@ -23,18 +23,6 @@ use crate::{
 };
 use alloc::{borrow::ToOwned, vec};
 
-// The most negative integer value that can be encoded in CBOR is:
-//    0x3B (0b001_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
-// which is -18_446_744_073_709_551_616 (-1 - 18_446_744_073_709_551_615).
-//
-// However, the underlying sk-cbor crate encodes negative integers as:
-//    Value::Negative(i64)
-// meaning that the most negative integer available in practice is
-//    i64::MIN = -9_223_372_036_854_775_808
-// which is 0x8000000000000000 in hex, and which CBOR-encodes as:
-//    0x3b 0x7fffffffffffffff
-const MOST_NEGATIVE_NINT: i128 = i64::MIN as i128;
-
 #[test]
 fn test_header_encode() {
     let tests = vec![
@@ -54,7 +42,7 @@ fn test_header_encode() {
         ),
         (
             Header {
-                alg: Some(Algorithm::PrivateUse(MOST_NEGATIVE_NINT)),
+                alg: Some(Algorithm::PrivateUse(i64::MIN)),
                 ..Default::default()
             },
             concat!(
@@ -390,30 +378,6 @@ fn test_header_encode_dup_fail() {
         let result = header.clone().to_vec();
         expect_err(result, "encode CBOR failure");
     }
-}
-
-#[test]
-fn test_header_encode_int_out_of_range_fail() {
-    // Unfortunately, it is possible to build Rust COSE structures that hold values that cannot be
-    // serialized to CBOR -- we use i128 for integer values for convenience, but the
-    // serializable range is more like an i65 (!) in theory and [i64::MIN, u64::MAX] in
-    // practice.
-    let header = HeaderBuilder::new()
-        .value(
-            0x10000000000000000i128,
-            Value::TextString("boom!".to_owned()),
-        )
-        .build();
-    let result = header.to_vec();
-    expect_err(result, "expected u64");
-
-    let header = Header {
-        // "What we do, is if we need that extra push over the cliff, you know what we do?"
-        alg: Some(Algorithm::PrivateUse(MOST_NEGATIVE_NINT - 1)),
-        ..Default::default()
-    };
-    let result = header.to_vec();
-    expect_err(result, "expected i64");
 }
 
 #[test]

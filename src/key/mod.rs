@@ -19,7 +19,7 @@
 use crate::{
     cbor::values::{SimpleValue, Value},
     iana,
-    iana::EnumI128,
+    iana::EnumI64,
     util::{cbor_type_error, AsCborValue},
     Algorithm, CoseError, Label,
 };
@@ -201,7 +201,7 @@ impl AsCborValue for CoseKey {
 }
 
 /// Builder for [`CoseKey`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CoseKeyBuilder(CoseKey);
 
 impl CoseKeyBuilder {
@@ -215,15 +215,15 @@ impl CoseKeyBuilder {
             kty: KeyType::Assigned(iana::KeyType::EC2),
             params: vec![
                 (
-                    Label::Int(iana::Ec2KeyParameter::Crv as i128),
+                    Label::Int(iana::Ec2KeyParameter::Crv as i64),
                     Value::Unsigned(curve as u64),
                 ),
                 (
-                    Label::Int(iana::Ec2KeyParameter::X as i128),
+                    Label::Int(iana::Ec2KeyParameter::X as i64),
                     Value::ByteString(x),
                 ),
                 (
-                    Label::Int(iana::Ec2KeyParameter::Y as i128),
+                    Label::Int(iana::Ec2KeyParameter::Y as i64),
                     Value::ByteString(y),
                 ),
             ],
@@ -238,15 +238,15 @@ impl CoseKeyBuilder {
             kty: KeyType::Assigned(iana::KeyType::EC2),
             params: vec![
                 (
-                    Label::Int(iana::Ec2KeyParameter::Crv as i128),
+                    Label::Int(iana::Ec2KeyParameter::Crv as i64),
                     Value::Unsigned(curve as u64),
                 ),
                 (
-                    Label::Int(iana::Ec2KeyParameter::X as i128),
+                    Label::Int(iana::Ec2KeyParameter::X as i64),
                     Value::ByteString(x),
                 ),
                 (
-                    Label::Int(iana::Ec2KeyParameter::Y as i128),
+                    Label::Int(iana::Ec2KeyParameter::Y as i64),
                     match y_sign {
                         true => Value::Simple(SimpleValue::TrueValue),
                         false => Value::Simple(SimpleValue::FalseValue),
@@ -267,7 +267,7 @@ impl CoseKeyBuilder {
     ) -> Self {
         let mut builder = Self::new_ec2_pub_key(curve, x, y);
         builder.0.params.push((
-            Label::Int(iana::Ec2KeyParameter::D as i128),
+            Label::Int(iana::Ec2KeyParameter::D as i64),
             Value::ByteString(d),
         ));
         builder
@@ -278,7 +278,7 @@ impl CoseKeyBuilder {
         Self(CoseKey {
             kty: KeyType::Assigned(iana::KeyType::Symmetric),
             params: vec![(
-                Label::Int(iana::SymmetricKeyParameter::K as i128),
+                Label::Int(iana::SymmetricKeyParameter::K as i64),
                 Value::ByteString(k),
             )],
             ..Default::default()
@@ -303,8 +303,8 @@ impl CoseKeyBuilder {
     ///
     /// This function will panic if it used to set a parameter label from the [`iana::KeyParameter`]
     /// range.
-    pub fn param(mut self, label: i128, value: Value) -> Self {
-        if iana::KeyParameter::from_i128(label).is_some() {
+    pub fn param(mut self, label: i64, value: Value) -> Self {
+        if iana::KeyParameter::from_i64(label).is_some() {
             panic!("param() method used to set KeyParameter"); // safe: invalid input
         }
         self.0.params.push((Label::Int(label), value));

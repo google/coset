@@ -205,11 +205,11 @@ fn test_rfc8152_cose_mac_decode() {
                             HeaderBuilder::new()
                                 .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                 .value(
-                                    iana::HeaderAlgorithmParameter::StaticKeyId as i128,
+                                    iana::HeaderAlgorithmParameter::StaticKeyId as i64,
                                     Value::ByteString(b"peregrin.took@tuckborough.example".to_vec())
                                 )
                                 .value(
-                                    iana::HeaderAlgorithmParameter::PartyUNonce as i128,
+                                    iana::HeaderAlgorithmParameter::PartyUNonce as i64,
                                     Value::ByteString(hex::decode("4d8553e7e74f3c6a3a9dd3ef286a8195cbf8a23d19558ccfec7d34b824f42d92bd06bd2c7f0271f0214e141fb779ae2856abf585a58368b017e7f2a9e5ce4db5").unwrap())
                                 )
                                 .build(),
@@ -284,7 +284,7 @@ fn test_rfc8152_cose_mac_decode() {
                         .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ECDH_ES_A128KW).build())
                         .unprotected(
                             HeaderBuilder::new()
-                                .value(iana::HeaderAlgorithmParameter::EphemeralKey as i128,
+                                .value(iana::HeaderAlgorithmParameter::EphemeralKey as i64,
                                        CoseKeyBuilder::new_ec2_pub_key_y_sign(iana::EllipticCurve::P_521,
                                                                               hex::decode("0043b12669acac3fd27898ffba0bcd2e6c366d53bc4db71f909a759304acfb5e18cdc7ba0b13ff8c7636271a6924b1ac63c02688075b55ef2d613574e7dc242f79c3").unwrap(),
                                                                               true)
