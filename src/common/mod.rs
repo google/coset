@@ -19,7 +19,7 @@
 use crate::{
     cbor::{reader::DecoderError, values::Value, writer::EncoderError},
     iana,
-    iana::{EnumI128, WithPrivateRange},
+    iana::{EnumI64, WithPrivateRange},
     util::{cbor_type_error, AsCborValue},
 };
 use alloc::{boxed::Box, string::String, vec::Vec};
@@ -122,7 +122,7 @@ impl Default for Algorithm {
 /// A COSE label may be either a signed integer value or a string.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Label {
-    Int(i128),
+    Int(i64),
     Text(String),
 }
 
@@ -164,22 +164,19 @@ impl PartialOrd for Label {
 impl AsCborValue for Label {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
-            Value::Unsigned(i) => Ok(Label::Int(i as i128)),
-            Value::Negative(i) => Ok(Label::Int(i as i128)),
+            Value::Unsigned(u) => Ok(Label::Int(
+                u.try_into()
+                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
+            )),
+            Value::Negative(i) => Ok(Label::Int(i)),
             Value::TextString(t) => Ok(Label::Text(t)),
             v => cbor_type_error(&v, "int/tstr"),
         }
     }
     fn to_cbor_value(self) -> Result<Value, CoseError> {
         Ok(match self {
-            Label::Int(i) if i < 0 => Value::Negative(
-                i.try_into()
-                    .map_err(|_e| CoseError::UnexpectedType("-i128", "i64"))?,
-            ),
-            Label::Int(i) => Value::Unsigned(
-                i.try_into()
-                    .map_err(|_e| CoseError::UnexpectedType("i128", "u64"))?,
-            ),
+            Label::Int(i) if i < 0 => Value::Negative(i),
+            Label::Int(i) => Value::Unsigned(i as u64), // safe: i64 value that is >=0 fits in u64
             Label::Text(t) => Value::TextString(t),
         })
     }
@@ -188,19 +185,19 @@ impl AsCborValue for Label {
 /// A COSE label which can be either a signed integer value or a string, but
 /// where the allowed integer values are governed by IANA.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum RegisteredLabel<T: EnumI128> {
+pub enum RegisteredLabel<T: EnumI64> {
     Assigned(T),
     Text(String),
 }
 
-impl<T: EnumI128> CborSerializable for RegisteredLabel<T> {}
+impl<T: EnumI64> CborSerializable for RegisteredLabel<T> {}
 
 /// Manual implementation of [`Ord`] to ensure that CBOR canonical ordering is respected.
-impl<T: EnumI128> Ord for RegisteredLabel<T> {
+impl<T: EnumI64> Ord for RegisteredLabel<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
             (RegisteredLabel::Assigned(i1), RegisteredLabel::Assigned(i2)) => {
-                Label::Int(i1.to_i128()).cmp(&Label::Int(i2.to_i128()))
+                Label::Int(i1.to_i64()).cmp(&Label::Int(i2.to_i64()))
             }
             (RegisteredLabel::Assigned(_i1), RegisteredLabel::Text(_t2)) => Ordering::Less,
             (RegisteredLabel::Text(_t1), RegisteredLabel::Assigned(_i2)) => Ordering::Greater,
@@ -211,24 +208,27 @@ impl<T: EnumI128> Ord for RegisteredLabel<T> {
     }
 }
 
-impl<T: EnumI128> PartialOrd for RegisteredLabel<T> {
+impl<T: EnumI64> PartialOrd for RegisteredLabel<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T: EnumI128> AsCborValue for RegisteredLabel<T> {
+impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
-            Value::Unsigned(i) => {
-                if let Some(a) = T::from_i128(i as i128) {
+            Value::Unsigned(u) => {
+                let i: i64 = u
+                    .try_into()
+                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?;
+                if let Some(a) = T::from_i64(i) {
                     Ok(RegisteredLabel::Assigned(a))
                 } else {
                     Err(CoseError::UnregisteredIanaValue)
                 }
             }
             Value::Negative(i) => {
-                if let Some(a) = T::from_i128(i as i128) {
+                if let Some(a) = T::from_i64(i) {
                     Ok(RegisteredLabel::Assigned(a))
                 } else {
                     Err(CoseError::UnregisteredIanaValue)
@@ -241,17 +241,11 @@ impl<T: EnumI128> AsCborValue for RegisteredLabel<T> {
     fn to_cbor_value(self) -> Result<Value, CoseError> {
         Ok(match self {
             RegisteredLabel::Assigned(e) => {
-                let e128 = e.to_i128();
-                if e128 >= 0 {
-                    Value::Unsigned(
-                        e128.try_into()
-                            .map_err(|_e| CoseError::UnexpectedType("i128", "u64"))?,
-                    )
+                let e64 = e.to_i64();
+                if e64 >= 0 {
+                    Value::Unsigned(e64 as u64) // safe: i64 value that is >= 0 fits in u64
                 } else {
-                    Value::Negative(
-                        e128.try_into()
-                            .map_err(|_e| CoseError::UnexpectedType("-i128", "i64"))?,
-                    )
+                    Value::Negative(e64)
                 }
             }
             RegisteredLabel::Text(t) => Value::TextString(t),
@@ -263,22 +257,22 @@ impl<T: EnumI128> AsCborValue for RegisteredLabel<T> {
 /// where the allowed integer values are governed by IANA but include a private
 /// use range.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum RegisteredLabelWithPrivate<T: EnumI128 + WithPrivateRange> {
-    PrivateUse(i128),
+pub enum RegisteredLabelWithPrivate<T: EnumI64 + WithPrivateRange> {
+    PrivateUse(i64),
     Assigned(T),
     Text(String),
 }
 
-impl<T: EnumI128 + WithPrivateRange> CborSerializable for RegisteredLabelWithPrivate<T> {}
+impl<T: EnumI64 + WithPrivateRange> CborSerializable for RegisteredLabelWithPrivate<T> {}
 
 /// Manual implementation of [`Ord`] to ensure that CBOR canonical ordering is respected.
-impl<T: EnumI128 + WithPrivateRange> Ord for RegisteredLabelWithPrivate<T> {
+impl<T: EnumI64 + WithPrivateRange> Ord for RegisteredLabelWithPrivate<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         use RegisteredLabelWithPrivate::{Assigned, PrivateUse, Text};
         match (self, other) {
-            (Assigned(i1), Assigned(i2)) => Label::Int(i1.to_i128()).cmp(&Label::Int(i2.to_i128())),
-            (Assigned(i1), PrivateUse(i2)) => Label::Int(i1.to_i128()).cmp(&Label::Int(*i2)),
-            (PrivateUse(i1), Assigned(i2)) => Label::Int(*i1).cmp(&Label::Int(i2.to_i128())),
+            (Assigned(i1), Assigned(i2)) => Label::Int(i1.to_i64()).cmp(&Label::Int(i2.to_i64())),
+            (Assigned(i1), PrivateUse(i2)) => Label::Int(i1.to_i64()).cmp(&Label::Int(*i2)),
+            (PrivateUse(i1), Assigned(i2)) => Label::Int(*i1).cmp(&Label::Int(i2.to_i64())),
             (PrivateUse(i1), PrivateUse(i2)) => Label::Int(*i1).cmp(&Label::Int(*i2)),
             (Assigned(_i1), Text(_t2)) => Ordering::Less,
             (PrivateUse(_i1), Text(_t2)) => Ordering::Less,
@@ -289,18 +283,20 @@ impl<T: EnumI128 + WithPrivateRange> Ord for RegisteredLabelWithPrivate<T> {
     }
 }
 
-impl<T: EnumI128 + WithPrivateRange> PartialOrd for RegisteredLabelWithPrivate<T> {
+impl<T: EnumI64 + WithPrivateRange> PartialOrd for RegisteredLabelWithPrivate<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T: EnumI128 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T> {
+impl<T: EnumI64 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T> {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
-            Value::Unsigned(i) => {
-                let i = i as i128;
-                if let Some(a) = T::from_i128(i) {
+            Value::Unsigned(u) => {
+                let i = u
+                    .try_into()
+                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?;
+                if let Some(a) = T::from_i64(i) {
                     Ok(RegisteredLabelWithPrivate::Assigned(a))
                 } else if T::is_private(i) {
                     Ok(RegisteredLabelWithPrivate::PrivateUse(i))
@@ -309,8 +305,7 @@ impl<T: EnumI128 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<
                 }
             }
             Value::Negative(i) => {
-                let i = i as i128;
-                if let Some(a) = T::from_i128(i) {
+                if let Some(a) = T::from_i64(i) {
                     Ok(RegisteredLabelWithPrivate::Assigned(a))
                 } else if T::is_private(i) {
                     Ok(RegisteredLabelWithPrivate::PrivateUse(i))
@@ -326,29 +321,17 @@ impl<T: EnumI128 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<
         Ok(match self {
             RegisteredLabelWithPrivate::PrivateUse(i) => {
                 if i >= 0 {
-                    Value::Unsigned(
-                        i.try_into()
-                            .map_err(|_e| CoseError::UnexpectedType("i128", "u64"))?,
-                    )
+                    Value::Unsigned(i as u64) // safe: i64 value that is >=0 fits in u64
                 } else {
-                    Value::Negative(
-                        i.try_into()
-                            .map_err(|_e| CoseError::UnexpectedType("-i128", "i64"))?,
-                    )
+                    Value::Negative(i)
                 }
             }
             RegisteredLabelWithPrivate::Assigned(i) => {
-                let i = i.to_i128();
+                let i = i.to_i64();
                 if i >= 0 {
-                    Value::Unsigned(
-                        i.try_into()
-                            .map_err(|_e| CoseError::UnexpectedType("i128", "u64"))?,
-                    )
+                    Value::Unsigned(i as u64) // safe: i64 value that is >=0 fits in u64
                 } else {
-                    Value::Negative(
-                        i.try_into()
-                            .map_err(|_e| CoseError::UnexpectedType("-i128", "i64"))?,
-                    )
+                    Value::Negative(i)
                 }
             }
             RegisteredLabelWithPrivate::Text(t) => Value::TextString(t),

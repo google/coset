@@ -19,7 +19,7 @@
 use crate::{
     cbor::values::Value,
     iana,
-    iana::EnumI128,
+    iana::EnumI64,
     util::{cbor_type_error, AsCborValue},
     Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel,
 };
@@ -295,7 +295,7 @@ impl AsCborValue for Header {
 }
 
 /// Builder for [`Header`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct HeaderBuilder(Header);
 
 impl HeaderBuilder {
@@ -358,9 +358,9 @@ impl HeaderBuilder {
     /// # Panics
     ///
     /// This function will panic if it used to set a header label from the range [1, 6].
-    pub fn value(mut self, label: i128, value: Value) -> Self {
-        if label >= iana::HeaderParameter::Alg.to_i128()
-            && label <= iana::HeaderParameter::CounterSignature.to_i128()
+    pub fn value(mut self, label: i64, value: Value) -> Self {
+        if label >= iana::HeaderParameter::Alg.to_i64()
+            && label <= iana::HeaderParameter::CounterSignature.to_i64()
         {
             panic!("value() method used to set core header parameter"); // safe: invalid input
         }

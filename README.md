@@ -17,6 +17,34 @@ example](examples/signature.rs) for documentation on how to use the code.
 
 This crate supports `no_std`, but uses the `alloc` crate.
 
+## Integer Ranges
+
+CBOR supports integers in the range:
+
+```text
+[-18_446_744_073_709_551_616, -1] ∪ [0, 18_446_744_073_709_551_615]
+```
+
+which is [-2<sup>64</sup>, -1] ∪ [0, 2<sup>64</sup> - 1].
+
+This does not map onto a single Rust integer type, so different CBOR crates take different approaches.
+
+- The [`serde_cbor`](https://docs.rs/serde_cbor) crate uses a single `i128` integer type for all integer values, which
+  means that all CBOR integer values can be expressed, but there are also `i128` values that cannot be encoded in CBOR.
+  This also means that data size is larger.
+- The [`sk-cbor`](https://docs.rs/sk-cbor) crate uses distinct types:
+    - positive numbers as u64, covering [0, 2<sup>64</sup> - 1]
+    - negative numbers as i64, covering [-2<sup>63</sup>, -1] (which means that some theoretically-valid large negative
+      values are not represented).
+
+This crate uses a single type to encompass both positive and negative values, but uses `i64` for that type to keep data
+sizes smaller.  This means that:
+
+- positive numbers in `i64` cover [0, 2<sup>63</sup> - 1]
+- negative numbers in `i64` cover [-2<sup>63</sup>, -1]
+
+and so there are large values &ndash; both positive and negative &ndash; which are not supported by this crate.
+
 ## Working on the Code
 
 Local coding conventions are enforced by the [continuous integration jobs](.github/workflows) and include:

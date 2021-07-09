@@ -350,7 +350,7 @@ fn test_rfc8152_private_cose_key_decode() {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 key_id: b"our-secret".to_vec(),
                 params: vec![
-                    (Label::Int(iana::SymmetricKeyParameter::K as i128) ,
+                    (Label::Int(iana::SymmetricKeyParameter::K as i64) ,
                         Value::ByteString(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap())),
                 ],
                 ..Default::default()
@@ -382,7 +382,7 @@ fn test_rfc8152_private_cose_key_decode() {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 key_id: b"our-secret2".to_vec(),
                 params: vec![(
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) ,
+                    Label::Int(iana::SymmetricKeyParameter::K as i64) ,
                         Value::ByteString(hex::decode("849b5786457c1491be3a76dcea6c4271").unwrap()),
                 )],
                 ..Default::default()
@@ -398,7 +398,7 @@ fn test_rfc8152_private_cose_key_decode() {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 key_id: b"018c0ae5-4d9b-471b-bfd6-eef314bc7037".to_vec(),
                 params: vec![(
-                    Label::Int(iana::SymmetricKeyParameter::K as i128) ,
+                    Label::Int(iana::SymmetricKeyParameter::K as i64) ,
                         Value::ByteString(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap()),
                 )],
                 ..Default::default()
@@ -598,7 +598,7 @@ fn test_key_builder() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 params: vec![(
-                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Label::Int(iana::SymmetricKeyParameter::K as i64),
                     Value::ByteString(vec![1, 2, 3]),
                 )],
                 ..Default::default()
@@ -612,7 +612,7 @@ fn test_key_builder() {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
                 params: vec![(
-                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Label::Int(iana::SymmetricKeyParameter::K as i64),
                     Value::ByteString(vec![1, 2, 3]),
                 )],
                 ..Default::default()
@@ -626,7 +626,7 @@ fn test_key_builder() {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 key_id: vec![4, 5],
                 params: vec![(
-                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Label::Int(iana::SymmetricKeyParameter::K as i64),
                     Value::ByteString(vec![1, 2, 3]),
                 )],
                 ..Default::default()
@@ -646,7 +646,7 @@ fn test_key_builder() {
                 .into_iter()
                 .collect(),
                 params: vec![(
-                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Label::Int(iana::SymmetricKeyParameter::K as i64),
                     Value::ByteString(vec![1, 2, 3]),
                 )],
                 ..Default::default()
@@ -660,7 +660,7 @@ fn test_key_builder() {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 base_iv: vec![4, 5],
                 params: vec![(
-                    Label::Int(iana::SymmetricKeyParameter::K as i128),
+                    Label::Int(iana::SymmetricKeyParameter::K as i64),
                     Value::ByteString(vec![1, 2, 3]),
                 )],
                 ..Default::default()

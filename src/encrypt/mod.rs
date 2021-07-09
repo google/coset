@@ -136,7 +136,7 @@ impl CoseRecipient {
 }
 
 /// Builder for [`CoseRecipient`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CoseRecipientBuilder(CoseRecipient);
 
 impl CoseRecipientBuilder {
@@ -304,7 +304,7 @@ impl CoseEncrypt {
 }
 
 /// Builder for [`CoseEncrypt`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CoseEncryptBuilder(CoseEncrypt);
 
 impl CoseEncryptBuilder {
@@ -433,7 +433,7 @@ impl CoseEncrypt0 {
 }
 
 /// Builder for `CoseEncrypt0` objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CoseEncrypt0Builder(CoseEncrypt0);
 
 impl CoseEncrypt0Builder {

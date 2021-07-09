@@ -32,7 +32,7 @@ mod tests;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Nonce {
     Bytes(Vec<u8>),
-    Integer(i128),
+    Integer(i64),
 }
 
 /// Structure representing a party involved in key derivation.
@@ -73,8 +73,11 @@ impl AsCborValue for PartyInfo {
             nonce: match a.remove(1) {
                 Value::Simple(SimpleValue::NullValue) => None,
                 Value::ByteString(b) => Some(Nonce::Bytes(b)),
-                Value::Unsigned(i) => Some(Nonce::Integer(i.into())),
-                Value::Negative(i) => Some(Nonce::Integer(i.into())),
+                Value::Unsigned(u) => Some(Nonce::Integer(
+                    u.try_into()
+                        .map_err(|_| CoseError::UnexpectedType("u64", "u63"))?,
+                )),
+                Value::Negative(i) => Some(Nonce::Integer(i)),
                 v => return cbor_type_error(&v, "bstr / int / nil"),
             },
             identity: match a.remove(0) {
@@ -94,14 +97,9 @@ impl AsCborValue for PartyInfo {
             match self.nonce {
                 None => Value::Simple(SimpleValue::NullValue),
                 Some(Nonce::Bytes(b)) => Value::ByteString(b),
-                Some(Nonce::Integer(i)) if i < 0 => Value::Negative(
-                    i.try_into()
-                        .map_err(|_e| CoseError::UnexpectedType("i128", "u64"))?,
-                ),
-                Some(Nonce::Integer(i)) => Value::Unsigned(
-                    i.try_into()
-                        .map_err(|_e| CoseError::UnexpectedType("-i128", "i64"))?,
-                ),
+                Some(Nonce::Integer(i)) if i < 0 => Value::Negative(i),
+                Some(Nonce::Integer(i)) => Value::Unsigned(i as u64), /* safe: i64 value that is
+                                                                       * >=0 fits in u64 */
             },
             match self.other {
                 None => Value::Simple(SimpleValue::NullValue),
@@ -112,7 +110,7 @@ impl AsCborValue for PartyInfo {
 }
 
 /// Builder for [`PartyInfo`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct PartyInfoBuilder(PartyInfo);
 
 impl PartyInfoBuilder {
@@ -167,7 +165,7 @@ impl AsCborValue for SuppPubInfo {
             },
             protected: Header::from_cbor_bstr(a.remove(1))?,
             key_data_length: match a.remove(0) {
-                Value::Unsigned(i) => i,
+                Value::Unsigned(u) => u,
                 v => return cbor_type_error(&v, "uint"),
             },
         })
@@ -186,7 +184,7 @@ impl AsCborValue for SuppPubInfo {
 }
 
 /// Builder for [`SuppPubInfo`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct SuppPubInfoBuilder(SuppPubInfo);
 
 impl SuppPubInfoBuilder {
@@ -269,7 +267,7 @@ impl AsCborValue for CoseKdfContext {
 }
 
 /// Builder for [`CoseKdfContext`] objects.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CoseKdfContextBuilder(CoseKdfContext);
 
 impl CoseKdfContextBuilder {
