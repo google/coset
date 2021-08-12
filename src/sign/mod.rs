@@ -59,24 +59,22 @@ impl AsCborValue for CoseSignature {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut sig = Self::default();
-        sig.signature = match a.remove(2) {
-            cbor::Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, &"bstr"),
-        };
-
-        sig.unprotected = Header::from_cbor_value(a.remove(1))?;
-        sig.protected = Header::from_cbor_bstr(a.remove(0))?;
-
-        Ok(sig)
+        Ok(Self {
+            signature: match a.remove(2) {
+                cbor::Value::Bytes(b) => b,
+                v => return cbor_type_error(&v, &"bstr"),
+            },
+            unprotected: Header::from_cbor_value(a.remove(1))?,
+            protected: Header::from_cbor_bstr(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.protected.to_cbor_bstr());
-        v.push(self.unprotected.to_cbor_value());
-        v.push(cbor::Value::Bytes(self.signature.clone()));
-        cbor::Value::Array(v)
+        cbor::Value::Array(vec![
+            self.protected.to_cbor_bstr(),
+            self.unprotected.to_cbor_value(),
+            cbor::Value::Bytes(self.signature.clone()),
+        ])
     }
 }
 
@@ -129,12 +127,12 @@ impl AsCborValue for CoseSign {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut sign = Self::default();
+        let mut signatures = vec![];
         match a.remove(3) {
             cbor::Value::Array(sigs) => {
                 for sig in sigs.into_iter() {
                     match CoseSignature::from_cbor_value::<E>(sig) {
-                        Ok(s) => sign.signatures.push(s),
+                        Ok(s) => signatures.push(s),
                         Err(_e) => {
                             return Err(serde::de::Error::invalid_value(
                                 Unexpected::StructVariant,
@@ -148,33 +146,34 @@ impl AsCborValue for CoseSign {
                 return cbor_type_error(&v, &"array of COSE_Signature");
             }
         };
-        sign.payload = match a.remove(2) {
-            cbor::Value::Bytes(b) => Some(b),
-            cbor::Value::Null => None,
-            v => return cbor_type_error(&v, &"bstr or nil"),
-        };
 
-        sign.unprotected = Header::from_cbor_value(a.remove(1))?;
-        sign.protected = Header::from_cbor_bstr(a.remove(0))?;
-
-        Ok(sign)
+        Ok(Self {
+            signatures,
+            payload: match a.remove(2) {
+                cbor::Value::Bytes(b) => Some(b),
+                cbor::Value::Null => None,
+                v => return cbor_type_error(&v, &"bstr or nil"),
+            },
+            unprotected: Header::from_cbor_value(a.remove(1))?,
+            protected: Header::from_cbor_bstr(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.protected.to_cbor_bstr());
-        v.push(self.unprotected.to_cbor_value());
-        match &self.payload {
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-            None => v.push(cbor::Value::Null),
-        }
-        v.push(cbor::Value::Array(
-            self.signatures
-                .iter()
-                .map(|sig| sig.to_cbor_value())
-                .collect(),
-        ));
-        cbor::Value::Array(v)
+        cbor::Value::Array(vec![
+            self.protected.to_cbor_bstr(),
+            self.unprotected.to_cbor_value(),
+            match &self.payload {
+                Some(b) => cbor::Value::Bytes(b.clone()),
+                None => cbor::Value::Null,
+            },
+            cbor::Value::Array(
+                self.signatures
+                    .iter()
+                    .map(|sig| sig.to_cbor_value())
+                    .collect(),
+            ),
+        ])
     }
 }
 
@@ -274,33 +273,31 @@ impl AsCborValue for CoseSign1 {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut sign = Self::default();
-        sign.signature = match a.remove(3) {
-            cbor::Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, &"bstr"),
-        };
-        sign.payload = match a.remove(2) {
-            cbor::Value::Bytes(b) => Some(b),
-            cbor::Value::Null => None,
-            v => return cbor_type_error(&v, &"bstr or nil"),
-        };
-
-        sign.unprotected = Header::from_cbor_value(a.remove(1))?;
-        sign.protected = Header::from_cbor_bstr(a.remove(0))?;
-
-        Ok(sign)
+        Ok(Self {
+            signature: match a.remove(3) {
+                cbor::Value::Bytes(b) => b,
+                v => return cbor_type_error(&v, &"bstr"),
+            },
+            payload: match a.remove(2) {
+                cbor::Value::Bytes(b) => Some(b),
+                cbor::Value::Null => None,
+                v => return cbor_type_error(&v, &"bstr or nil"),
+            },
+            unprotected: Header::from_cbor_value(a.remove(1))?,
+            protected: Header::from_cbor_bstr(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.protected.to_cbor_bstr());
-        v.push(self.unprotected.to_cbor_value());
-        match &self.payload {
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-            None => v.push(cbor::Value::Null),
-        }
-        v.push(cbor::Value::Bytes(self.signature.clone()));
-        cbor::Value::Array(v)
+        cbor::Value::Array(vec![
+            self.protected.to_cbor_bstr(),
+            self.unprotected.to_cbor_value(),
+            match &self.payload {
+                Some(b) => cbor::Value::Bytes(b.clone()),
+                None => cbor::Value::Null,
+            },
+            cbor::Value::Bytes(self.signature.clone()),
+        ])
     }
 }
 
@@ -390,15 +387,16 @@ pub fn sig_structure_data(
     aad: &[u8],
     payload: &[u8],
 ) -> Vec<u8> {
-    let mut arr = Vec::<cbor::Value>::new();
-    arr.push(cbor::Value::Text(context.text().to_owned()));
-    if body.is_empty() {
-        arr.push(cbor::Value::Bytes(vec![]));
-    } else {
-        arr.push(cbor::Value::Bytes(
-            body.to_vec().expect("failed to serialize header"), // safe: always serializable
-        ));
-    }
+    let mut arr = vec![
+        cbor::Value::Text(context.text().to_owned()),
+        if body.is_empty() {
+            cbor::Value::Bytes(vec![])
+        } else {
+            cbor::Value::Bytes(
+                body.to_vec().expect("failed to serialize header"), // safe: always serializable
+            )
+        },
+    ];
     if let Some(sign) = sign {
         if sign.is_empty() {
             arr.push(cbor::Value::Bytes(vec![]));

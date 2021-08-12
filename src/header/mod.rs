@@ -243,7 +243,7 @@ impl AsCborValue for Header {
                                         .push(CoseSignature::from_cbor_value(sig)?);
                                 }
                             }
-                            v => return cbor_type_error(&v, &"array or bstr value"),
+                            v => return cbor_type_error(v, &"array or bstr value"),
                         }
                     }
                     v => return cbor_type_error(&v, &"array value"),
