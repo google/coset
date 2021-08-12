@@ -361,9 +361,11 @@ fn test_header_encode_int_out_of_range_fail() {
     let result = cbor::ser::to_vec(&header);
     expect_err(result, "stored in CBOR");
 
-    let mut header = Header::default();
-    // "What we do, is if we need that extra push over the cliff, you know what we do?"
-    header.alg = Some(Algorithm::PrivateUse(MOST_NEGATIVE_NINT - 1));
+    let header = Header {
+        // "What we do, is if we need that extra push over the cliff, you know what we do?"
+        alg: Some(Algorithm::PrivateUse(MOST_NEGATIVE_NINT - 1)),
+        ..Default::default()
+    };
     let result = cbor::ser::to_vec(&header);
     expect_err(result, "stored in CBOR");
 }

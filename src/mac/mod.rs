@@ -66,44 +66,42 @@ impl AsCborValue for CoseMac {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut mac = Self::default();
-
+        let mut recipients = Vec::new();
         match a.remove(4) {
             cbor::Value::Array(a) => {
                 for val in a {
-                    mac.recipients.push(CoseRecipient::from_cbor_value(val)?);
+                    recipients.push(CoseRecipient::from_cbor_value(val)?);
                 }
             }
             v => return cbor_type_error(&v, &"array"),
         }
-        mac.tag = match a.remove(3) {
-            cbor::Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, &"bstr"),
-        };
-        mac.payload = match a.remove(2) {
-            cbor::Value::Bytes(b) => Some(b),
-            cbor::Value::Null => None,
-            v => return cbor_type_error(&v, &"bstr"),
-        };
-        mac.unprotected = Header::from_cbor_value(a.remove(1))?;
-        mac.protected = Header::from_cbor_bstr(a.remove(0))?;
-
-        Ok(mac)
+        Ok(Self {
+            recipients,
+            tag: match a.remove(3) {
+                cbor::Value::Bytes(b) => b,
+                v => return cbor_type_error(&v, &"bstr"),
+            },
+            payload: match a.remove(2) {
+                cbor::Value::Bytes(b) => Some(b),
+                cbor::Value::Null => None,
+                v => return cbor_type_error(&v, &"bstr"),
+            },
+            unprotected: Header::from_cbor_value(a.remove(1))?,
+            protected: Header::from_cbor_bstr(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.protected.to_cbor_bstr());
-        v.push(self.unprotected.to_cbor_value());
-        match &self.payload {
-            None => v.push(cbor::Value::Null),
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-        }
-        v.push(cbor::Value::Bytes(self.tag.clone()));
-        v.push(cbor::Value::Array(
-            self.recipients.iter().map(|r| r.to_cbor_value()).collect(),
-        ));
-        cbor::Value::Array(v)
+        cbor::Value::Array(vec![
+            self.protected.to_cbor_bstr(),
+            self.unprotected.to_cbor_value(),
+            match &self.payload {
+                None => cbor::Value::Null,
+                Some(b) => cbor::Value::Bytes(b.clone()),
+            },
+            cbor::Value::Bytes(self.tag.clone()),
+            cbor::Value::Array(self.recipients.iter().map(|r| r.to_cbor_value()).collect()),
+        ])
     }
 }
 
@@ -205,33 +203,31 @@ impl AsCborValue for CoseMac0 {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut mac = Self::default();
-
-        mac.tag = match a.remove(3) {
-            cbor::Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, &"bstr"),
-        };
-        mac.payload = match a.remove(2) {
-            cbor::Value::Bytes(b) => Some(b),
-            cbor::Value::Null => None,
-            v => return cbor_type_error(&v, &"bstr"),
-        };
-        mac.unprotected = Header::from_cbor_value(a.remove(1))?;
-        mac.protected = Header::from_cbor_bstr(a.remove(0))?;
-
-        Ok(mac)
+        Ok(Self {
+            tag: match a.remove(3) {
+                cbor::Value::Bytes(b) => b,
+                v => return cbor_type_error(&v, &"bstr"),
+            },
+            payload: match a.remove(2) {
+                cbor::Value::Bytes(b) => Some(b),
+                cbor::Value::Null => None,
+                v => return cbor_type_error(&v, &"bstr"),
+            },
+            unprotected: Header::from_cbor_value(a.remove(1))?,
+            protected: Header::from_cbor_bstr(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.protected.to_cbor_bstr());
-        v.push(self.unprotected.to_cbor_value());
-        match &self.payload {
-            None => v.push(cbor::Value::Null),
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-        }
-        v.push(cbor::Value::Bytes(self.tag.clone()));
-        cbor::Value::Array(v)
+        cbor::Value::Array(vec![
+            self.protected.to_cbor_bstr(),
+            self.unprotected.to_cbor_value(),
+            match &self.payload {
+                None => cbor::Value::Null,
+                Some(b) => cbor::Value::Bytes(b.clone()),
+            },
+            cbor::Value::Bytes(self.tag.clone()),
+        ])
     }
 }
 
@@ -322,16 +318,18 @@ pub fn mac_structure_data(
     external_aad: &[u8],
     payload: &[u8],
 ) -> Vec<u8> {
-    let mut arr = Vec::<cbor::Value>::new();
-    arr.push(cbor::Value::Text(context.text().to_owned()));
-    if protected.is_empty() {
-        arr.push(cbor::Value::Bytes(vec![]));
-    } else {
-        arr.push(cbor::Value::Bytes(
-            protected.to_vec().expect("failed to serialize header"), // safe: always serializable
-        ));
-    }
-    arr.push(cbor::Value::Bytes(external_aad.to_vec()));
-    arr.push(cbor::Value::Bytes(payload.to_vec()));
+    let arr = vec![
+        cbor::Value::Text(context.text().to_owned()),
+        if protected.is_empty() {
+            cbor::Value::Bytes(vec![])
+        } else {
+            cbor::Value::Bytes(
+                protected.to_vec().expect("failed to serialize header"), /* safe: always
+                                                                          * serializable */
+            )
+        },
+        cbor::Value::Bytes(external_aad.to_vec()),
+        cbor::Value::Bytes(payload.to_vec()),
+    ];
     cbor::to_vec(&cbor::Value::Array(arr)).expect("failed to serialize Enc_structure") // safe: always serializable
 }

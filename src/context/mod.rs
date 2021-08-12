@@ -66,43 +66,42 @@ impl AsCborValue for PartyInfo {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut party = Self::default();
-        party.other = match a.remove(2) {
-            cbor::Value::Null => None,
-            cbor::Value::Bytes(b) => Some(b),
-            v => return cbor_type_error(&v, &"bstr / nil"),
-        };
-        party.nonce = match a.remove(1) {
-            cbor::Value::Null => None,
-            cbor::Value::Bytes(b) => Some(Nonce::Bytes(b)),
-            cbor::Value::Integer(i) => Some(Nonce::Integer(i)),
-            v => return cbor_type_error(&v, &"bstr / int / nil"),
-        };
-        party.identity = match a.remove(0) {
-            cbor::Value::Null => None,
-            cbor::Value::Bytes(b) => Some(b),
-            v => return cbor_type_error(&v, &"bstr / nil"),
-        };
-
-        Ok(party)
+        Ok(Self {
+            other: match a.remove(2) {
+                cbor::Value::Null => None,
+                cbor::Value::Bytes(b) => Some(b),
+                v => return cbor_type_error(&v, &"bstr / nil"),
+            },
+            nonce: match a.remove(1) {
+                cbor::Value::Null => None,
+                cbor::Value::Bytes(b) => Some(Nonce::Bytes(b)),
+                cbor::Value::Integer(i) => Some(Nonce::Integer(i)),
+                v => return cbor_type_error(&v, &"bstr / int / nil"),
+            },
+            identity: match a.remove(0) {
+                cbor::Value::Null => None,
+                cbor::Value::Bytes(b) => Some(b),
+                v => return cbor_type_error(&v, &"bstr / nil"),
+            },
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        match &self.identity {
-            None => v.push(cbor::Value::Null),
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-        }
-        match &self.nonce {
-            None => v.push(cbor::Value::Null),
-            Some(Nonce::Bytes(b)) => v.push(cbor::Value::Bytes(b.clone())),
-            Some(Nonce::Integer(i)) => v.push(cbor::Value::Integer(*i)),
-        }
-        match &self.other {
-            None => v.push(cbor::Value::Null),
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-        }
-        cbor::Value::Array(v)
+        cbor::Value::Array(vec![
+            match &self.identity {
+                None => cbor::Value::Null,
+                Some(b) => cbor::Value::Bytes(b.clone()),
+            },
+            match &self.nonce {
+                None => cbor::Value::Null,
+                Some(Nonce::Bytes(b)) => cbor::Value::Bytes(b.clone()),
+                Some(Nonce::Integer(i)) => cbor::Value::Integer(*i),
+            },
+            match &self.other {
+                None => cbor::Value::Null,
+                Some(b) => cbor::Value::Bytes(b.clone()),
+            },
+        ])
     }
 }
 
@@ -151,26 +150,30 @@ impl AsCborValue for SuppPubInfo {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut info = Self::default();
-        if a.len() == 3 {
-            info.other = match a.remove(2) {
-                cbor::Value::Bytes(b) => Some(b),
-                v => return cbor_type_error(&v, &"bstr"),
-            }
-        }
-        info.protected = Header::from_cbor_bstr(a.remove(1))?;
-        info.key_data_length = match a.remove(0) {
-            cbor::Value::Integer(i) if i >= 0 && i <= u64::MAX.into() => i as u64,
-            v => return cbor_type_error(&v, &"uint"),
-        };
-
-        Ok(info)
+        Ok(Self {
+            other: {
+                if a.len() == 3 {
+                    match a.remove(2) {
+                        cbor::Value::Bytes(b) => Some(b),
+                        v => return cbor_type_error(&v, &"bstr"),
+                    }
+                } else {
+                    None
+                }
+            },
+            protected: Header::from_cbor_bstr(a.remove(1))?,
+            key_data_length: match a.remove(0) {
+                cbor::Value::Integer(i) if i >= 0 && i <= u64::MAX.into() => i as u64,
+                v => return cbor_type_error(&v, &"uint"),
+            },
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(cbor::Value::Integer(self.key_data_length as i128));
-        v.push(self.protected.to_cbor_bstr());
+        let mut v = vec![
+            cbor::Value::Integer(self.key_data_length as i128),
+            self.protected.to_cbor_bstr(),
+        ];
         if let Some(other) = &self.other {
             v.push(cbor::Value::Bytes(other.clone()));
         }
@@ -230,32 +233,32 @@ impl AsCborValue for CoseKdfContext {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut context = Self::default();
-
-        context.supp_priv_info = Vec::with_capacity(a.len() - 4);
+        let mut supp_priv_info = Vec::with_capacity(a.len() - 4);
         for i in (4..a.len()).rev() {
             let b = match a.remove(i) {
                 cbor::Value::Bytes(b) => b,
                 v => return cbor_type_error(&v, &"bstr"),
             };
-            context.supp_priv_info.push(b);
+            supp_priv_info.push(b);
         }
-        context.supp_priv_info.reverse();
+        supp_priv_info.reverse();
 
-        context.supp_pub_info = SuppPubInfo::from_cbor_value(a.remove(3))?;
-        context.party_v_info = PartyInfo::from_cbor_value(a.remove(2))?;
-        context.party_u_info = PartyInfo::from_cbor_value(a.remove(1))?;
-        context.algorithm_id = Algorithm::from_cbor_value(a.remove(0))?;
-
-        Ok(context)
+        Ok(Self {
+            supp_priv_info,
+            supp_pub_info: SuppPubInfo::from_cbor_value(a.remove(3))?,
+            party_v_info: PartyInfo::from_cbor_value(a.remove(2))?,
+            party_u_info: PartyInfo::from_cbor_value(a.remove(1))?,
+            algorithm_id: Algorithm::from_cbor_value(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.algorithm_id.to_cbor_value());
-        v.push(self.party_u_info.to_cbor_value());
-        v.push(self.party_v_info.to_cbor_value());
-        v.push(self.supp_pub_info.to_cbor_value());
+        let mut v = vec![
+            self.algorithm_id.to_cbor_value(),
+            self.party_u_info.to_cbor_value(),
+            self.party_v_info.to_cbor_value(),
+            self.supp_pub_info.to_cbor_value(),
+        ];
         for supp_priv_info in &self.supp_priv_info {
             v.push(cbor::Value::Bytes(supp_priv_info.clone()));
         }

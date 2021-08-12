@@ -27,12 +27,12 @@ fn test_algorithm_conversion() {
 
 #[test]
 fn test_header_param_private_range() {
-    assert_eq!(HeaderParameter::is_private(1), false);
-    assert_eq!(HeaderParameter::is_private(-70_000), true);
+    assert!(!HeaderParameter::is_private(1));
+    assert!(HeaderParameter::is_private(-70_000));
 }
 
 #[test]
 fn test_elliptic_curve_private_range() {
-    assert_eq!(EllipticCurve::is_private(1), false);
-    assert_eq!(EllipticCurve::is_private(-70_000), true);
+    assert!(!EllipticCurve::is_private(1));
+    assert!(EllipticCurve::is_private(-70_000));
 }

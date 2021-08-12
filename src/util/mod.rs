@@ -30,7 +30,7 @@ where
     Err(serde::de::Error::invalid_type(
         match v {
             cbor::Value::Integer(i) => serde::de::Unexpected::Signed(*i as i64),
-            cbor::Value::Text(t) => serde::de::Unexpected::Str(&t),
+            cbor::Value::Text(t) => serde::de::Unexpected::Str(t),
             cbor::Value::Null => serde::de::Unexpected::Unit,
             cbor::Value::Bool(b) => serde::de::Unexpected::Bool(*b),
             cbor::Value::Float(f) => serde::de::Unexpected::Float(*f),

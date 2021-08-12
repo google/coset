@@ -61,40 +61,39 @@ impl AsCborValue for CoseRecipient {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut recipient = Self::default();
+        let mut recipients = Vec::new();
         if a.len() == 4 {
             match a.remove(3) {
                 cbor::Value::Array(a) => {
                     for val in a {
-                        recipient
-                            .recipients
-                            .push(CoseRecipient::from_cbor_value(val)?);
+                        recipients.push(CoseRecipient::from_cbor_value(val)?);
                     }
                 }
                 v => return cbor_type_error(&v, &"array"),
             }
         }
 
-        recipient.ciphertext = match a.remove(2) {
-            cbor::Value::Bytes(b) => Some(b),
-            cbor::Value::Null => None,
-            v => return cbor_type_error(&v, &"bstr / null"),
-        };
-
-        recipient.unprotected = Header::from_cbor_value(a.remove(1))?;
-        recipient.protected = Header::from_cbor_bstr(a.remove(0))?;
-
-        Ok(recipient)
+        Ok(Self {
+            recipients,
+            ciphertext: match a.remove(2) {
+                cbor::Value::Bytes(b) => Some(b),
+                cbor::Value::Null => None,
+                v => return cbor_type_error(&v, &"bstr / null"),
+            },
+            unprotected: Header::from_cbor_value(a.remove(1))?,
+            protected: Header::from_cbor_bstr(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.protected.to_cbor_bstr());
-        v.push(self.unprotected.to_cbor_value());
-        match &self.ciphertext {
-            None => v.push(cbor::Value::Null),
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-        }
+        let mut v = vec![
+            self.protected.to_cbor_bstr(),
+            self.unprotected.to_cbor_value(),
+            match &self.ciphertext {
+                None => cbor::Value::Null,
+                Some(b) => cbor::Value::Bytes(b.clone()),
+            },
+        ];
         if !self.recipients.is_empty() {
             v.push(cbor::Value::Array(
                 self.recipients.iter().map(|r| r.to_cbor_value()).collect(),
@@ -216,42 +215,38 @@ impl AsCborValue for CoseEncrypt {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut encrypted = Self::default();
+        let mut recipients = Vec::new();
         match a.remove(3) {
             cbor::Value::Array(a) => {
                 for val in a {
-                    encrypted
-                        .recipients
-                        .push(CoseRecipient::from_cbor_value(val)?);
+                    recipients.push(CoseRecipient::from_cbor_value(val)?);
                 }
             }
             v => return cbor_type_error(&v, &"array"),
         }
 
-        encrypted.ciphertext = match a.remove(2) {
-            cbor::Value::Bytes(b) => Some(b),
-            cbor::Value::Null => None,
-            v => return cbor_type_error(&v, &"bstr"),
-        };
-
-        encrypted.unprotected = Header::from_cbor_value(a.remove(1))?;
-        encrypted.protected = Header::from_cbor_bstr(a.remove(0))?;
-
-        Ok(encrypted)
+        Ok(Self {
+            recipients,
+            ciphertext: match a.remove(2) {
+                cbor::Value::Bytes(b) => Some(b),
+                cbor::Value::Null => None,
+                v => return cbor_type_error(&v, &"bstr"),
+            },
+            unprotected: Header::from_cbor_value(a.remove(1))?,
+            protected: Header::from_cbor_bstr(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.protected.to_cbor_bstr());
-        v.push(self.unprotected.to_cbor_value());
-        match &self.ciphertext {
-            None => v.push(cbor::Value::Null),
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-        }
-        v.push(cbor::Value::Array(
-            self.recipients.iter().map(|r| r.to_cbor_value()).collect(),
-        ));
-        cbor::Value::Array(v)
+        cbor::Value::Array(vec![
+            self.protected.to_cbor_bstr(),
+            self.unprotected.to_cbor_value(),
+            match &self.ciphertext {
+                None => cbor::Value::Null,
+                Some(b) => cbor::Value::Bytes(b.clone()),
+            },
+            cbor::Value::Array(self.recipients.iter().map(|r| r.to_cbor_value()).collect()),
+        ])
     }
 }
 
@@ -345,28 +340,26 @@ impl AsCborValue for CoseEncrypt0 {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut encrypted = Self::default();
-        encrypted.ciphertext = match a.remove(2) {
-            cbor::Value::Bytes(b) => Some(b),
-            cbor::Value::Null => None,
-            v => return cbor_type_error(&v, &"bstr"),
-        };
-
-        encrypted.unprotected = Header::from_cbor_value(a.remove(1))?;
-        encrypted.protected = Header::from_cbor_bstr(a.remove(0))?;
-
-        Ok(encrypted)
+        Ok(Self {
+            ciphertext: match a.remove(2) {
+                cbor::Value::Bytes(b) => Some(b),
+                cbor::Value::Null => None,
+                v => return cbor_type_error(&v, &"bstr"),
+            },
+            unprotected: Header::from_cbor_value(a.remove(1))?,
+            protected: Header::from_cbor_bstr(a.remove(0))?,
+        })
     }
 
     fn to_cbor_value(&self) -> cbor::Value {
-        let mut v = Vec::<cbor::Value>::new();
-        v.push(self.protected.to_cbor_bstr());
-        v.push(self.unprotected.to_cbor_value());
-        match &self.ciphertext {
-            None => v.push(cbor::Value::Null),
-            Some(b) => v.push(cbor::Value::Bytes(b.clone())),
-        }
-        cbor::Value::Array(v)
+        cbor::Value::Array(vec![
+            self.protected.to_cbor_bstr(),
+            self.unprotected.to_cbor_value(),
+            match &self.ciphertext {
+                None => cbor::Value::Null,
+                Some(b) => cbor::Value::Bytes(b.clone()),
+            },
+        ])
     }
 }
 
@@ -457,15 +450,17 @@ pub fn enc_structure_data(
     protected: &Header,
     external_aad: &[u8],
 ) -> Vec<u8> {
-    let mut arr = Vec::<cbor::Value>::new();
-    arr.push(cbor::Value::Text(context.text().to_owned()));
-    if protected.is_empty() {
-        arr.push(cbor::Value::Bytes(vec![]));
-    } else {
-        arr.push(cbor::Value::Bytes(
-            protected.to_vec().expect("failed to serialize header"), // safe: always serializable
-        ));
-    }
-    arr.push(cbor::Value::Bytes(external_aad.to_vec()));
+    let arr = vec![
+        cbor::Value::Text(context.text().to_owned()),
+        if protected.is_empty() {
+            cbor::Value::Bytes(vec![])
+        } else {
+            cbor::Value::Bytes(
+                protected.to_vec().expect("failed to serialize header"), /* safe: always
+                                                                          * serializable */
+            )
+        },
+        cbor::Value::Bytes(external_aad.to_vec()),
+    ];
     cbor::to_vec(&cbor::Value::Array(arr)).expect("failed to serialize Enc_structure") // safe: always serializable
 }
