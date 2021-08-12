@@ -118,13 +118,23 @@ impl CoseMac {
     where
         F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
     {
-        let tbm = mac_structure_data(
+        let tbm = self.tbm(external_aad);
+        verify(&self.tag, &tbm)
+    }
+
+    /// Construct the to-be-MAC-ed data for this object. Any protected header values should be set
+    /// before using this method, as should the `payload`.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the `payload` has not been set.
+    fn tbm(&self, external_aad: &[u8]) -> Vec<u8> {
+        mac_structure_data(
             MacContext::CoseMac,
             &self.protected,
             external_aad,
             self.payload.as_ref().expect("payload missing"), // safe: documented
-        );
-        verify(&self.tag, &tbm)
+        )
     }
 }
 
@@ -155,13 +165,22 @@ impl CoseMacBuilder {
     where
         F: FnOnce(&[u8]) -> Vec<u8>,
     {
-        let tbm = mac_structure_data(
-            MacContext::CoseMac,
-            &self.0.protected,
-            external_aad,
-            self.0.payload.as_ref().expect("payload missing"), // safe: documented
-        );
+        let tbm = self.0.tbm(external_aad);
         self.tag(create(&tbm))
+    }
+
+    /// Calculate the tag value, using `mac`. Any protected header values should be set
+    /// before using this method, as should the `payload`.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the `payload` has not been set.
+    pub fn try_create_tag<F, E>(self, external_aad: &[u8], create: F) -> Result<Self, E>
+    where
+        F: FnOnce(&[u8]) -> Result<Vec<u8>, E>,
+    {
+        let tbm = self.0.tbm(external_aad);
+        Ok(self.tag(create(&tbm)?))
     }
 }
 
@@ -244,13 +263,23 @@ impl CoseMac0 {
     where
         F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
     {
-        let tbm = mac_structure_data(
+        let tbm = self.tbm(external_aad);
+        verify(&self.tag, &tbm)
+    }
+
+    /// Construct the to-be-MAC-ed data for this object. Any protected header values should be set
+    /// before using this method, as should the `payload`.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the `payload` has not been set.
+    fn tbm(&self, external_aad: &[u8]) -> Vec<u8> {
+        mac_structure_data(
             MacContext::CoseMac0,
             &self.protected,
             external_aad,
             self.payload.as_ref().expect("payload missing"), // safe: documented
-        );
-        verify(&self.tag, &tbm)
+        )
     }
 }
 
@@ -275,13 +304,22 @@ impl CoseMac0Builder {
     where
         F: FnOnce(&[u8]) -> Vec<u8>,
     {
-        let tbm = mac_structure_data(
-            MacContext::CoseMac0,
-            &self.0.protected,
-            external_aad,
-            self.0.payload.as_ref().expect("payload missing"), // safe: documented
-        );
+        let tbm = self.0.tbm(external_aad);
         self.tag(create(&tbm))
+    }
+
+    /// Calculate the tag value, using `mac`. Any protected header values should be set
+    /// before using this method, as should the `payload`.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the `payload` has not been set.
+    pub fn try_create_tag<F, E>(self, external_aad: &[u8], create: F) -> Result<Self, E>
+    where
+        F: FnOnce(&[u8]) -> Result<Vec<u8>, E>,
+    {
+        let tbm = self.0.tbm(external_aad);
+        Ok(self.tag(create(&tbm)?))
     }
 }
 

@@ -502,6 +502,12 @@ impl FakeMac {
             Err("mismatch".to_owned())
         }
     }
+    fn try_compute(&self, data: &[u8]) -> Result<Vec<u8>, String> {
+        Ok(self.compute(data))
+    }
+    fn fail_compute(&self, _data: &[u8]) -> Result<Vec<u8>, String> {
+        Err("failed".to_string())
+    }
 }
 
 #[test]
@@ -534,6 +540,25 @@ fn test_cose_mac_roundtrip() {
     assert!(mac
         .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
         .is_err());
+}
+
+#[test]
+fn test_cose_mac_tag_result() {
+    let tagger = FakeMac {};
+    let external_aad = b"This is the external aad";
+    let mut _mac = CoseMacBuilder::new()
+        .protected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
+        .payload(b"This is the data".to_vec())
+        .try_create_tag(external_aad, |data| tagger.try_compute(data))
+        .unwrap()
+        .build();
+
+    // Cope with MAC creation failure.
+    let result = CoseMacBuilder::new()
+        .protected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
+        .payload(b"This is the data".to_vec())
+        .try_create_tag(external_aad, |data| tagger.fail_compute(data));
+    expect_err(result, "failed");
 }
 
 #[test]
@@ -594,6 +619,25 @@ fn test_cose_mac0_roundtrip() {
     assert!(mac
         .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
         .is_err());
+}
+
+#[test]
+fn test_cose_mac0_tag_result() {
+    let tagger = FakeMac {};
+    let external_aad = b"This is the external aad";
+    let mut _mac = CoseMac0Builder::new()
+        .protected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
+        .payload(b"This is the data".to_vec())
+        .try_create_tag(external_aad, |data| tagger.try_compute(data))
+        .unwrap()
+        .build();
+
+    // Cope with MAC creation failure.
+    let result = CoseMac0Builder::new()
+        .protected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
+        .payload(b"This is the data".to_vec())
+        .try_create_tag(external_aad, |data| tagger.fail_compute(data));
+    expect_err(result, "failed");
 }
 
 #[test]

@@ -191,14 +191,19 @@ impl CoseSign {
         F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
     {
         let sig = &self.signatures[which];
-        let tbs_data = sig_structure_data(
+        let tbs_data = self.tbs_data(aad, sig);
+        verifier(&sig.signature, &tbs_data)
+    }
+
+    /// Construct the to-be-signed data for this object.
+    fn tbs_data(&self, aad: &[u8], sig: &CoseSignature) -> Vec<u8> {
+        sig_structure_data(
             SignatureContext::CoseSignature,
             &self.protected,
             Some(&sig.protected),
             aad,
             self.payload.as_ref().unwrap_or(&vec![]),
-        );
-        verifier(&sig.signature, &tbs_data)
+        )
     }
 }
 
@@ -225,15 +230,26 @@ impl CoseSignBuilder {
     where
         F: FnOnce(&[u8]) -> Vec<u8>,
     {
-        let tbs_data = sig_structure_data(
-            SignatureContext::CoseSignature,
-            &self.0.protected,
-            Some(&sig.protected),
-            aad,
-            self.0.payload.as_ref().unwrap_or(&vec![]),
-        );
+        let tbs_data = self.0.tbs_data(aad, &sig);
         sig.signature = signer(&tbs_data);
         self.add_signature(sig)
+    }
+
+    /// Calculate the signature value, using `signer` to generate the signature bytes that will be
+    /// used to complete `sig`.  Any protected header values should be set before using this
+    /// method.
+    pub fn try_add_created_signature<F, E>(
+        self,
+        mut sig: CoseSignature,
+        aad: &[u8],
+        signer: F,
+    ) -> Result<Self, E>
+    where
+        F: FnOnce(&[u8]) -> Result<Vec<u8>, E>,
+    {
+        let tbs_data = self.0.tbs_data(aad, &sig);
+        sig.signature = signer(&tbs_data)?;
+        Ok(self.add_signature(sig))
     }
 }
 
@@ -310,14 +326,19 @@ impl CoseSign1 {
     where
         F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
     {
-        let tbs_data = sig_structure_data(
+        let tbs_data = self.tbs_data(aad);
+        verifier(&self.signature, &tbs_data)
+    }
+
+    /// Construct the to-be-signed data for this object.
+    fn tbs_data(&self, aad: &[u8]) -> Vec<u8> {
+        sig_structure_data(
             SignatureContext::CoseSign1,
             &self.protected,
             None,
             aad,
             self.payload.as_ref().unwrap_or(&vec![]),
-        );
-        verifier(&self.signature, &tbs_data)
+        )
     }
 }
 
@@ -338,15 +359,18 @@ impl CoseSign1Builder {
     where
         F: FnOnce(&[u8]) -> Vec<u8>,
     {
-        let tbs_data = sig_structure_data(
-            SignatureContext::CoseSign1,
-            &self.0.protected,
-            None,
-            aad,
-            self.0.payload.as_ref().unwrap_or(&vec![]),
-        );
-        let sig_data = signer(&tbs_data);
+        let sig_data = signer(&self.0.tbs_data(aad));
         self.signature(sig_data)
+    }
+
+    /// Calculate the signature value, using `signer` to generate the signature bytes.  Any
+    /// protected header values should be set before using this method.
+    pub fn try_create_signature<F, E>(self, aad: &[u8], signer: F) -> Result<Self, E>
+    where
+        F: FnOnce(&[u8]) -> Result<Vec<u8>, E>,
+    {
+        let sig_data = signer(&self.0.tbs_data(aad))?;
+        Ok(self.signature(sig_data))
     }
 }
 

@@ -1029,6 +1029,13 @@ impl FakeSigner {
             Ok(())
         }
     }
+    fn try_sign(&self, data: &[u8]) -> Result<Vec<u8>, String> {
+        Ok(self.sign(data))
+    }
+
+    fn fail_sign(&self, _data: &[u8]) -> Result<Vec<u8>, String> {
+        Err("failed".to_string())
+    }
 }
 
 #[test]
@@ -1082,6 +1089,41 @@ fn test_sign_roundtrip() {
     assert!(sign2
         .verify_signature(0, aad, |sig, data| verifier.verify(sig, data))
         .is_err());
+}
+
+#[test]
+fn test_sign_create_result() {
+    let signer = FakeSigner {};
+
+    let pt = b"This is the content";
+    let aad = b"this is additional data";
+
+    let protected = HeaderBuilder::new()
+        .algorithm(iana::Algorithm::ES256)
+        .key_id(b"11".to_vec())
+        .build();
+    let _sign = CoseSignBuilder::new()
+        .protected(protected.clone())
+        .payload(pt.to_vec())
+        .try_add_created_signature(
+            CoseSignatureBuilder::new()
+                .protected(protected.clone())
+                .build(),
+            aad,
+            |pt| signer.try_sign(pt),
+        )
+        .unwrap()
+        .build();
+
+    let result = CoseSignBuilder::new()
+        .protected(protected.clone())
+        .payload(pt.to_vec())
+        .try_add_created_signature(
+            CoseSignatureBuilder::new().protected(protected).build(),
+            aad,
+            |pt| signer.fail_sign(pt),
+        );
+    expect_err(result, "failed");
 }
 
 #[test]
@@ -1152,4 +1194,29 @@ fn test_sign1_roundtrip() {
     assert!(sign1
         .verify_signature(aad, |sig, data| verifier.verify(sig, data))
         .is_err());
+}
+
+#[test]
+fn test_sign1_create_result() {
+    let signer = FakeSigner {};
+
+    let pt = b"This is the content";
+    let aad = b"this is additional data";
+
+    let protected = HeaderBuilder::new()
+        .algorithm(iana::Algorithm::ES256)
+        .key_id(b"11".to_vec())
+        .build();
+    let _sign = CoseSign1Builder::new()
+        .protected(protected.clone())
+        .payload(pt.to_vec())
+        .try_create_signature(aad, |pt| signer.try_sign(pt))
+        .unwrap()
+        .build();
+
+    let result = CoseSign1Builder::new()
+        .protected(protected)
+        .payload(pt.to_vec())
+        .try_create_signature(aad, |pt| signer.fail_sign(pt));
+    expect_err(result, "failed");
 }

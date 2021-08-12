@@ -167,14 +167,45 @@ impl CoseRecipientBuilder {
     where
         F: FnOnce(&[u8], &[u8]) -> Vec<u8>,
     {
+        let aad = self.aad(context, external_aad);
+        self.ciphertext(cipher(plaintext, &aad))
+    }
+
+    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
+    /// plaintext and combined AAD (in that order).  Any protected header values should be set
+    /// before using this method.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the `context` parameter does not refer to a recipient context.
+    pub fn try_create_ciphertext<F, E>(
+        self,
+        context: EncryptionContext,
+        plaintext: &[u8],
+        external_aad: &[u8],
+        cipher: F,
+    ) -> Result<Self, E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
+    {
+        let aad = self.aad(context, external_aad);
+        Ok(self.ciphertext(cipher(plaintext, &aad)?))
+    }
+
+    /// Construct the combined AAD data needed for encryption. Any protected header values should be
+    /// set before using this method.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the `context` parameter does not refer to a recipient context.
+    fn aad(&self, context: EncryptionContext, external_aad: &[u8]) -> Vec<u8> {
         match context {
             EncryptionContext::EncRecipient
             | EncryptionContext::MacRecipient
             | EncryptionContext::RecRecipient => {}
             _ => panic!("unsupported encryption context {:?}", context), // safe: documented
         }
-        let aad = enc_structure_data(context, &self.0.protected, external_aad);
-        self.ciphertext(cipher(plaintext, &aad))
+        enc_structure_data(context, &self.0.protected, external_aad)
     }
 }
 
@@ -298,6 +329,26 @@ impl CoseEncryptBuilder {
         self.ciphertext(cipher(plaintext, &aad))
     }
 
+    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
+    /// plaintext and combined AAD (in that order).  Any protected header values should be set
+    /// before using this method.
+    pub fn try_create_ciphertext<F, E>(
+        self,
+        plaintext: &[u8],
+        external_aad: &[u8],
+        cipher: F,
+    ) -> Result<Self, E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
+    {
+        let aad = enc_structure_data(
+            EncryptionContext::CoseEncrypt,
+            &self.0.protected,
+            external_aad,
+        );
+        Ok(self.ciphertext(cipher(plaintext, &aad)?))
+    }
+
     /// Add a [`CoseRecipient`].
     pub fn add_recipient(mut self, recipient: CoseRecipient) -> Self {
         self.0.recipients.push(recipient);
@@ -409,6 +460,26 @@ impl CoseEncrypt0Builder {
             external_aad,
         );
         self.ciphertext(cipher(plaintext, &aad))
+    }
+
+    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
+    /// plaintext and combined AAD (in that order).  Any protected header values should be set
+    /// before using this method.
+    pub fn try_create_ciphertext<F, E>(
+        self,
+        plaintext: &[u8],
+        external_aad: &[u8],
+        cipher: F,
+    ) -> Result<Self, E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
+    {
+        let aad = enc_structure_data(
+            EncryptionContext::CoseEncrypt0,
+            &self.0.protected,
+            external_aad,
+        );
+        Ok(self.ciphertext(cipher(plaintext, &aad)?))
     }
 }
 
