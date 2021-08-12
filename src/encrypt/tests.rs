@@ -654,6 +654,9 @@ impl FakeCipher {
         }
         Ok(pt.to_vec())
     }
+    fn fail_encrypt(&self, _plaintext: &[u8], _additional_data: &[u8]) -> Result<Vec<u8>, String> {
+        Err("failed".to_string())
+    }
 }
 
 #[test]
@@ -705,6 +708,37 @@ fn test_cose_recipient_roundtrip() {
             cipher.decrypt(ct, aad)
         })
         .is_err());
+}
+
+#[test]
+fn test_cose_recipient_result() {
+    let pt = b"This is the plaintext";
+    let external_aad = b"This is the external aad";
+    let cipher = FakeCipher {};
+
+    let protected = HeaderBuilder::new()
+        .algorithm(iana::Algorithm::ES256)
+        .key_id(b"11".to_vec())
+        .build();
+    let _recipient = CoseRecipientBuilder::new()
+        .protected(protected.clone())
+        .try_create_ciphertext(
+            EncryptionContext::EncRecipient,
+            pt,
+            external_aad,
+            |pt, aad| cipher.encrypt(pt, aad),
+        )
+        .unwrap()
+        .build();
+    let status = CoseRecipientBuilder::new()
+        .protected(protected)
+        .try_create_ciphertext(
+            EncryptionContext::EncRecipient,
+            pt,
+            external_aad,
+            |pt, aad| cipher.fail_encrypt(pt, aad),
+        );
+    expect_err(status, "failed");
 }
 
 #[test]
@@ -800,6 +834,27 @@ fn test_cose_encrypt_roundtrip() {
 }
 
 #[test]
+fn test_cose_encrypt_status() {
+    let pt = b"This is the plaintext";
+    let external_aad = b"This is the external aad";
+    let cipher = FakeCipher {};
+
+    let protected = HeaderBuilder::new()
+        .algorithm(iana::Algorithm::ES256)
+        .key_id(b"11".to_vec())
+        .build();
+    let _encrypt = CoseEncryptBuilder::new()
+        .protected(protected.clone())
+        .try_create_ciphertext(pt, external_aad, |pt, aad| cipher.encrypt(pt, aad))
+        .unwrap()
+        .build();
+    let status = CoseEncryptBuilder::new()
+        .protected(protected)
+        .try_create_ciphertext(pt, external_aad, |pt, aad| cipher.fail_encrypt(pt, aad));
+    expect_err(status, "failed");
+}
+
+#[test]
 #[should_panic]
 fn test_cose_encrypt_missing_ciphertext() {
     let external_aad = b"This is the external aad";
@@ -847,6 +902,27 @@ fn test_cose_encrypt0_roundtrip() {
     assert!(encrypt
         .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
+}
+
+#[test]
+fn test_cose_encrypt0_status() {
+    let pt = b"This is the plaintext";
+    let external_aad = b"This is the external aad";
+    let cipher = FakeCipher {};
+
+    let protected = HeaderBuilder::new()
+        .algorithm(iana::Algorithm::ES256)
+        .key_id(b"11".to_vec())
+        .build();
+    let _encrypt = CoseEncrypt0Builder::new()
+        .protected(protected.clone())
+        .try_create_ciphertext(pt, external_aad, |pt, aad| cipher.encrypt(pt, aad))
+        .unwrap()
+        .build();
+    let status = CoseEncrypt0Builder::new()
+        .protected(protected)
+        .try_create_ciphertext(pt, external_aad, |pt, aad| cipher.fail_encrypt(pt, aad));
+    expect_err(status, "failed");
 }
 
 #[test]
