@@ -29,6 +29,7 @@ fn test_cbor_type_error() {
         (Value::Simple(SimpleValue::FalseValue), "false"),
         (Value::Simple(SimpleValue::Undefined), "undefined"),
         (Value::Unsigned(128), "uint"),
+        (Value::Negative(-1), "nint"),
         (Value::ByteString(vec![1, 2]), "bstr"),
         (Value::TextString("string".to_owned()), "tstr"),
         (Value::Array(vec![Value::Unsigned(0)]), "array"),

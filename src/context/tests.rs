@@ -77,6 +77,24 @@ fn test_context_encode() {
         (
             CoseKdfContextBuilder::new()
                 .algorithm(iana::Algorithm::A128GCM)
+                .party_u_info(
+                    PartyInfoBuilder::new()
+                        .identity(vec![3, 6])
+                        .nonce(Nonce::Integer(-2))
+                        .build(),
+                )
+                .build(),
+            concat!(
+                "84", // 4-tuple
+                "01", // int : AES-128-GCM
+                "83", "420306", "21f6", // 3-tuple: [2-bstr, nint, nil]
+                "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
+                "82", "0040", // 2-tuple: [0, 0-bstr]
+            ),
+        ),
+        (
+            CoseKdfContextBuilder::new()
+                .algorithm(iana::Algorithm::A128GCM)
                 .party_v_info(
                     PartyInfoBuilder::new()
                         .identity(vec![3, 6])
