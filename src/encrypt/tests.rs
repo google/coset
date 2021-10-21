@@ -670,49 +670,45 @@ fn test_cose_recipient_roundtrip() {
     let external_aad = b"This is the external aad";
     let cipher = FakeCipher {};
 
-    let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
-        .key_id(b"11".to_vec())
-        .build();
-    let mut recipient = CoseRecipientBuilder::new()
-        .protected(protected)
-        .create_ciphertext(
-            EncryptionContext::EncRecipient,
-            pt,
-            external_aad,
-            |pt, aad| cipher.encrypt(pt, aad).unwrap(),
-        )
-        .build();
+    for context in [
+        EncryptionContext::EncRecipient,
+        EncryptionContext::MacRecipient,
+        EncryptionContext::RecRecipient,
+    ] {
+        let protected = HeaderBuilder::new()
+            .algorithm(iana::Algorithm::ES256)
+            .key_id(b"11".to_vec())
+            .build();
 
-    let recovered_pt = recipient
-        .decrypt(EncryptionContext::EncRecipient, external_aad, |ct, aad| {
-            cipher.decrypt(ct, aad)
-        })
-        .unwrap();
-    assert_eq!(&pt[..], recovered_pt);
+        let mut recipient = CoseRecipientBuilder::new()
+            .protected(protected)
+            .create_ciphertext(context, pt, external_aad, |pt, aad| {
+                cipher.encrypt(pt, aad).unwrap()
+            })
+            .build();
 
-    // Changing an unprotected header leaves the ciphertext decipherable.
-    recipient.unprotected.content_type = Some(ContentType::Text("text/plain".to_owned()));
-    assert!(recipient
-        .decrypt(EncryptionContext::EncRecipient, external_aad, |ct, aad| {
-            cipher.decrypt(ct, aad)
-        })
-        .is_ok());
+        let recovered_pt = recipient
+            .decrypt(context, external_aad, |ct, aad| cipher.decrypt(ct, aad))
+            .unwrap();
+        assert_eq!(&pt[..], recovered_pt);
 
-    // Providing a different `aad` means the signature won't validate.
-    assert!(recipient
-        .decrypt(EncryptionContext::EncRecipient, b"not aad", |ct, aad| {
-            cipher.decrypt(ct, aad)
-        })
-        .is_err());
+        // Changing an unprotected header leaves the ciphertext decipherable.
+        recipient.unprotected.content_type = Some(ContentType::Text("text/plain".to_owned()));
+        assert!(recipient
+            .decrypt(context, external_aad, |ct, aad| { cipher.decrypt(ct, aad) })
+            .is_ok());
 
-    // Changing a protected header invalidates the signature.
-    recipient.protected = Header::default();
-    assert!(recipient
-        .decrypt(EncryptionContext::EncRecipient, external_aad, |ct, aad| {
-            cipher.decrypt(ct, aad)
-        })
-        .is_err());
+        // Providing a different `aad` means the signature won't validate.
+        assert!(recipient
+            .decrypt(context, b"not aad", |ct, aad| { cipher.decrypt(ct, aad) })
+            .is_err());
+
+        // Changing a protected header invalidates the signature.
+        recipient.protected = Header::default();
+        assert!(recipient
+            .decrypt(context, external_aad, |ct, aad| { cipher.decrypt(ct, aad) })
+            .is_err());
+    }
 }
 
 #[test]

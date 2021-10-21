@@ -102,6 +102,7 @@ fn test_label_decode_fail() {
 fn test_registered_label_encode() {
     let tests = vec![
         (RegisteredLabel::Assigned(iana::Algorithm::A192GCM), "02"),
+        (RegisteredLabel::Assigned(iana::Algorithm::EdDSA), "27"),
         (RegisteredLabel::Text("abc".to_owned()), "63616263"),
     ];
 
@@ -116,23 +117,20 @@ fn test_registered_label_encode() {
 
 #[test]
 fn test_registered_label_sort() {
+    use RegisteredLabel::{Assigned, Text};
     // Pairs of `RegisteredLabel`s with the "smaller" first.
     let pairs = vec![
+        (Assigned(iana::Algorithm::A192GCM), Text("a".to_owned())),
+        (Assigned(iana::Algorithm::WalnutDSA), Text("ab".to_owned())),
+        (Text("ab".to_owned()), Text("cd".to_owned())),
+        (Text("ab".to_owned()), Text("abcd".to_owned())),
         (
-            RegisteredLabel::Assigned(iana::Algorithm::A192GCM),
-            RegisteredLabel::Text("a".to_owned()),
+            Assigned(iana::Algorithm::AES_CCM_16_64_128),
+            Assigned(iana::Algorithm::A128KW),
         ),
         (
-            RegisteredLabel::Assigned(iana::Algorithm::WalnutDSA),
-            RegisteredLabel::Text("ab".to_owned()),
-        ),
-        (
-            RegisteredLabel::Assigned(iana::Algorithm::AES_CCM_16_64_128),
-            RegisteredLabel::Assigned(iana::Algorithm::A128KW),
-        ),
-        (
-            RegisteredLabel::Assigned(iana::Algorithm::A192GCM),
-            RegisteredLabel::Assigned(iana::Algorithm::AES_CCM_16_64_128),
+            Assigned(iana::Algorithm::A192GCM),
+            Assigned(iana::Algorithm::AES_CCM_16_64_128),
         ),
     ];
     for (left, right) in pairs.into_iter() {
@@ -172,6 +170,7 @@ fn test_registered_label_decode_fail() {
         ("43010203", "expected int/tstr"),
         ("", "IncompleteCborData"),
         ("09", "expected recognized IANA value"),
+        ("394e1f", "expected recognized IANA value"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
@@ -180,12 +179,25 @@ fn test_registered_label_decode_fail() {
     }
 }
 
+iana_registry! {
+    TestPrivateLabel {
+        Reserved: 0,
+        Something: 1,
+    }
+}
+
+impl WithPrivateRange for TestPrivateLabel {
+    fn is_private(i: i64) -> bool {
+        i > 10 || i < 1000
+    }
+}
+
 #[test]
 fn test_registered_label_with_private_encode() {
     let tests = vec![
         (
-            RegisteredLabelWithPrivate::Assigned(iana::Algorithm::A192GCM),
-            "02",
+            RegisteredLabelWithPrivate::Assigned(TestPrivateLabel::Something),
+            "01",
         ),
         (
             RegisteredLabelWithPrivate::Text("abc".to_owned()),
@@ -195,6 +207,7 @@ fn test_registered_label_with_private_encode() {
             RegisteredLabelWithPrivate::PrivateUse(-70_000),
             "3a0001116f",
         ),
+        (RegisteredLabelWithPrivate::PrivateUse(11), "0b"),
     ];
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
@@ -213,6 +226,8 @@ fn test_registered_label_with_private_sort() {
     let pairs = vec![
         (Assigned(iana::Algorithm::A192GCM), Text("a".to_owned())),
         (Assigned(iana::Algorithm::WalnutDSA), Text("ab".to_owned())),
+        (Text("ab".to_owned()), Text("cd".to_owned())),
+        (Text("ab".to_owned()), Text("abcd".to_owned())),
         (
             Assigned(iana::Algorithm::AES_CCM_16_64_128),
             Assigned(iana::Algorithm::A128KW),
@@ -265,6 +280,7 @@ fn test_registered_label_with_private_decode_fail() {
         ("43010203", "expected int/tstr"),
         ("", "IncompleteCborData"),
         ("09", "expected value in IANA or private use range"),
+        ("394e1f", "expected value in IANA or private use range"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();

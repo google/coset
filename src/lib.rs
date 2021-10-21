@@ -103,6 +103,7 @@ pub use sk_cbor as cbor;
 #[macro_use]
 pub(crate) mod util;
 
+#[macro_use]
 pub mod iana;
 
 mod common;
