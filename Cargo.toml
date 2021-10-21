@@ -10,7 +10,7 @@ keywords = ["cryptography", "cose"]
 categories = ["cryptography"]
 
 [dependencies]
-sk-cbor = "^0.1.0"
+sk-cbor = "^0.1.2"
 
 [dev-dependencies]
 hex = "^0.4.2"
