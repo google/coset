@@ -205,8 +205,11 @@ fn test_cose_key_encode() {
     for (_, key_data) in tests.iter() {
         keyset_data.extend_from_slice(&hex::decode(key_data).unwrap());
     }
-    let got = keyset.to_vec().unwrap();
-    assert_eq!(hex::encode(keyset_data), hex::encode(got));
+    let got_data = keyset.clone().to_vec().unwrap();
+    assert_eq!(hex::encode(keyset_data), hex::encode(&got_data));
+
+    let got = CoseKeySet::from_slice(&got_data).unwrap();
+    assert_eq!(got, keyset);
 }
 
 #[test]
@@ -545,6 +548,24 @@ fn test_cose_key_decode_fail() {
     for (key_data, err_msg) in tests.iter() {
         let data = hex::decode(key_data).unwrap();
         let result = CoseKey::from_slice(&data);
+        expect_err(result, err_msg);
+    }
+}
+
+#[test]
+fn test_cose_keyset_decode_fail() {
+    let tests = vec![(
+        concat!(
+            "a1", // 1-map
+            "a1", // 1-map
+            "01", "01", // 1 (kty) => OKP
+            "00"
+        ),
+        "expected array",
+    )];
+    for (keyset_data, err_msg) in tests.iter() {
+        let data = hex::decode(keyset_data).unwrap();
+        let result = CoseKeySet::from_slice(&data);
         expect_err(result, err_msg);
     }
 }

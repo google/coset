@@ -41,6 +41,7 @@ impl Default for KeyType {
 pub type KeyOperation = crate::RegisteredLabel<iana::KeyOperation>;
 
 /// A collection of [`CoseKey`] objects.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct CoseKeySet(pub Vec<CoseKey>);
 
 impl crate::CborSerializable for CoseKeySet {}
