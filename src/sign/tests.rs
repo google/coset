@@ -885,6 +885,23 @@ fn test_cose_sign1_decode_fail() {
             ),
             "expected int/tstr",
         ),
+        (
+            concat!(
+                "84", // 4-tuple
+                "47", // bstr len 7 (protected)
+                concat!(
+                    "a2", // 2-map
+                    // The contents of the bstr-encoded header are not in canonical order.
+                    "04", "42", "3131", // 4 (kid) => 2-bstr "11"
+                    "01", "26", // 1 (alg) => ES256
+                ),
+                "a0",   // 0-map (unprotected)
+                "42",   // 2-bstr (payload)
+                "6161", // "aa"
+                "40",   // 0-bstr
+            ),
+            "OutOfOrderKey",
+        ),
     ];
     for (sign_data, err_msg) in tests.iter() {
         let data = hex::decode(sign_data).unwrap();
