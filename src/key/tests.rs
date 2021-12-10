@@ -190,6 +190,21 @@ fn test_cose_key_encode() {
                 "116ff6"
             ),
         ),
+        (
+            CoseKeyBuilder::new_ec2_pub_key_y_sign(
+                iana::EllipticCurve::P_256,
+                hex::decode("aabbcc").unwrap(),
+                false,
+            )
+            .build(),
+            concat!(
+                "a4", // 3-map
+                "01", "02", // 1 (kty) => 2 (EC2)
+                "20", "01", // -1 (crv) => 1 (P_256)
+                "21", "43", "aabbcc", // -2 (x) => 3-bstr
+                "22", "f4" // -3 (y) => false
+            ),
+        ),
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
         let got = key.clone().to_vec().unwrap();

@@ -103,6 +103,22 @@ fn test_cose_signature_encode() {
 }
 
 #[test]
+fn test_cose_signature_decode_noncanonical() {
+    // RFC8152 section 3: "Recipients MUST accept both a zero-length binary value and a zero-length
+    // map encoded in the binary value."
+    let sig_data = hex::decode(concat!(
+        "83",   // 3-tuple
+        "41a0", // 1-bstr holding 0-map (not a 0-bstr)
+        "a0",   // 0-map
+        "40",   // 0-bstr
+    ))
+    .unwrap();
+    let sig = CoseSignature::default();
+    let got = CoseSignature::from_slice(&sig_data).unwrap();
+    assert_eq!(sig, got);
+}
+
+#[test]
 fn test_cose_signature_decode_fail() {
     let tests = vec![
         (
