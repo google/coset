@@ -432,7 +432,7 @@ impl CoseEncrypt0 {
     }
 }
 
-/// Builder for `CoseEncrypt0` objects.
+/// Builder for [`CoseEncrypt0`] objects.
 #[derive(Debug, Default)]
 pub struct CoseEncrypt0Builder(CoseEncrypt0);
 

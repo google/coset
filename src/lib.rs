@@ -66,6 +66,8 @@
 //! // At the receiving end, deserialize the bytes back to a `CoseSign1` object.
 //! let mut sign1 = coset::CoseSign1::from_slice(&sign1_data).unwrap();
 //!
+//! // At this point, real code would validate the protected headers.
+//!
 //! // Check the signature, which needs to have the same `aad` provided, by
 //! // providing a closure that can do the verify operation.
 //! let result = sign1.verify_signature(aad, |sig, data| verifier.verify(sig, data));
