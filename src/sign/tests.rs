@@ -51,11 +51,14 @@ fn test_cose_signature_encode() {
         ),
         (
             CoseSignature {
-                protected: Header {
-                    alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
-                    key_id: vec![1, 2, 3],
-                    partial_iv: vec![1, 2, 3],
-                    ..Default::default()
+                protected: ProtectedHeader {
+                    original_data: None,
+                    header: Header {
+                        alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
+                        key_id: vec![1, 2, 3],
+                        partial_iv: vec![1, 2, 3],
+                        ..Default::default()
+                    },
                 },
                 signature: vec![1, 2, 3],
                 ..Default::default()
@@ -97,7 +100,8 @@ fn test_cose_signature_encode() {
         let got = sig.clone().to_vec().unwrap();
         assert_eq!(*sig_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseSignature::from_slice(&got).unwrap();
+        let mut got = CoseSignature::from_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*sig, got);
     }
 }
@@ -114,7 +118,8 @@ fn test_cose_signature_decode_noncanonical() {
     ))
     .unwrap();
     let sig = CoseSignature::default();
-    let got = CoseSignature::from_slice(&sig_data).unwrap();
+    let mut got = CoseSignature::from_slice(&sig_data).unwrap();
+    got.protected.original_data = None;
     assert_eq!(sig, got);
 }
 
@@ -221,11 +226,14 @@ fn test_cose_signature_builder() {
                 )
                 .build(),
             CoseSignature {
-                protected: Header {
-                    alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
-                    key_id: vec![1, 2, 3],
-                    iv: vec![1, 2, 3],
-                    ..Default::default()
+                protected: ProtectedHeader {
+                    original_data: None,
+                    header: Header {
+                        alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
+                        key_id: vec![1, 2, 3],
+                        iv: vec![1, 2, 3],
+                        ..Default::default()
+                    },
                 },
                 signature: vec![1, 2, 3],
                 ..Default::default()
@@ -371,7 +379,11 @@ fn test_cose_sign_encode() {
         let got = sign.clone().to_vec().unwrap();
         assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseSign::from_slice(&got).unwrap();
+        let mut got = CoseSign::from_slice(&got).unwrap();
+        got.protected.original_data = None;
+        for mut sig in &mut got.signatures {
+            sig.protected.original_data = None;
+        }
         assert_eq!(*sign, got);
 
         // Repeat with tagged variant.
@@ -379,7 +391,11 @@ fn test_cose_sign_encode() {
         let tagged_sign_data = format!("d862{}", sign_data);
         assert_eq!(tagged_sign_data, hex::encode(&got), "tagged case {}", i);
 
-        let got = CoseSign::from_tagged_slice(&got).unwrap();
+        let mut got = CoseSign::from_tagged_slice(&got).unwrap();
+        got.protected.original_data = None;
+        for mut sig in &mut got.signatures {
+            sig.protected.original_data = None;
+        }
         assert_eq!(*sign, got);
     }
 }
@@ -727,7 +743,14 @@ fn test_rfc8152_cose_sign_decode() {
             sign
         );
 
-        let got = CoseSign::from_tagged_slice(&got).unwrap();
+        let mut got = CoseSign::from_tagged_slice(&got).unwrap();
+        got.protected.original_data = None;
+        for mut sig in &mut got.signatures {
+            sig.protected.original_data = None;
+        }
+        for mut sig in &mut got.unprotected.counter_signatures {
+            sig.protected.original_data = None;
+        }
         assert_eq!(*sign, got);
     }
 }
@@ -803,7 +826,8 @@ fn test_cose_sign1_encode() {
         let got = sign.clone().to_vec().unwrap();
         assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseSign1::from_slice(&got).unwrap();
+        let mut got = CoseSign1::from_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*sign, got);
 
         // Repeat with tagged variant.
@@ -811,7 +835,8 @@ fn test_cose_sign1_encode() {
         let want_hex = format!("d2{}", sign_data);
         assert_eq!(want_hex, hex::encode(&got), "tagged case {}", i);
 
-        let got = CoseSign1::from_tagged_slice(&got).unwrap();
+        let mut got = CoseSign1::from_tagged_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*sign, got);
     }
 }
@@ -938,13 +963,15 @@ fn test_cose_sign1_decode_noncanonical() {
     )];
     for (sign, sign_data) in tests.iter() {
         let data = hex::decode(sign_data).unwrap();
-        let got = CoseSign1::from_slice(&data).unwrap();
+        let mut got = CoseSign1::from_slice(&data).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*sign, got);
 
         // Repeat with tagged variant.
         let mut tagged_data = vec![0xd2];
         tagged_data.extend_from_slice(&data);
-        let got = CoseSign1::from_tagged_slice(&tagged_data).unwrap();
+        let mut got = CoseSign1::from_tagged_slice(&tagged_data).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*sign, got);
     }
 }
@@ -1060,7 +1087,8 @@ fn test_rfc8152_cose_sign1_decode() {
         let got = sign.clone().to_tagged_vec().unwrap();
         assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseSign1::from_tagged_slice(&got).unwrap();
+        let mut got = CoseSign1::from_tagged_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*sign, got);
     }
 }
@@ -1068,6 +1096,7 @@ fn test_rfc8152_cose_sign1_decode() {
 #[derive(Copy, Clone)]
 struct FakeSigner {}
 
+extern crate std;
 impl FakeSigner {
     fn sign(&self, data: &[u8]) -> Vec<u8> {
         data.to_vec()
@@ -1131,15 +1160,91 @@ fn test_sign_roundtrip() {
 
     // Changing a protected header invalidates the signature.
     let mut sign2 = sign.clone();
-    sign2.protected = Header::default();
+    sign2.protected = ProtectedHeader::default();
     assert!(sign2
         .verify_signature(0, aad, |sig, data| verifier.verify(sig, data))
         .is_err());
     let mut sign3 = sign;
-    sign3.signatures[0].protected = Header::default();
+    sign3.signatures[0].protected = ProtectedHeader::default();
     assert!(sign2
         .verify_signature(0, aad, |sig, data| verifier.verify(sig, data))
         .is_err());
+}
+
+#[test]
+fn test_sign_noncanonical() {
+    let signer = FakeSigner {};
+    let verifier = signer;
+    let pt = b"aa";
+    let aad = b"bb";
+
+    let tests = vec![
+        // Non-canonical: empty map can just be an empty bstr, not a bstr holding an empty map.
+        ("a0", Header::default()),
+        // Non-canonical: the map length (of 0) is non-minimally encoded as the 0x00 following
+        // 0xb8; it is short enough that it would normally be folded into the type byte
+        // (0xa0).
+        ("b800", Header::default()),
+        // Non-canonical: map not in canonical order.
+        (
+            concat!(
+                "a2", // 2-map
+                // The contents of the bstr-encoded header are not in canonical order.
+                "04", "42", "3131", // 4 (kid) => 2-bstr "11"
+                "01", "26", // 1 (alg) => ES256
+            ),
+            HeaderBuilder::new()
+                .algorithm(iana::Algorithm::ES256)
+                .key_id(vec![0x31, 0x31])
+                .build(),
+        ),
+    ];
+
+    for (protected_data, header) in tests {
+        // Build a protected header from a non-canonically encoded input.
+        let protected_data = hex::decode(protected_data).unwrap();
+        let protected =
+            ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data.clone())).unwrap();
+        assert_eq!(protected.header, header);
+        assert_eq!(protected.original_data, Some(protected_data));
+
+        // Build a signature whose inputs include the non-canonically encoded protected header.
+        let mut sign = CoseSign {
+            payload: Some(pt.to_vec()),
+            protected: protected.clone(),
+            ..Default::default()
+        };
+        let mut sig = CoseSignature {
+            protected: protected.clone(),
+            ..Default::default()
+        };
+        sig.protected = protected.clone();
+        sig.signature = signer.sign(&sign.tbs_data(aad, &sig));
+        sign.signatures.push(sig.clone());
+        let sign_data = sign.to_vec().unwrap();
+
+        // Parsing and verifying this signature should still succeed, because the `ProtectedHeader`
+        // includes the wire data and uses it for building the signature input.
+        let sign = CoseSign::from_slice(&sign_data).unwrap();
+        assert!(sign
+            .verify_signature(0, aad, |sig, data| verifier.verify(sig, data))
+            .is_ok());
+
+        // However, if we attempt to build the same signature inputs by hand (thus not including the
+        // non-canonical wire data)...
+        let recreated_sign = CoseSignBuilder::new()
+            .protected(protected.header)
+            .payload(pt.to_vec())
+            .add_signature(sig)
+            .build();
+
+        // ...then the transplanted signature will not verify, because the re-building of the
+        // signature inputs will use the canonical encoding of the protected header, which
+        // is not what was originally used for the signature input.
+        assert!(recreated_sign
+            .verify_signature(0, aad, |sig, data| verifier.verify(sig, data))
+            .is_err());
+    }
 }
 
 #[test]
@@ -1241,7 +1346,8 @@ fn test_sign1_roundtrip() {
         .is_err());
 
     // Changing a protected header invalidates the signature.
-    sign1.protected.content_type = Some(ContentType::Text("text/plain".to_owned()));
+    sign1.protected.original_data = None;
+    sign1.protected.header.content_type = Some(ContentType::Text("text/plain".to_owned()));
     assert!(sign1
         .verify_signature(aad, |sig, data| verifier.verify(sig, data))
         .is_err());
@@ -1270,4 +1376,46 @@ fn test_sign1_create_result() {
         .payload(pt.to_vec())
         .try_create_signature(aad, |pt| signer.fail_sign(pt));
     expect_err(result, "failed");
+}
+
+#[test]
+fn test_sign1_noncanonical() {
+    let signer = FakeSigner {};
+    let verifier = signer;
+    let pt = b"aa";
+    let aad = b"bb";
+
+    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
+    assert_eq!(protected.header, Header::default());
+    assert_eq!(protected.original_data, Some(vec![0xa0]));
+
+    // Build a signature whose inputs include the non-canonically encoded protected header.
+    let mut sign1 = CoseSign1::default();
+    sign1.payload = Some(pt.to_vec());
+    sign1.protected = protected.clone();
+    sign1.signature = signer.sign(&sign1.tbs_data(aad));
+    let sign1_data = sign1.to_vec().unwrap();
+
+    // Parsing and verifying this signature should still succeed, because the `ProtectedHeader`
+    // includes the wire data and uses it for building the signature input.
+    let sign1 = CoseSign1::from_slice(&sign1_data).unwrap();
+    assert!(sign1
+        .verify_signature(aad, |sig, data| verifier.verify(sig, data))
+        .is_ok());
+
+    // However, if we attempt to build the same signature inputs by hand (thus not including the
+    // non-canonical wire data)...
+    let recreated_sign1 = CoseSign1Builder::new()
+        .protected(protected.header)
+        .payload(pt.to_vec())
+        .signature(sign1.signature)
+        .build();
+
+    // ...then the transplanted signature will not verify, because the re-building of the signature
+    // inputs will use the canonical encoding of the protected header, which is not what was
+    // originally used for the signature input.
+    assert!(recreated_sign1
+        .verify_signature(aad, |sig, data| verifier.verify(sig, data))
+        .is_err());
 }

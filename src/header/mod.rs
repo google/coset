@@ -71,30 +71,6 @@ pub struct Header {
 }
 
 impl Header {
-    /// Constructor from a [`Value`] that holds a `bstr` encoded header.
-    #[inline]
-    pub fn from_cbor_bstr(val: Value) -> Result<Self, CoseError> {
-        let data = match val {
-            Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, "bstr encoded map"),
-        };
-        if data.is_empty() {
-            return Ok(Self::default());
-        }
-        Header::from_slice(&data)
-    }
-
-    /// Convert this header to a `bstr` encoded map, as a [`Value`], consuming the object along the
-    /// way.
-    #[inline]
-    pub fn cbor_bstr(self) -> Result<Value, CoseError> {
-        Ok(Value::Bytes(if self.is_empty() {
-            vec![]
-        } else {
-            self.to_vec()?
-        }))
-    }
-
     /// Indicate whether the `Header` is empty.
     pub fn is_empty(&self) -> bool {
         self.alg.is_none()
@@ -406,5 +382,71 @@ impl HeaderBuilder {
     pub fn text_value(mut self, label: String, value: Value) -> Self {
         self.0.rest.push((Label::Text(label), value));
         self
+    }
+}
+
+/// Structure representing a protected COSE header map.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ProtectedHeader {
+    /// If this structure was created by parsing serialized data, this field
+    /// holds the entire contents of the original `bstr` data.
+    pub original_data: Option<Vec<u8>>,
+    /// Parsed header information.
+    pub header: Header,
+}
+
+impl ProtectedHeader {
+    /// Constructor from a [`Value`] that holds a `bstr` encoded header.
+    #[inline]
+    pub fn from_cbor_bstr(val: Value) -> Result<Self, CoseError> {
+        let data = match val {
+            Value::Bytes(b) => b,
+            v => return cbor_type_error(&v, "bstr encoded map"),
+        };
+        let header = if data.is_empty() {
+            // An empty bstr is used as a short cut for an empty header map.
+            Header::default()
+        } else {
+            Header::from_slice(&data)?
+        };
+        Ok(ProtectedHeader {
+            original_data: Some(data),
+            header,
+        })
+    }
+
+    /// Convert this header to a `bstr` encoded map, as a [`Value`], consuming the object along the
+    /// way.
+    #[inline]
+    pub fn cbor_bstr(self) -> Result<Value, CoseError> {
+        Ok(Value::Bytes(
+            if let Some(original_data) = self.original_data {
+                original_data
+            } else if self.is_empty() {
+                vec![]
+            } else {
+                self.to_vec()?
+            },
+        ))
+    }
+
+    /// Indicate whether the `ProtectedHeader` is empty.
+    pub fn is_empty(&self) -> bool {
+        self.header.is_empty()
+    }
+}
+
+impl crate::CborSerializable for ProtectedHeader {}
+
+impl AsCborValue for ProtectedHeader {
+    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+        Ok(ProtectedHeader {
+            original_data: None,
+            header: Header::from_cbor_value(value)?,
+        })
+    }
+
+    fn to_cbor_value(self) -> Result<Value, CoseError> {
+        self.header.to_cbor_value()
     }
 }

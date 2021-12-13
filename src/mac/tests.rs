@@ -55,7 +55,8 @@ fn test_cose_mac_decode() {
         let got = mac.clone().to_vec().unwrap();
         assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseMac::from_slice(&got).unwrap();
+        let mut got = CoseMac::from_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*mac, got);
     }
 }
@@ -348,7 +349,14 @@ fn test_rfc8152_cose_mac_decode() {
         let got = mac.clone().to_tagged_vec().unwrap();
         assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseMac::from_tagged_slice(&got).unwrap();
+        let mut got = CoseMac::from_tagged_slice(&got).unwrap();
+        got.protected.original_data = None;
+        for mut recip in &mut got.recipients {
+            recip.protected.original_data = None;
+        }
+        for mut sig in &mut got.unprotected.counter_signatures {
+            sig.protected.original_data = None;
+        }
         assert_eq!(*mac, got);
     }
 }
@@ -381,7 +389,8 @@ fn test_cose_mac0_decode() {
         let got = mac.clone().to_vec().unwrap();
         assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseMac0::from_slice(&got).unwrap();
+        let mut got = CoseMac0::from_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*mac, got);
     }
 }
@@ -485,7 +494,8 @@ fn test_rfc8152_cose_mac0_decode() {
         let got = mac.clone().to_tagged_vec().unwrap();
         assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseMac0::from_tagged_slice(&got).unwrap();
+        let mut got = CoseMac0::from_tagged_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*mac, got);
     }
 }
@@ -540,8 +550,48 @@ fn test_cose_mac_roundtrip() {
         .is_err());
 
     // Changing a protected header invalidates the tag.
-    mac.protected = Header::default();
+    mac.protected = ProtectedHeader::default();
     assert!(mac
+        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .is_err());
+}
+
+#[test]
+fn test_cose_mac_noncanonical() {
+    let tagger = FakeMac {};
+    let external_aad = b"aad";
+
+    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
+    assert_eq!(protected.header, Header::default());
+    assert_eq!(protected.original_data, Some(vec![0xa0]));
+
+    let mut mac = CoseMac {
+        protected: protected.clone(),
+        payload: Some(b"data".to_vec()),
+        ..Default::default()
+    };
+    let tbm = mac.tbm(external_aad);
+    mac.tag = tagger.compute(&tbm);
+
+    // Checking the MAC should still succeed, because the `ProtectedHeader`
+    // includes the wire data and uses it for building the input.
+    assert!(mac
+        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .is_ok());
+
+    // However, if we attempt to build the same decryption inputs by hand (thus not including the
+    // non-canonical wire data)...
+    let recreated_mac = CoseMacBuilder::new()
+        .protected(protected.header)
+        .payload(b"data".to_vec())
+        .tag(mac.tag)
+        .build();
+
+    // ...then the transplanted tag will not verify, because the re-building of the
+    // inputs will use the canonical encoding of the protected header, which is not what was
+    // originally used for the input.
+    assert!(recreated_mac
         .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
         .is_err());
 }
@@ -619,8 +669,48 @@ fn test_cose_mac0_roundtrip() {
         .is_err());
 
     // Changing a protected header invalidates the tag.
-    mac.protected = Header::default();
+    mac.protected = ProtectedHeader::default();
     assert!(mac
+        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .is_err());
+}
+
+#[test]
+fn test_cose_mac0_noncanonical() {
+    let tagger = FakeMac {};
+    let external_aad = b"aad";
+
+    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
+    assert_eq!(protected.header, Header::default());
+    assert_eq!(protected.original_data, Some(vec![0xa0]));
+
+    let mut mac = CoseMac0 {
+        protected: protected.clone(),
+        payload: Some(b"data".to_vec()),
+        ..Default::default()
+    };
+    let tbm = mac.tbm(external_aad);
+    mac.tag = tagger.compute(&tbm);
+
+    // Checking the MAC should still succeed, because the `ProtectedHeader`
+    // includes the wire data and uses it for building the input.
+    assert!(mac
+        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .is_ok());
+
+    // However, if we attempt to build the same decryption inputs by hand (thus not including the
+    // non-canonical wire data)...
+    let recreated_mac = CoseMac0Builder::new()
+        .protected(protected.header)
+        .payload(b"data".to_vec())
+        .tag(mac.tag)
+        .build();
+
+    // ...then the transplanted tag will not verify, because the re-building of the
+    // inputs will use the canonical encoding of the protected header, which is not what was
+    // originally used for the input.
+    assert!(recreated_mac
         .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
         .is_err());
 }

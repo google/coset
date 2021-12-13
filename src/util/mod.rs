@@ -104,3 +104,18 @@ macro_rules! builder_set_optional {
         }
     };
 }
+
+/// Add a setter function that fills out a `ProtectedHeader` from `Header` contents.
+macro_rules! builder_set_protected {
+    ( $name:ident ) => {
+        /// Set the associated field.
+        #[must_use]
+        pub fn $name(mut self, hdr: $crate::Header) -> Self {
+            self.0.$name = $crate::ProtectedHeader {
+                original_data: None,
+                header: hdr,
+            };
+            self
+        }
+    };
+}

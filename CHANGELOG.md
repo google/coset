@@ -9,6 +9,9 @@
     - Drop `derive` of `Eq` for data types (`ciborium` supports float values, which are inherently non-`Eq`)
     - Add `#[must_use]` attributes to builder methods.
     - Update MSRV to 1.56.0, as `ciborium` is `edition=2021`
+- Use new `ProtectedHeader` type for protected headers (breaking change).  This variant of `Header` preserves any
+  originally-parsed data, so that calculations (signatures, decryption, etc.) over the data can use the bit-for-bit wire
+  data instead of a reconstituted (and potentially different) version.
 
 ## 0.2.0 - 2021-12-09
 

@@ -86,7 +86,8 @@
 //!     .is_err());
 //!
 //! // Changing a protected header invalidates the signature.
-//! sign1.protected.content_type = Some(coset::ContentType::Text("text/plain".to_owned()));
+//! sign1.protected.original_data = None;
+//! sign1.protected.header.content_type = Some(coset::ContentType::Text("text/plain".to_owned()));
 //! assert!(sign1
 //!     .verify_signature(aad, |sig, data| verifier.verify(sig, data))
 //!     .is_err());
