@@ -16,7 +16,7 @@
 
 use super::*;
 use crate::{
-    cbor::values::{SimpleValue, Value},
+    cbor::value::Value,
     util::expect_err,
 };
 use alloc::{borrow::ToOwned, boxed::Box, vec};
@@ -24,17 +24,16 @@ use alloc::{borrow::ToOwned, boxed::Box, vec};
 #[test]
 fn test_cbor_type_error() {
     let cases = vec![
-        (Value::Simple(SimpleValue::NullValue), "null"),
-        (Value::Simple(SimpleValue::TrueValue), "true"),
-        (Value::Simple(SimpleValue::FalseValue), "false"),
-        (Value::Simple(SimpleValue::Undefined), "undefined"),
-        (Value::Unsigned(128), "uint"),
-        (Value::Negative(-1), "nint"),
-        (Value::ByteString(vec![1, 2]), "bstr"),
-        (Value::TextString("string".to_owned()), "tstr"),
-        (Value::Array(vec![Value::Unsigned(0)]), "array"),
+        (Value::Null, "null"),
+        (Value::Bool(true), "true"),
+        (Value::Bool(false), "false"),
+        (Value::from(128), "uint"),
+        (Value::from(-1), "nint"),
+        (Value::Bytes(vec![1, 2]), "bstr"),
+        (Value::Text("string".to_owned()), "tstr"),
+        (Value::Array(vec![Value::from(0)]), "array"),
         (Value::Map(vec![]), "map"),
-        (Value::Tag(1, Box::new(Value::Unsigned(0))), "tag"),
+        (Value::Tag(1, Box::new(Value::from(0))), "tag"),
     ];
     for (val, want) in cases {
         let e = cbor_type_error::<()>(&val, "a");

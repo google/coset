@@ -289,6 +289,7 @@ fn test_registered_label_with_private_decode_fail() {
     }
 }
 
+// FIXME
 // The most negative integer value that can be encoded in CBOR is:
 //    0x3B (0b001_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
 // which is -18_446_744_073_709_551_616 (-1 - 18_446_744_073_709_551_615).
@@ -297,6 +298,7 @@ fn test_registered_label_with_private_decode_fail() {
 // `Value::Negative(i64)`, which cannot hold this value
 const CBOR_NINT_MIN_HEX: &str = "3bffffffffffffffff";
 
+// FIXME
 // The largest positive integer value that can be encoded in CBOR is:
 //    0x1B (0b000_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
 // which is 18_446_744_073_709_551_615.

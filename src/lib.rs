@@ -100,7 +100,7 @@
 extern crate alloc;
 
 /// Re-export of the `sk-cbor` crate used for underlying CBOR encoding.
-pub use sk_cbor as cbor;
+pub use ciborium as cbor;
 
 #[macro_use]
 pub(crate) mod util;

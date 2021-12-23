@@ -17,7 +17,7 @@
 //! COSE Headers functionality.
 
 use crate::{
-    cbor::values::Value,
+    cbor::value::Value,
     iana,
     iana::EnumI64,
     util::{cbor_type_error, AsCborValue},
@@ -49,7 +49,7 @@ pub type ContentType = crate::RegisteredLabel<iana::CoapContentFormat>;
 ///       ? 7 => COSE_Signature / [+COSE_Signature] ; Counter signature
 ///   )
 ///  ```
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Header {
     /// Cryptographic algorithm to use
     pub alg: Option<Algorithm>,
@@ -75,7 +75,7 @@ impl Header {
     #[inline]
     pub fn from_cbor_bstr(val: Value) -> Result<Self, CoseError> {
         let data = match val {
-            Value::ByteString(b) => b,
+            Value::Bytes(b) => b,
             v => return cbor_type_error(&v, "bstr encoded map"),
         };
         if data.is_empty() {
@@ -88,7 +88,7 @@ impl Header {
     /// way.
     #[inline]
     pub fn cbor_bstr(self) -> Result<Value, CoseError> {
-        Ok(Value::ByteString(if self.is_empty() {
+        Ok(Value::Bytes(if self.is_empty() {
             vec![]
         } else {
             self.to_vec()?
@@ -110,13 +110,13 @@ impl Header {
 
 impl crate::CborSerializable for Header {}
 
-const ALG: Value = Value::Unsigned(iana::HeaderParameter::Alg as u64);
-const CRIT: Value = Value::Unsigned(iana::HeaderParameter::Crit as u64);
-const CONTENT_TYPE: Value = Value::Unsigned(iana::HeaderParameter::ContentType as u64);
-const KID: Value = Value::Unsigned(iana::HeaderParameter::Kid as u64);
-const IV: Value = Value::Unsigned(iana::HeaderParameter::Iv as u64);
-const PARTIAL_IV: Value = Value::Unsigned(iana::HeaderParameter::PartialIv as u64);
-const COUNTER_SIG: Value = Value::Unsigned(iana::HeaderParameter::CounterSignature as u64);
+fn ALG() -> Value { Value::from(iana::HeaderParameter::Alg as u64) }
+fn CRIT() -> Value { Value::from(iana::HeaderParameter::Crit as u64) }
+fn CONTENT_TYPE() -> Value { Value::from(iana::HeaderParameter::ContentType as u64) }
+fn KID() -> Value { Value::from(iana::HeaderParameter::Kid as u64) }
+fn IV() -> Value { Value::from(iana::HeaderParameter::Iv as u64) }
+fn PARTIAL_IV() -> Value { Value::from(iana::HeaderParameter::PartialIv as u64) }
+fn COUNTER_SIG() -> Value { Value::from(iana::HeaderParameter::CounterSignature as u64) }
 
 impl AsCborValue for Header {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
@@ -128,9 +128,9 @@ impl AsCborValue for Header {
         let mut headers = Self::default();
         for (label, value) in m.into_iter() {
             match label {
-                x if x == ALG => headers.alg = Some(Algorithm::from_cbor_value(value)?),
+                x if x == ALG() => headers.alg = Some(Algorithm::from_cbor_value(value)?),
 
-                x if x == CRIT => match value {
+                x if x == CRIT() => match value {
                     Value::Array(a) => {
                         if a.is_empty() {
                             return Err(CoseError::UnexpectedType(
@@ -147,7 +147,7 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, "array value"),
                 },
 
-                x if x == CONTENT_TYPE => {
+                x if x == CONTENT_TYPE() => {
                     headers.content_type = Some(ContentType::from_cbor_value(value)?);
                     if let Some(ContentType::Text(text)) = &headers.content_type {
                         if text.is_empty() {
@@ -170,8 +170,8 @@ impl AsCborValue for Header {
                     }
                 }
 
-                x if x == KID => match value {
-                    Value::ByteString(v) => {
+                x if x == KID() => match value {
+                    Value::Bytes(v) => {
                         if v.is_empty() {
                             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
                         }
@@ -180,8 +180,8 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, "bstr value"),
                 },
 
-                x if x == IV => match value {
-                    Value::ByteString(v) => {
+                x if x == IV() => match value {
+                    Value::Bytes(v) => {
                         if v.is_empty() {
                             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
                         }
@@ -190,8 +190,8 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, "bstr value"),
                 },
 
-                x if x == PARTIAL_IV => match value {
-                    Value::ByteString(v) => {
+                x if x == PARTIAL_IV() => match value {
+                    Value::Bytes(v) => {
                         if v.is_empty() {
                             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
                         }
@@ -199,7 +199,7 @@ impl AsCborValue for Header {
                     }
                     v => return cbor_type_error(&v, "bstr value"),
                 },
-                x if x == COUNTER_SIG => match value {
+                x if x == COUNTER_SIG() => match value {
                     Value::Array(sig_or_sigs) => {
                         if sig_or_sigs.is_empty() {
                             return Err(CoseError::UnexpectedType(
@@ -215,7 +215,7 @@ impl AsCborValue for Header {
                         // - If it's a bstr, sig_or_sigs is a single signature.
                         // - If it's an array, sig_or_sigs is an array of signatures
                         match &sig_or_sigs[0] {
-                            Value::ByteString(_) => headers
+                            Value::Bytes(_) => headers
                                 .counter_signatures
                                 .push(CoseSignature::from_cbor_value(Value::Array(sig_or_sigs))?),
                             Value::Array(_) => {
@@ -251,32 +251,32 @@ impl AsCborValue for Header {
     fn to_cbor_value(mut self) -> Result<Value, CoseError> {
         let mut map = Vec::<(Value, Value)>::new();
         if let Some(alg) = self.alg {
-            map.push((ALG, alg.to_cbor_value()?));
+            map.push((ALG(), alg.to_cbor_value()?));
         }
         if !self.crit.is_empty() {
             let mut arr = Vec::new();
             for c in self.crit {
                 arr.push(c.to_cbor_value()?);
             }
-            map.push((CRIT, Value::Array(arr)));
+            map.push((CRIT(), Value::Array(arr)));
         }
         if let Some(content_type) = self.content_type {
-            map.push((CONTENT_TYPE, content_type.to_cbor_value()?));
+            map.push((CONTENT_TYPE(), content_type.to_cbor_value()?));
         }
         if !self.key_id.is_empty() {
-            map.push((KID, Value::ByteString(self.key_id)));
+            map.push((KID(), Value::Bytes(self.key_id)));
         }
         if !self.iv.is_empty() {
-            map.push((IV, Value::ByteString(self.iv)));
+            map.push((IV(), Value::Bytes(self.iv)));
         }
         if !self.partial_iv.is_empty() {
-            map.push((PARTIAL_IV, Value::ByteString(self.partial_iv)));
+            map.push((PARTIAL_IV(), Value::Bytes(self.partial_iv)));
         }
         if !self.counter_signatures.is_empty() {
             if self.counter_signatures.len() == 1 {
                 // A single counter signature is encoded differently.
                 map.push((
-                    COUNTER_SIG,
+                    COUNTER_SIG(),
                     self.counter_signatures.remove(0).to_cbor_value()?,
                 ));
             } else {
@@ -284,7 +284,7 @@ impl AsCborValue for Header {
                 for cs in self.counter_signatures {
                     arr.push(cs.to_cbor_value()?);
                 }
-                map.push((COUNTER_SIG, Value::Array(arr)));
+                map.push((COUNTER_SIG(), Value::Array(arr)));
             }
         }
         for (label, value) in self.rest.into_iter() {

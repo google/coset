@@ -16,7 +16,7 @@
 
 use super::*;
 use crate::{
-    cbor::Value, iana, util::expect_err, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
+    cbor::value::Value, iana, util::expect_err, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
     CoseSignatureBuilder, HeaderBuilder, TaggedCborSerializable,
 };
 use alloc::{
@@ -321,7 +321,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                                    HeaderBuilder::new()
                                        .key_id(b"our-secret".to_vec())
                                        .value(iana::HeaderAlgorithmParameter::Salt as i64,
-                                              Value::ByteString(b"aabbccddeeffgghh".to_vec()))
+                                              Value::Bytes(b"aabbccddeeffgghh".to_vec()))
                                        .build())
                                .ciphertext(vec![])
                                .build())
@@ -426,11 +426,11 @@ fn test_rfc8152_cose_encrypt_decode() {
                                             .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                             .value(
                                                 iana::HeaderAlgorithmParameter::StaticKeyId as i64,
-                                                Value::ByteString(b"peregrin.took@tuckborough.example".to_vec())
+                                                Value::Bytes(b"peregrin.took@tuckborough.example".to_vec())
                                             )
                                             .value(
                                                 iana::HeaderAlgorithmParameter::PartyUNonce as i64,
-                                                Value::ByteString(hex::decode("0101").unwrap())
+                                                Value::Bytes(hex::decode("0101").unwrap())
                                             )
                                             .build())
                                .ciphertext(hex::decode("41e0d76f579dbd0d936a662d54d8582037de2e366fde1c62").unwrap())

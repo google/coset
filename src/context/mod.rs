@@ -17,7 +17,7 @@
 //! COSE_KDF_Context functionality.
 
 use crate::{
-    cbor::{SimpleValue, Value},
+    cbor::value::Value,
     iana,
     util::{cbor_type_error, AsCborValue},
     Algorithm, CoseError, Header,
@@ -66,23 +66,22 @@ impl AsCborValue for PartyInfo {
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
             other: match a.remove(2) {
-                Value::Simple(SimpleValue::NullValue) => None,
-                Value::ByteString(b) => Some(b),
+                Value::Null => None,
+                Value::Bytes(b) => Some(b),
                 v => return cbor_type_error(&v, "bstr / nil"),
             },
             nonce: match a.remove(1) {
-                Value::Simple(SimpleValue::NullValue) => None,
-                Value::ByteString(b) => Some(Nonce::Bytes(b)),
-                Value::Unsigned(u) => Some(Nonce::Integer(
+                Value::Null => None,
+                Value::Bytes(b) => Some(Nonce::Bytes(b)),
+                Value::Integer(u) => Some(Nonce::Integer(
                     u.try_into()
                         .map_err(|_| CoseError::UnexpectedType("u64", "u63"))?,
                 )),
-                Value::Negative(i) => Some(Nonce::Integer(i)),
                 v => return cbor_type_error(&v, "bstr / int / nil"),
             },
             identity: match a.remove(0) {
-                Value::Simple(SimpleValue::NullValue) => None,
-                Value::ByteString(b) => Some(b),
+                Value::Null => None,
+                Value::Bytes(b) => Some(b),
                 v => return cbor_type_error(&v, "bstr / nil"),
             },
         })
@@ -91,19 +90,17 @@ impl AsCborValue for PartyInfo {
     fn to_cbor_value(self) -> Result<Value, CoseError> {
         Ok(Value::Array(vec![
             match self.identity {
-                None => Value::Simple(SimpleValue::NullValue),
-                Some(b) => Value::ByteString(b),
+                None => Value::Null,
+                Some(b) => Value::Bytes(b),
             },
             match self.nonce {
-                None => Value::Simple(SimpleValue::NullValue),
-                Some(Nonce::Bytes(b)) => Value::ByteString(b),
-                Some(Nonce::Integer(i)) if i < 0 => Value::Negative(i),
-                Some(Nonce::Integer(i)) => Value::Unsigned(i as u64), /* safe: i64 value that is
-                                                                       * >=0 fits in u64 */
+                None => Value::Null,
+                Some(Nonce::Bytes(b)) => Value::Bytes(b),
+                Some(Nonce::Integer(i)) => Value::from(i),
             },
             match self.other {
-                None => Value::Simple(SimpleValue::NullValue),
-                Some(b) => Value::ByteString(b),
+                None => Value::Null,
+                Some(b) => Value::Bytes(b),
             },
         ]))
     }
@@ -129,7 +126,7 @@ impl PartyInfoBuilder {
 ///      ? other : bstr
 ///  ],
 ///  ```
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct SuppPubInfo {
     pub key_data_length: u64,
     pub protected: Header,
@@ -156,7 +153,7 @@ impl AsCborValue for SuppPubInfo {
             other: {
                 if a.len() == 3 {
                     match a.remove(2) {
-                        Value::ByteString(b) => Some(b),
+                        Value::Bytes(b) => Some(b),
                         v => return cbor_type_error(&v, "bstr"),
                     }
                 } else {
@@ -165,7 +162,7 @@ impl AsCborValue for SuppPubInfo {
             },
             protected: Header::from_cbor_bstr(a.remove(1))?,
             key_data_length: match a.remove(0) {
-                Value::Unsigned(u) => u,
+                Value::Integer(u) => u.try_into().map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
                 v => return cbor_type_error(&v, "uint"),
             },
         })
@@ -173,11 +170,11 @@ impl AsCborValue for SuppPubInfo {
 
     fn to_cbor_value(self) -> Result<Value, CoseError> {
         let mut v = vec![
-            Value::Unsigned(self.key_data_length),
+            Value::from(self.key_data_length),
             self.protected.cbor_bstr()?,
         ];
         if let Some(other) = self.other {
-            v.push(Value::ByteString(other));
+            v.push(Value::Bytes(other));
         }
         Ok(Value::Array(v))
     }
@@ -208,7 +205,7 @@ impl SuppPubInfoBuilder {
 ///      ? SuppPrivInfo : bstr
 ///  ]
 /// ```
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseKdfContext {
     algorithm_id: Algorithm,
     party_u_info: PartyInfo,
@@ -236,7 +233,7 @@ impl AsCborValue for CoseKdfContext {
         let mut supp_priv_info = Vec::with_capacity(a.len() - 4);
         for i in (4..a.len()).rev() {
             let b = match a.remove(i) {
-                Value::ByteString(b) => b,
+                Value::Bytes(b) => b,
                 v => return cbor_type_error(&v, "bstr"),
             };
             supp_priv_info.push(b);
@@ -260,7 +257,7 @@ impl AsCborValue for CoseKdfContext {
             self.supp_pub_info.to_cbor_value()?,
         ];
         for supp_priv_info in self.supp_priv_info {
-            v.push(Value::ByteString(supp_priv_info));
+            v.push(Value::Bytes(supp_priv_info));
         }
         Ok(Value::Array(v))
     }
