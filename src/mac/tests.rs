@@ -16,7 +16,7 @@
 
 use super::*;
 use crate::{
-    cbor::values::Value, util::expect_err, CborSerializable, ContentType, CoseKeyBuilder,
+    cbor::value::Value, util::expect_err, CborSerializable, ContentType, CoseKeyBuilder,
     CoseRecipientBuilder, HeaderBuilder, TaggedCborSerializable,
 };
 use alloc::{
@@ -206,11 +206,11 @@ fn test_rfc8152_cose_mac_decode() {
                                 .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                 .value(
                                     iana::HeaderAlgorithmParameter::StaticKeyId as i64,
-                                    Value::ByteString(b"peregrin.took@tuckborough.example".to_vec())
+                                    Value::Bytes(b"peregrin.took@tuckborough.example".to_vec())
                                 )
                                 .value(
                                     iana::HeaderAlgorithmParameter::PartyUNonce as i64,
-                                    Value::ByteString(hex::decode("4d8553e7e74f3c6a3a9dd3ef286a8195cbf8a23d19558ccfec7d34b824f42d92bd06bd2c7f0271f0214e141fb779ae2856abf585a58368b017e7f2a9e5ce4db5").unwrap())
+                                    Value::Bytes(hex::decode("4d8553e7e74f3c6a3a9dd3ef286a8195cbf8a23d19558ccfec7d34b824f42d92bd06bd2c7f0271f0214e141fb779ae2856abf585a58368b017e7f2a9e5ce4db5").unwrap())
                                 )
                                 .build(),
                         )

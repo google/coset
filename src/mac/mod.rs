@@ -18,7 +18,7 @@
 
 use crate::{
     cbor,
-    cbor::values::{SimpleValue, Value},
+    cbor::value::Value,
     iana,
     util::{cbor_type_error, AsCborValue},
     CborSerializable, CoseError, CoseRecipient, Header,
@@ -38,7 +38,7 @@ mod tests;
 ///     recipients :[+COSE_recipient]
 ///  ]
 /// ```
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseMac {
     pub protected: Header,
     pub unprotected: Header,
@@ -76,12 +76,12 @@ impl AsCborValue for CoseMac {
         Ok(Self {
             recipients,
             tag: match a.remove(3) {
-                Value::ByteString(b) => b,
+                Value::Bytes(b) => b,
                 v => return cbor_type_error(&v, "bstr"),
             },
             payload: match a.remove(2) {
-                Value::ByteString(b) => Some(b),
-                Value::Simple(SimpleValue::NullValue) => None,
+                Value::Bytes(b) => Some(b),
+                Value::Null => None,
                 v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
@@ -94,10 +94,10 @@ impl AsCborValue for CoseMac {
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
             match self.payload {
-                None => Value::Simple(SimpleValue::NullValue),
-                Some(b) => Value::ByteString(b),
+                None => Value::Null,
+                Some(b) => Value::Bytes(b),
             },
-            Value::ByteString(self.tag),
+            Value::Bytes(self.tag),
         ];
         let mut arr = Vec::new();
         for r in self.recipients {
@@ -195,7 +195,7 @@ impl CoseMacBuilder {
 ///     tag : bstr,
 ///  ]
 /// ```
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseMac0 {
     pub protected: Header,
     pub unprotected: Header,
@@ -222,12 +222,12 @@ impl AsCborValue for CoseMac0 {
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
             tag: match a.remove(3) {
-                Value::ByteString(b) => b,
+                Value::Bytes(b) => b,
                 v => return cbor_type_error(&v, "bstr"),
             },
             payload: match a.remove(2) {
-                Value::ByteString(b) => Some(b),
-                Value::Simple(SimpleValue::NullValue) => None,
+                Value::Bytes(b) => Some(b),
+                Value::Null => None,
                 v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
@@ -240,10 +240,10 @@ impl AsCborValue for CoseMac0 {
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
             match self.payload {
-                None => Value::Simple(SimpleValue::NullValue),
-                Some(b) => Value::ByteString(b),
+                None => Value::Null,
+                Some(b) => Value::Bytes(b),
             },
-            Value::ByteString(self.tag),
+            Value::Bytes(self.tag),
         ]))
     }
 }
@@ -353,20 +353,20 @@ pub fn mac_structure_data(
     payload: &[u8],
 ) -> Vec<u8> {
     let arr = vec![
-        Value::TextString(context.text().to_owned()),
+        Value::Text(context.text().to_owned()),
         if protected.is_empty() {
-            Value::ByteString(vec![])
+            Value::Bytes(vec![])
         } else {
-            Value::ByteString(
+            Value::Bytes(
                 protected.to_vec().expect("failed to serialize header"), /* safe: always
                                                                           * serializable */
             )
         },
-        Value::ByteString(external_aad.to_vec()),
-        Value::ByteString(payload.to_vec()),
+        Value::Bytes(external_aad.to_vec()),
+        Value::Bytes(payload.to_vec()),
     ];
 
     let mut data = Vec::new();
-    cbor::writer::write(Value::Array(arr), &mut data).unwrap(); // safe: always serializable
+    cbor::ser::into_writer(&Value::Array(arr), &mut data).unwrap(); // safe: always serializable
     data
 }

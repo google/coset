@@ -17,7 +17,7 @@
 //! Common internal utilities.
 
 use crate::{
-    cbor::values::{SimpleValue, Value},
+    cbor::value::Value,
     CoseError,
 };
 
@@ -27,19 +27,16 @@ mod tests;
 /// Return an error indicating that an unexpected CBOR type was encountered.
 pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T, CoseError> {
     let got = match value {
-        Value::Unsigned(_) => "uint",
-        Value::Negative(_) => "nint",
-        Value::ByteString(_) => "bstr",
-        Value::TextString(_) => "tstr",
+        Value::Integer(_) => "int",
+        Value::Bytes(_) => "bstr",
+        Value::Float(_) => "float",
+        Value::Text(_) => "tstr",
+        Value::Bool(_) => "bool",
+        Value::Null => "nul",
+        Value::Tag(_, _) => "tag",
         Value::Array(_) => "array",
         Value::Map(_) => "map",
-        Value::Tag(_, _) => "tag",
-        Value::Simple(s) => match s {
-            SimpleValue::FalseValue => "false",
-            SimpleValue::TrueValue => "true",
-            SimpleValue::NullValue => "null",
-            SimpleValue::Undefined => "undefined",
-        },
+        _ => "other",
     };
     Err(CoseError::UnexpectedType(got, want))
 }

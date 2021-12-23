@@ -18,7 +18,7 @@
 
 use crate::{
     cbor,
-    cbor::values::{SimpleValue, Value},
+    cbor::value::Value,
     common::CborSerializable,
     iana,
     util::{cbor_type_error, AsCborValue},
@@ -38,7 +38,7 @@ mod tests;
 ///      ? recipients : [+COSE_recipient]
 ///  ]
 /// ```
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseRecipient {
     pub protected: Header,
     pub unprotected: Header,
@@ -77,8 +77,8 @@ impl AsCborValue for CoseRecipient {
         Ok(Self {
             recipients,
             ciphertext: match a.remove(2) {
-                Value::ByteString(b) => Some(b),
-                Value::Simple(SimpleValue::NullValue) => None,
+                Value::Bytes(b) => Some(b),
+                Value::Null => None,
                 v => return cbor_type_error(&v, "bstr / null"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
@@ -91,8 +91,8 @@ impl AsCborValue for CoseRecipient {
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
             match self.ciphertext {
-                None => Value::Simple(SimpleValue::NullValue),
-                Some(b) => Value::ByteString(b),
+                None => Value::Null,
+                Some(b) => Value::Bytes(b),
             },
         ];
         if !self.recipients.is_empty() {
@@ -219,7 +219,7 @@ impl CoseRecipientBuilder {
 ///      recipients : [+COSE_recipient]
 ///  ]
 ///  ```
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseEncrypt {
     pub protected: Header,
     pub unprotected: Header,
@@ -256,8 +256,8 @@ impl AsCborValue for CoseEncrypt {
         Ok(Self {
             recipients,
             ciphertext: match a.remove(2) {
-                Value::ByteString(b) => Some(b),
-                Value::Simple(SimpleValue::NullValue) => None,
+                Value::Bytes(b) => Some(b),
+                Value::Null => None,
                 v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
@@ -274,8 +274,8 @@ impl AsCborValue for CoseEncrypt {
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
             match self.ciphertext {
-                None => Value::Simple(SimpleValue::NullValue),
-                Some(b) => Value::ByteString(b),
+                None => Value::Null,
+                Some(b) => Value::Bytes(b),
             },
             Value::Array(arr),
         ]))
@@ -363,7 +363,7 @@ impl CoseEncryptBuilder {
 ///      ciphertext : bstr / nil,
 ///  ]
 ///  ```
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseEncrypt0 {
     pub protected: Header,
     pub unprotected: Header,
@@ -389,8 +389,8 @@ impl AsCborValue for CoseEncrypt0 {
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
             ciphertext: match a.remove(2) {
-                Value::ByteString(b) => Some(b),
-                Value::Simple(SimpleValue::NullValue) => None,
+                Value::Bytes(b) => Some(b),
+                Value::Null => None,
                 v => return cbor_type_error(&v, "bstr"),
             },
 
@@ -404,8 +404,8 @@ impl AsCborValue for CoseEncrypt0 {
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
             match self.ciphertext {
-                None => Value::Simple(SimpleValue::NullValue),
-                Some(b) => Value::ByteString(b),
+                None => Value::Null,
+                Some(b) => Value::Bytes(b),
             },
         ]))
     }
@@ -517,19 +517,19 @@ pub fn enc_structure_data(
     external_aad: &[u8],
 ) -> Vec<u8> {
     let arr = vec![
-        Value::TextString(context.text().to_owned()),
+        Value::Text(context.text().to_owned()),
         if protected.is_empty() {
-            Value::ByteString(vec![])
+            Value::Bytes(vec![])
         } else {
-            Value::ByteString(
+            Value::Bytes(
                 protected.to_vec().expect("failed to serialize header"), /* safe: always
                                                                           * serializable */
             )
         },
-        Value::ByteString(external_aad.to_vec()),
+        Value::Bytes(external_aad.to_vec()),
     ];
 
     let mut data = Vec::new();
-    cbor::writer::write(Value::Array(arr), &mut data).unwrap(); // safe: always serializable
+    cbor::ser::into_writer(&Value::Array(arr), &mut data).unwrap(); // safe: always serializable
     data
 }

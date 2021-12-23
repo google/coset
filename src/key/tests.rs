@@ -15,7 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{cbor::Value, iana, util::expect_err, CborSerializable};
+use crate::{cbor::value::Value, iana, util::expect_err, CborSerializable};
 use alloc::{borrow::ToOwned, vec};
 
 #[test]
@@ -125,8 +125,8 @@ fn test_cose_key_encode() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 params: vec![
-                    (Label::Int(0x46), Value::Unsigned(0x47)),
-                    (Label::Int(0x66), Value::Unsigned(0x67)),
+                    (Label::Int(0x46), Value::from(0x47)),
+                    (Label::Int(0x66), Value::from(0x67)),
                 ],
                 ..Default::default()
             },
@@ -141,8 +141,8 @@ fn test_cose_key_encode() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 params: vec![
-                    (Label::Int(0x1234), Value::Unsigned(0x47)),
-                    (Label::Text("a".to_owned()), Value::Unsigned(0x67)),
+                    (Label::Int(0x1234), Value::from(0x47)),
+                    (Label::Text("a".to_owned()), Value::from(0x67)),
                 ],
                 ..Default::default()
             },
@@ -158,8 +158,8 @@ fn test_cose_key_encode() {
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 params: vec![
-                    (Label::Int(0x66), Value::Unsigned(0x67)),
-                    (Label::Text("a".to_owned()), Value::Unsigned(0x47)),
+                    (Label::Int(0x66), Value::from(0x67)),
+                    (Label::Text("a".to_owned()), Value::from(0x47)),
                 ],
                 ..Default::default()
             },
@@ -179,7 +179,7 @@ fn test_cose_key_encode() {
                     .unwrap(),
             )
             .algorithm(iana::Algorithm::ES256)
-            .param(-70000, Value::Simple(SimpleValue::NullValue))
+            .param(-70000, Value::Null)
             .build(),
             concat!(
                 "a60102032620012158206b4ad240073b",
@@ -369,7 +369,7 @@ fn test_rfc8152_private_cose_key_decode() {
                 key_id: b"our-secret".to_vec(),
                 params: vec![
                     (Label::Int(iana::SymmetricKeyParameter::K as i64) ,
-                        Value::ByteString(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap())),
+                        Value::Bytes(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap())),
                 ],
                 ..Default::default()
             },
@@ -401,7 +401,7 @@ fn test_rfc8152_private_cose_key_decode() {
                 key_id: b"our-secret2".to_vec(),
                 params: vec![(
                     Label::Int(iana::SymmetricKeyParameter::K as i64) ,
-                        Value::ByteString(hex::decode("849b5786457c1491be3a76dcea6c4271").unwrap()),
+                        Value::Bytes(hex::decode("849b5786457c1491be3a76dcea6c4271").unwrap()),
                 )],
                 ..Default::default()
             },
@@ -417,7 +417,7 @@ fn test_rfc8152_private_cose_key_decode() {
                 key_id: b"018c0ae5-4d9b-471b-bfd6-eef314bc7037".to_vec(),
                 params: vec![(
                     Label::Int(iana::SymmetricKeyParameter::K as i64) ,
-                        Value::ByteString(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap()),
+                        Value::Bytes(hex::decode("849b57219dae48de646d07dbb533566e976686457c1491be3a76dcea6c427188").unwrap()),
                 )],
                 ..Default::default()
             },
@@ -617,8 +617,8 @@ fn test_cose_key_decode_dup_fail() {
 #[test]
 fn test_cose_key_encode_dup_fail() {
     let tests = vec![CoseKeyBuilder::new()
-        .param(10, Value::Unsigned(0))
-        .param(10, Value::Unsigned(0))
+        .param(10, Value::from(0))
+        .param(10, Value::from(0))
         .build()];
     for key in tests {
         let result = key.clone().to_vec();
@@ -635,7 +635,7 @@ fn test_key_builder() {
                 kty: KeyType::Assigned(iana::KeyType::Symmetric),
                 params: vec![(
                     Label::Int(iana::SymmetricKeyParameter::K as i64),
-                    Value::ByteString(vec![1, 2, 3]),
+                    Value::Bytes(vec![1, 2, 3]),
                 )],
                 ..Default::default()
             },
@@ -649,7 +649,7 @@ fn test_key_builder() {
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
                 params: vec![(
                     Label::Int(iana::SymmetricKeyParameter::K as i64),
-                    Value::ByteString(vec![1, 2, 3]),
+                    Value::Bytes(vec![1, 2, 3]),
                 )],
                 ..Default::default()
             },
@@ -663,7 +663,7 @@ fn test_key_builder() {
                 key_id: vec![4, 5],
                 params: vec![(
                     Label::Int(iana::SymmetricKeyParameter::K as i64),
-                    Value::ByteString(vec![1, 2, 3]),
+                    Value::Bytes(vec![1, 2, 3]),
                 )],
                 ..Default::default()
             },
@@ -683,7 +683,7 @@ fn test_key_builder() {
                 .collect(),
                 params: vec![(
                     Label::Int(iana::SymmetricKeyParameter::K as i64),
-                    Value::ByteString(vec![1, 2, 3]),
+                    Value::Bytes(vec![1, 2, 3]),
                 )],
                 ..Default::default()
             },
@@ -697,7 +697,7 @@ fn test_key_builder() {
                 base_iv: vec![4, 5],
                 params: vec![(
                     Label::Int(iana::SymmetricKeyParameter::K as i64),
-                    Value::ByteString(vec![1, 2, 3]),
+                    Value::Bytes(vec![1, 2, 3]),
                 )],
                 ..Default::default()
             },
@@ -714,6 +714,6 @@ fn test_key_builder_core_param_panic() {
     // Attempting to set a core `KeyParameter` (in range [1,5]) via `.param()` panics.
     let _key =
         CoseKeyBuilder::new_ec2_pub_key(iana::EllipticCurve::P_256, vec![1, 2, 3], vec![2, 3, 4])
-            .param(1, Value::Simple(SimpleValue::NullValue))
+            .param(1, Value::Null)
             .build();
 }

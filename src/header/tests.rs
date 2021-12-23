@@ -16,7 +16,7 @@
 
 use super::*;
 use crate::{
-    cbor::values::{SimpleValue, Value},
+    cbor::value::Value,
     iana,
     util::expect_err,
     CborSerializable, Label,
@@ -59,8 +59,8 @@ fn test_header_encode() {
                 key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
                 rest: vec![
-                    (Label::Int(0x46), Value::Unsigned(0x47)),
-                    (Label::Int(0x66), Value::Unsigned(0x67)),
+                    (Label::Int(0x46), Value::from(0x47)),
+                    (Label::Int(0x66), Value::from(0x67)),
                 ],
                 ..Default::default()
             },
@@ -83,8 +83,8 @@ fn test_header_encode() {
                 key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
                 rest: vec![
-                    (Label::Int(0x46), Value::Unsigned(0x47)),
-                    (Label::Text("a".to_owned()), Value::Unsigned(0x47)),
+                    (Label::Int(0x46), Value::from(0x47)),
+                    (Label::Text("a".to_owned()), Value::from(0x47)),
                 ],
                 counter_signatures: vec![CoseSignature {
                     signature: vec![1, 2, 3],
@@ -113,8 +113,8 @@ fn test_header_encode() {
                 key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
                 rest: vec![
-                    (Label::Int(0x46), Value::Unsigned(0x47)),
-                    (Label::Text("a".to_owned()), Value::Unsigned(0x47)),
+                    (Label::Int(0x46), Value::from(0x47)),
+                    (Label::Text("a".to_owned()), Value::from(0x47)),
                 ],
                 counter_signatures: vec![
                     CoseSignature {
@@ -364,14 +364,14 @@ fn test_header_encode_dup_fail() {
             key_id: vec![1, 2, 3],
             iv: vec![1, 2, 3],
             rest: vec![
-                (Label::Int(0x46), Value::Unsigned(0x47)),
-                (Label::Int(0x46), Value::Unsigned(0x67)),
+                (Label::Int(0x46), Value::from(0x47)),
+                (Label::Int(0x46), Value::from(0x67)),
             ],
             ..Default::default()
         },
         HeaderBuilder::new()
-            .text_value("doop".to_owned(), Value::Unsigned(1))
-            .text_value("doop".to_owned(), Value::Unsigned(2))
+            .text_value("doop".to_owned(), Value::from(1))
+            .text_value("doop".to_owned(), Value::from(2))
             .build(),
     ];
     for header in tests {
@@ -398,8 +398,8 @@ fn test_header_builder() {
                 .key_id(vec![1, 2, 3])
                 .partial_iv(vec![4, 5, 6]) // removed by .iv() call
                 .iv(vec![1, 2, 3])
-                .value(0x46, Value::Unsigned(0x47))
-                .value(0x66, Value::Unsigned(0x67))
+                .value(0x46, Value::from(0x47))
+                .value(0x66, Value::from(0x67))
                 .build(),
             Header {
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
@@ -411,8 +411,8 @@ fn test_header_builder() {
                 key_id: vec![1, 2, 3],
                 iv: vec![1, 2, 3],
                 rest: vec![
-                    (Label::Int(0x46), Value::Unsigned(0x47)),
-                    (Label::Int(0x66), Value::Unsigned(0x67)),
+                    (Label::Int(0x46), Value::from(0x47)),
+                    (Label::Int(0x66), Value::from(0x67)),
                 ],
                 ..Default::default()
             },
@@ -450,6 +450,6 @@ fn test_header_builder() {
 fn test_header_builder_core_param_panic() {
     // Attempting to set a core header parameter (in range [1,7]) via `.param()` panics.
     let _hdr = HeaderBuilder::new()
-        .value(1, Value::Simple(SimpleValue::NullValue))
+        .value(1, Value::Null)
         .build();
 }

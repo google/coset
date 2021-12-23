@@ -17,7 +17,8 @@
 //! Common types.
 
 use crate::{
-    cbor::{reader::DecoderError, values::Value, writer::EncoderError},
+    cbor,
+    cbor::value::Value,
     iana,
     iana::{EnumI64, WithPrivateRange},
     util::{cbor_type_error, AsCborValue},
@@ -31,9 +32,9 @@ mod tests;
 /// Error type for failures in encoding or decoding COSE types.
 pub enum CoseError {
     /// CBOR decoding failure.
-    DecodeFailed(DecoderError),
+    DecodeFailed,
     /// CBOR encoding failure.
-    EncodeFailed(EncoderError),
+    EncodeFailed,
     /// Unexpected CBOR type encountered (got, want).
     UnexpectedType(&'static str, &'static str),
     /// Unrecognized value in IANA-controlled range (with no private range).
@@ -42,23 +43,24 @@ pub enum CoseError {
     UnregisteredIanaNonPrivateValue,
 }
 
-impl core::convert::From<DecoderError> for CoseError {
-    fn from(e: DecoderError) -> Self {
-        CoseError::DecodeFailed(e)
+impl<T> core::convert::From<cbor::de::Error<T>> for CoseError {
+    fn from(_e: cbor::de::Error<T>) -> Self {
+        CoseError::DecodeFailed
     }
 }
 
-impl core::convert::From<EncoderError> for CoseError {
-    fn from(e: EncoderError) -> Self {
-        CoseError::EncodeFailed(e)
+impl<T> core::convert::From<cbor::ser::Error<T>> for CoseError {
+    fn from(_e: cbor::ser::Error<T>) -> Self {
+        CoseError::EncodeFailed
     }
 }
+
 
 impl core::fmt::Debug for CoseError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            CoseError::DecodeFailed(de) => write!(f, "decode CBOR failure: {:?}", de),
-            CoseError::EncodeFailed(ee) => write!(f, "encode CBOR failure: {:?}", ee),
+            CoseError::DecodeFailed => write!(f, "decode CBOR failure"),
+            CoseError::EncodeFailed => write!(f, "encode CBOR failure"),
             CoseError::UnexpectedType(got, want) => write!(f, "got {}, expected {}", got, want),
             CoseError::UnregisteredIanaValue => write!(f, "expected recognized IANA value"),
             CoseError::UnregisteredIanaNonPrivateValue => {
@@ -72,14 +74,15 @@ impl core::fmt::Debug for CoseError {
 pub trait CborSerializable: AsCborValue {
     /// Create an object instance from serialized CBOR data in a slice.
     fn from_slice(slice: &[u8]) -> Result<Self, CoseError> {
-        let value = sk_cbor::reader::read(slice).map_err(CoseError::DecodeFailed)?;
+        let value = cbor::de::from_reader(slice).map_err(|_| CoseError::DecodeFailed)?;
         Self::from_cbor_value(value)
     }
 
     /// Serialize this object to a vector, consuming it along the way.
     fn to_vec(self) -> Result<Vec<u8>, CoseError> {
         let mut data = Vec::new();
-        sk_cbor::writer::write(self.to_cbor_value()?, &mut data)?;
+        cbor::ser::into_writer(&self.to_cbor_value()?, &mut data)
+        .map_err(|_| CoseError::EncodeFailed)?;
         Ok(data)
     }
 }
@@ -92,7 +95,7 @@ pub trait TaggedCborSerializable: AsCborValue {
     /// Create an object instance from serialized CBOR data in a slice, expecting an initial
     /// tag value.
     fn from_tagged_slice(slice: &[u8]) -> Result<Self, CoseError> {
-        match sk_cbor::reader::read(slice)? {
+        match cbor::de::from_reader(slice)? {
             Value::Tag(t, v) if t == Self::TAG => Self::from_cbor_value(*v),
             v => cbor_type_error(&v, "tag"),
         }
@@ -102,8 +105,8 @@ pub trait TaggedCborSerializable: AsCborValue {
     /// way.
     fn to_tagged_vec(self) -> Result<Vec<u8>, CoseError> {
         let mut data = Vec::new();
-        sk_cbor::writer::write(
-            Value::Tag(Self::TAG, Box::new(self.to_cbor_value()?)),
+        cbor::ser::into_writer(
+            &Value::Tag(Self::TAG, Box::new(self.to_cbor_value()?)),
             &mut data,
         )?;
         Ok(data)
@@ -164,20 +167,15 @@ impl PartialOrd for Label {
 impl AsCborValue for Label {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
-            Value::Unsigned(u) => Ok(Label::Int(
-                u.try_into()
-                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
-            )),
-            Value::Negative(i) => Ok(Label::Int(i)),
-            Value::TextString(t) => Ok(Label::Text(t)),
+            Value::Integer(i) => Ok(Label::Int(i.try_into().map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?)),
+            Value::Text(t) => Ok(Label::Text(t)),
             v => cbor_type_error(&v, "int/tstr"),
         }
     }
     fn to_cbor_value(self) -> Result<Value, CoseError> {
         Ok(match self {
-            Label::Int(i) if i < 0 => Value::Negative(i),
-            Label::Int(i) => Value::Unsigned(i as u64), // safe: i64 value that is >=0 fits in u64
-            Label::Text(t) => Value::TextString(t),
+            Label::Int(i) => Value::from(i),
+            Label::Text(t) => Value::Text(t),
         })
     }
 }
@@ -217,38 +215,23 @@ impl<T: EnumI64> PartialOrd for RegisteredLabel<T> {
 impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
-            Value::Unsigned(u) => {
-                let i: i64 = u
-                    .try_into()
-                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?;
-                if let Some(a) = T::from_i64(i) {
+            Value::Integer(i) => {
+                if let Some(a) = T::from_i64(i.try_into()
+                .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?) {
                     Ok(RegisteredLabel::Assigned(a))
                 } else {
                     Err(CoseError::UnregisteredIanaValue)
                 }
             }
-            Value::Negative(i) => {
-                if let Some(a) = T::from_i64(i) {
-                    Ok(RegisteredLabel::Assigned(a))
-                } else {
-                    Err(CoseError::UnregisteredIanaValue)
-                }
-            }
-            Value::TextString(t) => Ok(RegisteredLabel::Text(t)),
+            Value::Text(t) => Ok(RegisteredLabel::Text(t)),
             v => cbor_type_error(&v, "int/tstr"),
         }
     }
+
     fn to_cbor_value(self) -> Result<Value, CoseError> {
         Ok(match self {
-            RegisteredLabel::Assigned(e) => {
-                let e64 = e.to_i64();
-                if e64 >= 0 {
-                    Value::Unsigned(e64 as u64) // safe: i64 value that is >= 0 fits in u64
-                } else {
-                    Value::Negative(e64)
-                }
-            }
-            RegisteredLabel::Text(t) => Value::TextString(t),
+            RegisteredLabel::Assigned(e) => Value::from(e.to_i64()),
+            RegisteredLabel::Text(t) => Value::Text(t),
         })
     }
 }
@@ -292,8 +275,8 @@ impl<T: EnumI64 + WithPrivateRange> PartialOrd for RegisteredLabelWithPrivate<T>
 impl<T: EnumI64 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T> {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
-            Value::Unsigned(u) => {
-                let i = u
+            Value::Integer(i) => {
+                let i = i
                     .try_into()
                     .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?;
                 if let Some(a) = T::from_i64(i) {
@@ -304,37 +287,15 @@ impl<T: EnumI64 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T
                     Err(CoseError::UnregisteredIanaNonPrivateValue)
                 }
             }
-            Value::Negative(i) => {
-                if let Some(a) = T::from_i64(i) {
-                    Ok(RegisteredLabelWithPrivate::Assigned(a))
-                } else if T::is_private(i) {
-                    Ok(RegisteredLabelWithPrivate::PrivateUse(i))
-                } else {
-                    Err(CoseError::UnregisteredIanaNonPrivateValue)
-                }
-            }
-            Value::TextString(t) => Ok(RegisteredLabelWithPrivate::Text(t)),
+            Value::Text(t) => Ok(RegisteredLabelWithPrivate::Text(t)),
             v => cbor_type_error(&v, "int/tstr"),
         }
     }
     fn to_cbor_value(self) -> Result<Value, CoseError> {
         Ok(match self {
-            RegisteredLabelWithPrivate::PrivateUse(i) => {
-                if i >= 0 {
-                    Value::Unsigned(i as u64) // safe: i64 value that is >=0 fits in u64
-                } else {
-                    Value::Negative(i)
-                }
-            }
-            RegisteredLabelWithPrivate::Assigned(i) => {
-                let i = i.to_i64();
-                if i >= 0 {
-                    Value::Unsigned(i as u64) // safe: i64 value that is >=0 fits in u64
-                } else {
-                    Value::Negative(i)
-                }
-            }
-            RegisteredLabelWithPrivate::Text(t) => Value::TextString(t),
+            RegisteredLabelWithPrivate::PrivateUse(i) => Value::from(i),
+            RegisteredLabelWithPrivate::Assigned(i) => Value::from(i.to_i64()),
+            RegisteredLabelWithPrivate::Text(t) => Value::Text(t),
         })
     }
 }
