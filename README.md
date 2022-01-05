@@ -6,7 +6,7 @@
 
 This crate holds a set of Rust types for working with CBOR Object Signing and Encryption (COSE) objects, as defined in
 [RFC 8152](https://tools.ietf.org/html/rfc8152).  It builds on the core [CBOR](https://tools.ietf.org/html/rfc7049)
-parsing functionality from the [`sk-cbor` crate](https://docs.rs/sk-cbor).
+parsing functionality from the [`ciborium` crate](https://docs.rs/ciborium).
 
 See [crate docs](https://google.github.io/coset/rust/coset/index.html), or the [signature
 example](examples/signature.rs) for documentation on how to use the code.
@@ -16,6 +16,10 @@ example](examples/signature.rs) for documentation on how to use the code.
 ## `no_std` Support
 
 This crate supports `no_std`, but uses the `alloc` crate.
+
+## Minimum Supported Rust Version
+
+MSRV is 1.56 (the main `ciborium` dependency is `edition="2021"`)
 
 ## Integer Ranges
 
@@ -32,6 +36,9 @@ This does not map onto a single Rust integer type, so different CBOR crates take
 - The [`serde_cbor`](https://docs.rs/serde_cbor) crate uses a single `i128` integer type for all integer values, which
   means that all CBOR integer values can be expressed, but there are also `i128` values that cannot be encoded in CBOR.
   This also means that data size is larger.
+- The [`ciborium`](https://docs.rs/ciborium) also uses a single `i128` integer type internally, but wraps it in its own
+  [`Integer`](https://docs.rs/ciborium/latest/ciborium/value/struct.Integer.html) type and only implements `TryFrom`
+  (not `From`) for `i128` / `u128` conversions so that unrepresentable numbers can be rejected.
 - The [`sk-cbor`](https://docs.rs/sk-cbor) crate uses distinct types:
     - positive numbers as u64, covering [0, 2<sup>64</sup> - 1]
     - negative numbers as i64, covering [-2<sup>63</sup>, -1] (which means that some theoretically-valid large negative
