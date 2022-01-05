@@ -558,13 +558,13 @@ fn test_cose_sign_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "ExtraneousData",
+            "got int, expected tag",
         ),
         (
             concat!(
                 "18",     // incomplete int
             ),
-            "IncompleteCborData",
+            "decode CBOR failure",
         ),
     ];
     for (sign_data, err_msg) in tests.iter() {
@@ -993,7 +993,7 @@ fn test_cose_sign1_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "ExtraneousData",
+            "got int, expected tag",
         ),
         (
             concat!(

@@ -24,11 +24,11 @@ use alloc::{borrow::ToOwned, boxed::Box, vec};
 #[test]
 fn test_cbor_type_error() {
     let cases = vec![
-        (Value::Null, "null"),
-        (Value::Bool(true), "true"),
-        (Value::Bool(false), "false"),
-        (Value::from(128), "uint"),
-        (Value::from(-1), "nint"),
+        (Value::Null, "nul"),
+        (Value::Bool(true), "bool"),
+        (Value::Bool(false), "bool"),
+        (Value::from(128), "int"),
+        (Value::from(-1), "int"),
         (Value::Bytes(vec![1, 2]), "bstr"),
         (Value::Text("string".to_owned()), "tstr"),
         (Value::Array(vec![Value::from(0)]), "array"),
