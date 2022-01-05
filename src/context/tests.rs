@@ -368,6 +368,19 @@ fn test_context_decode_fail() {
             ),
             "expected bstr",
         ),
+        (
+            concat!(
+                "84", // 4-tuple
+                "01", // int : AES-128-GCM
+                "83", // 3-tuple: [0-bstr, out-of-range int, nil]
+                "401b8000000000000000f6",
+                "83", // 3-tuple: [nil, nil, nil]
+                "f6f6f6",
+                "82", // 2-tuple: [0, 0-bstr]
+                "0040",
+            ),
+            "got u64, expected u63",
+        ),
     ];
     for (context_data, err_msg) in tests.iter() {
         let data = hex::decode(context_data).unwrap();
