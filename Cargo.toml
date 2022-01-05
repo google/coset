@@ -10,11 +10,8 @@ keywords = ["cryptography", "cose"]
 categories = ["cryptography"]
 
 [dependencies]
+ciborium = { version = "^0.2.0", default-features = false }
 ciborium-io = "^0.2.0"
-
-[dependencies.ciborium]
-version = "^0.2.0"
-path = "../ciborium/ciborium"
 
 [dev-dependencies]
 hex = "^0.4.2"
