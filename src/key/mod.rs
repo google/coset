@@ -123,8 +123,16 @@ impl AsCborValue for CoseKey {
         };
 
         let mut key = Self::default();
-        for (label, value) in m.into_iter() {
-            match label {
+        let mut seen = BTreeSet::new();
+        for (l, value) in m.into_iter() {
+            // The `ciborium` CBOR library does not police duplicate map keys.
+            // RFC 8152 section 14 requires that COSE does police duplicates, so do it here.
+            let label = Label::from_cbor_value(l.clone())?;
+            if seen.contains(&label) {
+                return Err(CoseError::DecodeFailed);
+            }
+            seen.insert(label.clone());
+            match l {
                 x if x == kty_value() => key.kty = KeyType::from_cbor_value(value)?,
 
                 x if x == kid_value() => match value {
@@ -169,10 +177,7 @@ impl AsCborValue for CoseKey {
                     v => return cbor_type_error(&v, "bstr value"),
                 },
 
-                l => {
-                    let label = Label::from_cbor_value(l)?;
-                    key.params.push((label, value));
-                }
+                _l => key.params.push((label, value)),
             }
         }
         // Check that key type has been set.
@@ -204,7 +209,12 @@ impl AsCborValue for CoseKey {
         if !self.base_iv.is_empty() {
             map.push((base_iv_value(), Value::Bytes(self.base_iv)));
         }
+        let mut seen = BTreeSet::new();
         for (label, value) in self.params {
+            if seen.contains(&label) {
+                return Err(CoseError::EncodeFailed);
+            }
+            seen.insert(label.clone());
             map.push((label.to_cbor_value()?, value));
         }
         Ok(Value::Map(map))

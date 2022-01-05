@@ -595,7 +595,7 @@ fn test_cose_key_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "1866", "1847", // 66 => 47
             ),
-            "OutOfOrderKey",
+            "decode CBOR failure",
         ),
         (
             concat!(
@@ -604,7 +604,7 @@ fn test_cose_key_decode_dup_fail() {
                 "02", "41", "01", // 2 (kid) => 1-bstr
                 "01", "01", // 1 (kty) => OKP  (duplicate label)
             ),
-            "OutOfOrderKey",
+            "decode CBOR failure",
         ),
     ];
     for (key_data, err_msg) in tests.iter() {
