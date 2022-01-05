@@ -23,6 +23,7 @@ use crate::{
     util::{cbor_type_error, AsCborValue},
     Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel,
 };
+use alloc::collections::BTreeSet;
 use alloc::{string::String, vec, vec::Vec};
 
 #[cfg(test)]
@@ -140,8 +141,16 @@ impl AsCborValue for Header {
         };
 
         let mut headers = Self::default();
-        for (label, value) in m.into_iter() {
-            match label {
+        let mut seen = BTreeSet::new();
+        for (l, value) in m.into_iter() {
+            // The `ciborium` CBOR library does not police duplicate map keys.
+            // RFC 8152 section 14 requires that COSE does police duplicates, so do it here.
+            let label = Label::from_cbor_value(l.clone())?;
+            if seen.contains(&label) {
+                return Err(CoseError::DecodeFailed);
+            }
+            seen.insert(label.clone());
+            match l {
                 x if x == alg_value() => headers.alg = Some(Algorithm::from_cbor_value(value)?),
 
                 x if x == crit_value() => match value {
@@ -245,10 +254,7 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, "array value"),
                 },
 
-                l => {
-                    let label = Label::from_cbor_value(l)?;
-                    headers.rest.push((label, value));
-                }
+                _l => headers.rest.push((label, value)),
             }
             // RFC 8152 section 3.1: "The 'Initialization Vector' and 'Partial Initialization
             // Vector' parameters MUST NOT both be present in the same security layer."
@@ -301,7 +307,12 @@ impl AsCborValue for Header {
                 map.push((counter_sig_value(), Value::Array(arr)));
             }
         }
+        let mut seen = BTreeSet::new();
         for (label, value) in self.rest.into_iter() {
+            if seen.contains(&label) {
+                return Err(CoseError::EncodeFailed);
+            }
+            seen.insert(label.clone());
             map.push((label.to_cbor_value()?, value));
         }
         Ok(Value::Map(map))

@@ -335,7 +335,7 @@ fn test_header_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "1866", "1847", // 66 => 47
             ),
-            "OutOfOrderKey",
+            "decode CBOR failure",
         ),
         (
             concat!(
@@ -344,7 +344,7 @@ fn test_header_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "01", "01", // 1 (alg) => A128GCM (duplicate label)
             ),
-            "OutOfOrderKey",
+            "decode CBOR failure",
         ),
     ];
     for (header_data, err_msg) in tests.iter() {
