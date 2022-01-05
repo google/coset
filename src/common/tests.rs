@@ -20,6 +20,16 @@ use alloc::{borrow::ToOwned, vec};
 use core::cmp::Ordering;
 
 #[test]
+fn test_error_convert() {
+    match CoseError::from(crate::cbor::ser::Error::<String>::Value(
+        "error message lost".to_owned(),
+    )) {
+        CoseError::EncodeFailed => {}
+        _ => panic!("unexpected error enum after conversion"),
+    }
+}
+
+#[test]
 fn test_label_encode() {
     let tests = vec![
         (Label::Int(2), "02"),
@@ -339,6 +349,19 @@ fn test_large_registered_label_decode_fail() {
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
         let result = RegisteredLabel::<crate::iana::HeaderParameter>::from_slice(&data);
+        expect_err(result, err_msg);
+    }
+}
+
+#[test]
+fn test_large_registered_label_with_private_decode_fail() {
+    let tests = vec![
+        (CBOR_NINT_OUT_OF_RANGE_HEX, "got u64, expected u63"),
+        (CBOR_INT_OUT_OF_RANGE_HEX, "expected u63"),
+    ];
+    for (label_data, err_msg) in tests.iter() {
+        let data = hex::decode(label_data).unwrap();
+        let result = RegisteredLabelWithPrivate::<crate::iana::HeaderParameter>::from_slice(&data);
         expect_err(result, err_msg);
     }
 }

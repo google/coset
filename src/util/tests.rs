@@ -31,6 +31,7 @@ fn test_cbor_type_error() {
         (Value::Array(vec![Value::from(0)]), "array"),
         (Value::Map(vec![]), "map"),
         (Value::Tag(1, Box::new(Value::from(0))), "tag"),
+        (Value::Float(1.054571817), "float"),
     ];
     for (val, want) in cases {
         let e = cbor_type_error::<()>(&val, "a");
