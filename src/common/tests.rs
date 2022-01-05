@@ -289,30 +289,39 @@ fn test_registered_label_with_private_decode_fail() {
     }
 }
 
-// FIXME
 // The most negative integer value that can be encoded in CBOR is:
 //    0x3B (0b001_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
 // which is -18_446_744_073_709_551_616 (-1 - 18_446_744_073_709_551_615).
 //
-// However, the underlying sk-cbor crate encodes negative integers as
-// `Value::Negative(i64)`, which cannot hold this value
-const CBOR_NINT_MIN_HEX: &str = "3bffffffffffffffff";
+// However, this crate uses `i64` for all integers, which cannot hold
+// negative values below `i64::MIN` (=-2^63 = 0x8000000000000000).
+const CBOR_NINT_MIN_HEX: &str = "3b7fffffffffffffff";
+const CBOR_NINT_OUT_OF_RANGE_HEX: &str = "3b8000000000000000";
 
-// FIXME
 // The largest positive integer value that can be encoded in CBOR is:
 //    0x1B (0b000_11011) 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF
 // which is 18_446_744_073_709_551_615.
 //
-// This is supported by the underlying sk-cbor crate as `Value::Unsigned(u64)`
-// but the current crate uses `i64` everywhere for convenience, and so cannot
-// hold this value.
-const CBOR_INT_MAX_HEX: &str = "1bffffffffffffffff";
+// However, this crate uses `i64` for all integers, which cannot hold
+// positive values above `i64::MAX` (=-2^63 - 1 = 0x7fffffffffffffff).
+const CBOR_INT_MAX_HEX: &str = "1b7fffffffffffffff";
+const CBOR_INT_OUT_OF_RANGE_HEX: &str = "1b8000000000000000";
+
+#[test]
+fn test_large_label_decode() {
+    let tests = vec![(CBOR_NINT_MIN_HEX, i64::MIN), (CBOR_INT_MAX_HEX, i64::MAX)];
+    for (label_data, want) in tests.iter() {
+        let data = hex::decode(label_data).unwrap();
+        let got = Label::from_slice(&data).unwrap();
+        assert_eq!(got, Label::Int(*want))
+    }
+}
 
 #[test]
 fn test_large_label_decode_fail() {
     let tests = vec![
-        (CBOR_NINT_MIN_HEX, "OutOfRangeIntegerValue"),
-        (CBOR_INT_MAX_HEX, "expected u63"),
+        (CBOR_NINT_OUT_OF_RANGE_HEX, "got u64, expected u63"),
+        (CBOR_INT_OUT_OF_RANGE_HEX, "expected u63"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
@@ -324,8 +333,8 @@ fn test_large_label_decode_fail() {
 #[test]
 fn test_large_registered_label_decode_fail() {
     let tests = vec![
-        (CBOR_NINT_MIN_HEX, "OutOfRangeIntegerValue"),
-        (CBOR_INT_MAX_HEX, "expected u63"),
+        (CBOR_NINT_OUT_OF_RANGE_HEX, "got u64, expected u63"),
+        (CBOR_INT_OUT_OF_RANGE_HEX, "expected u63"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
