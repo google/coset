@@ -110,13 +110,27 @@ impl Header {
 
 impl crate::CborSerializable for Header {}
 
-fn ALG() -> Value { Value::from(iana::HeaderParameter::Alg as u64) }
-fn CRIT() -> Value { Value::from(iana::HeaderParameter::Crit as u64) }
-fn CONTENT_TYPE() -> Value { Value::from(iana::HeaderParameter::ContentType as u64) }
-fn KID() -> Value { Value::from(iana::HeaderParameter::Kid as u64) }
-fn IV() -> Value { Value::from(iana::HeaderParameter::Iv as u64) }
-fn PARTIAL_IV() -> Value { Value::from(iana::HeaderParameter::PartialIv as u64) }
-fn COUNTER_SIG() -> Value { Value::from(iana::HeaderParameter::CounterSignature as u64) }
+fn alg_value() -> Value {
+    Value::from(iana::HeaderParameter::Alg as u64)
+}
+fn crit_value() -> Value {
+    Value::from(iana::HeaderParameter::Crit as u64)
+}
+fn content_type_value() -> Value {
+    Value::from(iana::HeaderParameter::ContentType as u64)
+}
+fn kid_value() -> Value {
+    Value::from(iana::HeaderParameter::Kid as u64)
+}
+fn iv_value() -> Value {
+    Value::from(iana::HeaderParameter::Iv as u64)
+}
+fn partial_iv_value() -> Value {
+    Value::from(iana::HeaderParameter::PartialIv as u64)
+}
+fn counter_sig_value() -> Value {
+    Value::from(iana::HeaderParameter::CounterSignature as u64)
+}
 
 impl AsCborValue for Header {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
@@ -128,9 +142,9 @@ impl AsCborValue for Header {
         let mut headers = Self::default();
         for (label, value) in m.into_iter() {
             match label {
-                x if x == ALG() => headers.alg = Some(Algorithm::from_cbor_value(value)?),
+                x if x == alg_value() => headers.alg = Some(Algorithm::from_cbor_value(value)?),
 
-                x if x == CRIT() => match value {
+                x if x == crit_value() => match value {
                     Value::Array(a) => {
                         if a.is_empty() {
                             return Err(CoseError::UnexpectedType(
@@ -147,7 +161,7 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, "array value"),
                 },
 
-                x if x == CONTENT_TYPE() => {
+                x if x == content_type_value() => {
                     headers.content_type = Some(ContentType::from_cbor_value(value)?);
                     if let Some(ContentType::Text(text)) = &headers.content_type {
                         if text.is_empty() {
@@ -170,7 +184,7 @@ impl AsCborValue for Header {
                     }
                 }
 
-                x if x == KID() => match value {
+                x if x == kid_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
                             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
@@ -180,7 +194,7 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, "bstr value"),
                 },
 
-                x if x == IV() => match value {
+                x if x == iv_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
                             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
@@ -190,7 +204,7 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, "bstr value"),
                 },
 
-                x if x == PARTIAL_IV() => match value {
+                x if x == partial_iv_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
                             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
@@ -199,7 +213,7 @@ impl AsCborValue for Header {
                     }
                     v => return cbor_type_error(&v, "bstr value"),
                 },
-                x if x == COUNTER_SIG() => match value {
+                x if x == counter_sig_value() => match value {
                     Value::Array(sig_or_sigs) => {
                         if sig_or_sigs.is_empty() {
                             return Err(CoseError::UnexpectedType(
@@ -251,32 +265,32 @@ impl AsCborValue for Header {
     fn to_cbor_value(mut self) -> Result<Value, CoseError> {
         let mut map = Vec::<(Value, Value)>::new();
         if let Some(alg) = self.alg {
-            map.push((ALG(), alg.to_cbor_value()?));
+            map.push((alg_value(), alg.to_cbor_value()?));
         }
         if !self.crit.is_empty() {
             let mut arr = Vec::new();
             for c in self.crit {
                 arr.push(c.to_cbor_value()?);
             }
-            map.push((CRIT(), Value::Array(arr)));
+            map.push((crit_value(), Value::Array(arr)));
         }
         if let Some(content_type) = self.content_type {
-            map.push((CONTENT_TYPE(), content_type.to_cbor_value()?));
+            map.push((content_type_value(), content_type.to_cbor_value()?));
         }
         if !self.key_id.is_empty() {
-            map.push((KID(), Value::Bytes(self.key_id)));
+            map.push((kid_value(), Value::Bytes(self.key_id)));
         }
         if !self.iv.is_empty() {
-            map.push((IV(), Value::Bytes(self.iv)));
+            map.push((iv_value(), Value::Bytes(self.iv)));
         }
         if !self.partial_iv.is_empty() {
-            map.push((PARTIAL_IV(), Value::Bytes(self.partial_iv)));
+            map.push((partial_iv_value(), Value::Bytes(self.partial_iv)));
         }
         if !self.counter_signatures.is_empty() {
             if self.counter_signatures.len() == 1 {
                 // A single counter signature is encoded differently.
                 map.push((
-                    COUNTER_SIG(),
+                    counter_sig_value(),
                     self.counter_signatures.remove(0).to_cbor_value()?,
                 ));
             } else {
@@ -284,7 +298,7 @@ impl AsCborValue for Header {
                 for cs in self.counter_signatures {
                     arr.push(cs.to_cbor_value()?);
                 }
-                map.push((COUNTER_SIG(), Value::Array(arr)));
+                map.push((counter_sig_value(), Value::Array(arr)));
             }
         }
         for (label, value) in self.rest.into_iter() {

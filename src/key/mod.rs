@@ -99,12 +99,21 @@ pub struct CoseKey {
 
 impl crate::CborSerializable for CoseKey {}
 
-fn KTY() -> Value { Value::from(iana::KeyParameter::Kty.to_i64()) }
-fn KID() -> Value { Value::from(iana::KeyParameter::Kid.to_i64()) }
-fn ALG() -> Value { Value::from(iana::KeyParameter::Alg.to_i64()) }
-fn KEY_OPS() -> Value { Value::from(iana::KeyParameter::KeyOps.to_i64()) 
-    }
-fn BASE_IV() -> Value { Value::from(iana::KeyParameter::BaseIv.to_i64()) }
+fn kty_value() -> Value {
+    Value::from(iana::KeyParameter::Kty.to_i64())
+}
+fn kid_value() -> Value {
+    Value::from(iana::KeyParameter::Kid.to_i64())
+}
+fn alg_value() -> Value {
+    Value::from(iana::KeyParameter::Alg.to_i64())
+}
+fn key_ops_value() -> Value {
+    Value::from(iana::KeyParameter::KeyOps.to_i64())
+}
+fn base_iv_value() -> Value {
+    Value::from(iana::KeyParameter::BaseIv.to_i64())
+}
 
 impl AsCborValue for CoseKey {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
@@ -116,9 +125,9 @@ impl AsCborValue for CoseKey {
         let mut key = Self::default();
         for (label, value) in m.into_iter() {
             match label {
-                x if x == KTY() => key.kty = KeyType::from_cbor_value(value)?,
+                x if x == kty_value() => key.kty = KeyType::from_cbor_value(value)?,
 
-                x if x == KID() => match value {
+                x if x == kid_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
                             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
@@ -128,9 +137,9 @@ impl AsCborValue for CoseKey {
                     v => return cbor_type_error(&v, "bstr value"),
                 },
 
-                x if x == ALG() => key.alg = Some(Algorithm::from_cbor_value(value)?),
+                x if x == alg_value() => key.alg = Some(Algorithm::from_cbor_value(value)?),
 
-                x if x == KEY_OPS() => match value {
+                x if x == key_ops_value() => match value {
                     Value::Array(key_ops) => {
                         for key_op in key_ops.into_iter() {
                             if !key.key_ops.insert(KeyOperation::from_cbor_value(key_op)?) {
@@ -150,7 +159,7 @@ impl AsCborValue for CoseKey {
                     v => return cbor_type_error(&v, "array value"),
                 },
 
-                x if x == BASE_IV() => match value {
+                x if x == base_iv_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
                             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
@@ -178,22 +187,22 @@ impl AsCborValue for CoseKey {
     }
 
     fn to_cbor_value(self) -> Result<Value, CoseError> {
-        let mut map: Vec<(Value, Value)> = vec![(KTY(), self.kty.to_cbor_value()?)];
+        let mut map: Vec<(Value, Value)> = vec![(kty_value(), self.kty.to_cbor_value()?)];
         if !self.key_id.is_empty() {
-            map.push((KID(), Value::Bytes(self.key_id)));
+            map.push((kid_value(), Value::Bytes(self.key_id)));
         }
         if let Some(alg) = self.alg {
-            map.push((ALG(), alg.to_cbor_value()?));
+            map.push((alg_value(), alg.to_cbor_value()?));
         }
         if !self.key_ops.is_empty() {
             let mut arr = Vec::new();
             for op in self.key_ops {
                 arr.push(op.to_cbor_value()?);
             }
-            map.push((KEY_OPS(), Value::Array(arr)));
+            map.push((key_ops_value(), Value::Array(arr)));
         }
         if !self.base_iv.is_empty() {
-            map.push((BASE_IV(), Value::Bytes(self.base_iv)));
+            map.push((base_iv_value(), Value::Bytes(self.base_iv)));
         }
         for (label, value) in self.params {
             map.push((label.to_cbor_value()?, value));
@@ -220,14 +229,8 @@ impl CoseKeyBuilder {
                     Label::Int(iana::Ec2KeyParameter::Crv as i64),
                     Value::from(curve as u64),
                 ),
-                (
-                    Label::Int(iana::Ec2KeyParameter::X as i64),
-                    Value::Bytes(x),
-                ),
-                (
-                    Label::Int(iana::Ec2KeyParameter::Y as i64),
-                    Value::Bytes(y),
-                ),
+                (Label::Int(iana::Ec2KeyParameter::X as i64), Value::Bytes(x)),
+                (Label::Int(iana::Ec2KeyParameter::Y as i64), Value::Bytes(y)),
             ],
             ..Default::default()
         })
@@ -243,10 +246,7 @@ impl CoseKeyBuilder {
                     Label::Int(iana::Ec2KeyParameter::Crv as i64),
                     Value::from(curve as u64),
                 ),
-                (
-                    Label::Int(iana::Ec2KeyParameter::X as i64),
-                    Value::Bytes(x),
-                ),
+                (Label::Int(iana::Ec2KeyParameter::X as i64), Value::Bytes(x)),
                 (
                     Label::Int(iana::Ec2KeyParameter::Y as i64),
                     Value::Bool(y_sign),
@@ -265,10 +265,10 @@ impl CoseKeyBuilder {
         d: Vec<u8>,
     ) -> Self {
         let mut builder = Self::new_ec2_pub_key(curve, x, y);
-        builder.0.params.push((
-            Label::Int(iana::Ec2KeyParameter::D as i64),
-            Value::Bytes(d),
-        ));
+        builder
+            .0
+            .params
+            .push((Label::Int(iana::Ec2KeyParameter::D as i64), Value::Bytes(d)));
         builder
     }
 
