@@ -15,10 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{
-    cbor::value::Value,
-    util::expect_err,
-};
+use crate::{cbor::value::Value, util::expect_err};
 use alloc::{borrow::ToOwned, boxed::Box, vec};
 
 #[test]

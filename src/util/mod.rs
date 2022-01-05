@@ -16,10 +16,7 @@
 
 //! Common internal utilities.
 
-use crate::{
-    cbor::value::Value,
-    CoseError,
-};
+use crate::{cbor::value::Value, CoseError};
 
 #[cfg(test)]
 mod tests;

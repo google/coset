@@ -23,8 +23,7 @@ use crate::{
     util::{cbor_type_error, AsCborValue},
     Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel,
 };
-use alloc::collections::BTreeSet;
-use alloc::{string::String, vec, vec::Vec};
+use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
 
 #[cfg(test)]
 mod tests;
