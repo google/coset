@@ -101,6 +101,7 @@ fn test_label_decode_fail() {
         ("43010203", "expected int/tstr"),
         ("", "decode CBOR failure: Io(EndOfFile"),
         ("1e", "decode CBOR failure: Syntax"),
+        ("0202", "extraneous data"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();

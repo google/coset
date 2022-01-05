@@ -29,16 +29,19 @@ use core::{cmp::Ordering, convert::TryInto};
 #[cfg(test)]
 mod tests;
 
-type DecodeIoError = <&'static [u8] as ciborium_io::Read>::Error;
+#[derive(Debug)]
+pub struct EndOfFile;
 
 /// Error type for failures in encoding or decoding COSE types.
 pub enum CoseError {
     /// CBOR decoding failure.
-    DecodeFailed(cbor::de::Error<DecodeIoError>),
+    DecodeFailed(cbor::de::Error<EndOfFile>),
     /// Duplicate map key detected.
     DuplicateMapKey,
     /// CBOR encoding failure.
     EncodeFailed,
+    /// CBOR input had extra data.
+    ExtraneousData,
     /// Integer value on the wire is outside the range of integers representable in this crate.
     /// See <https://crates.io/crates/coset/#integer-ranges>.
     OutOfRangeIntegerValue,
@@ -50,8 +53,8 @@ pub enum CoseError {
     UnregisteredIanaNonPrivateValue,
 }
 
-impl core::convert::From<cbor::de::Error<DecodeIoError>> for CoseError {
-    fn from(e: cbor::de::Error<DecodeIoError>) -> Self {
+impl core::convert::From<cbor::de::Error<EndOfFile>> for CoseError {
+    fn from(e: cbor::de::Error<EndOfFile>) -> Self {
         CoseError::DecodeFailed(e)
     }
 }
@@ -74,6 +77,7 @@ impl core::fmt::Debug for CoseError {
             CoseError::DecodeFailed(e) => write!(f, "decode CBOR failure: {}", e),
             CoseError::DuplicateMapKey => write!(f, "duplicate map key"),
             CoseError::EncodeFailed => write!(f, "encode CBOR failure"),
+            CoseError::ExtraneousData => write!(f, "extraneous data in CBOR input"),
             CoseError::OutOfRangeIntegerValue => write!(f, "out of range integer value"),
             CoseError::UnexpectedType(got, want) => write!(f, "got {}, expected {}", got, want),
             CoseError::UnregisteredIanaValue => write!(f, "expected recognized IANA value"),
@@ -84,12 +88,50 @@ impl core::fmt::Debug for CoseError {
     }
 }
 
+struct MeasuringReader<'a> {
+    buf: &'a [u8],
+}
+
+impl<'a> MeasuringReader<'a> {
+    fn new(buf: &'a [u8]) -> MeasuringReader<'a> {
+        MeasuringReader { buf }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.buf.is_empty()
+    }
+}
+
+impl<'a> ciborium_io::Read for &mut MeasuringReader<'a> {
+    type Error = EndOfFile;
+
+    fn read_exact(&mut self, data: &mut [u8]) -> Result<(), Self::Error> {
+        if data.len() > self.buf.len() {
+            return Err(EndOfFile);
+        }
+
+        let (prefix, suffix) = self.buf.split_at(data.len());
+        data.copy_from_slice(prefix);
+        self.buf = suffix;
+        Ok(())
+    }
+}
+
+fn read_to_value(slice: &[u8]) -> Result<Value, CoseError> {
+    let mut mr = MeasuringReader::new(slice);
+    let value = cbor::de::from_reader(&mut mr)?;
+    if mr.is_empty() {
+        Ok(value)
+    } else {
+        Err(CoseError::ExtraneousData)
+    }
+}
+
 /// Extension trait that adds serialization/deserialization methods.
 pub trait CborSerializable: AsCborValue {
     /// Create an object instance from serialized CBOR data in a slice.
     fn from_slice(slice: &[u8]) -> Result<Self, CoseError> {
-        let value = cbor::de::from_reader(slice)?;
-        Self::from_cbor_value(value)
+        Self::from_cbor_value(read_to_value(slice)?)
     }
 
     /// Serialize this object to a vector, consuming it along the way.
@@ -108,7 +150,7 @@ pub trait TaggedCborSerializable: AsCborValue {
     /// Create an object instance from serialized CBOR data in a slice, expecting an initial
     /// tag value.
     fn from_tagged_slice(slice: &[u8]) -> Result<Self, CoseError> {
-        match cbor::de::from_reader(slice)? {
+        match read_to_value(slice)? {
             Value::Tag(t, v) if t == Self::TAG => Self::from_cbor_value(*v),
             v => cbor_type_error(&v, "tag"),
         }
