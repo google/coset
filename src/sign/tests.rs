@@ -574,7 +574,7 @@ fn test_cose_sign_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "got int, expected tag",
+            "extraneous data",
         ),
         (
             concat!(
@@ -1043,7 +1043,7 @@ fn test_cose_sign1_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "got int, expected tag",
+            "extraneous data",
         ),
         (
             concat!(
