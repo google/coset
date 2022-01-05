@@ -151,6 +151,7 @@ impl CoseMacBuilder {
     builder_set_optional! {payload: Vec<u8>}
 
     /// Add a [`CoseRecipient`].
+    #[must_use]
     pub fn add_recipient(mut self, recipient: CoseRecipient) -> Self {
         self.0.recipients.push(recipient);
         self
@@ -162,6 +163,7 @@ impl CoseMacBuilder {
     /// # Panics
     ///
     /// This function will panic if the `payload` has not been set.
+    #[must_use]
     pub fn create_tag<F>(self, external_aad: &[u8], create: F) -> Self
     where
         F: FnOnce(&[u8]) -> Vec<u8>,
@@ -296,6 +298,7 @@ impl CoseMac0Builder {
     /// # Panics
     ///
     /// This function will panic if the `payload` has not been set.
+    #[must_use]
     pub fn create_tag<F>(self, external_aad: &[u8], create: F) -> Self
     where
         F: FnOnce(&[u8]) -> Vec<u8>,

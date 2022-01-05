@@ -88,6 +88,7 @@ macro_rules! builder {
 macro_rules! builder_set {
     ( $name:ident: $ftype:ty ) => {
         /// Set the associated field.
+        #[must_use]
         pub fn $name(mut self, $name: $ftype) -> Self {
             self.0.$name = $name;
             self
@@ -99,6 +100,7 @@ macro_rules! builder_set {
 macro_rules! builder_set_optional {
     ( $name:ident: $ftype:ty ) => {
         /// Set the associated field.
+        #[must_use]
         pub fn $name(mut self, $name: $ftype) -> Self {
             self.0.$name = Some($name);
             self

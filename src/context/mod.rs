@@ -274,12 +274,14 @@ impl CoseKdfContextBuilder {
     builder_set! {supp_pub_info: SuppPubInfo}
 
     /// Set the algorithm.
+    #[must_use]
     pub fn algorithm(mut self, alg: iana::Algorithm) -> Self {
         self.0.algorithm_id = Algorithm::Assigned(alg);
         self
     }
 
     /// Add supplemental private info.
+    #[must_use]
     pub fn add_supp_priv_info(mut self, supp_priv_info: Vec<u8>) -> Self {
         self.0.supp_priv_info.push(supp_priv_info);
         self

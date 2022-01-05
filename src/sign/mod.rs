@@ -208,6 +208,7 @@ impl CoseSignBuilder {
     builder_set_optional! {payload: Vec<u8>}
 
     /// Add a signature value.
+    #[must_use]
     pub fn add_signature(mut self, sig: CoseSignature) -> Self {
         self.0.signatures.push(sig);
         self
@@ -216,6 +217,7 @@ impl CoseSignBuilder {
     /// Calculate the signature value, using `signer` to generate the signature bytes that will be
     /// used to complete `sig`.  Any protected header values should be set before using this
     /// method.
+    #[must_use]
     pub fn add_created_signature<F>(self, mut sig: CoseSignature, aad: &[u8], signer: F) -> Self
     where
         F: FnOnce(&[u8]) -> Vec<u8>,
@@ -340,6 +342,7 @@ impl CoseSign1Builder {
 
     /// Calculate the signature value, using `signer` to generate the signature bytes.  Any
     /// protected header values should be set before using this method.
+    #[must_use]
     pub fn create_signature<F>(self, aad: &[u8], signer: F) -> Self
     where
         F: FnOnce(&[u8]) -> Vec<u8>,
