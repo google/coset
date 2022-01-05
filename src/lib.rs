@@ -16,7 +16,7 @@
 
 //! Set of types for supporting [CBOR Object Signing and Encryption (COSE)][COSE].
 //!
-//! Builds on the [`sk-cbor`](https://docs.rs/sk-cbor) crate for underlying [CBOR][CBOR] support.
+//! Builds on the [`ciborium`](https://docs.rs/ciborium) crate for underlying [CBOR][CBOR] support.
 //!
 //! ## Usage
 //!
@@ -99,7 +99,7 @@
 #![deny(broken_intra_doc_links)]
 extern crate alloc;
 
-/// Re-export of the `sk-cbor` crate used for underlying CBOR encoding.
+/// Re-export of the `ciborium` crate used for underlying CBOR encoding.
 pub use ciborium as cbor;
 
 #[macro_use]
