@@ -295,12 +295,14 @@ impl CoseKeyBuilder {
     }
 
     /// Set the algorithm.
+    #[must_use]
     pub fn algorithm(mut self, alg: iana::Algorithm) -> Self {
         self.0.alg = Some(Algorithm::Assigned(alg));
         self
     }
 
     /// Add a key operation.
+    #[must_use]
     pub fn add_key_op(mut self, op: iana::KeyOperation) -> Self {
         self.0.key_ops.insert(KeyOperation::Assigned(op));
         self
@@ -312,6 +314,7 @@ impl CoseKeyBuilder {
     ///
     /// This function will panic if it used to set a parameter label from the [`iana::KeyParameter`]
     /// range.
+    #[must_use]
     pub fn param(mut self, label: i64, value: Value) -> Self {
         if iana::KeyParameter::from_i64(label).is_some() {
             panic!("param() method used to set KeyParameter"); // safe: invalid input

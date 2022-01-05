@@ -146,6 +146,7 @@ impl CoseRecipientBuilder {
     builder_set_optional! {ciphertext: Vec<u8>}
 
     /// Add a [`CoseRecipient`].
+    #[must_use]
     pub fn add_recipient(mut self, recipient: CoseRecipient) -> Self {
         self.0.recipients.push(recipient);
         self
@@ -158,6 +159,7 @@ impl CoseRecipientBuilder {
     /// # Panics
     ///
     /// This function will panic if the `context` parameter does not refer to a recipient context.
+    #[must_use]
     pub fn create_ciphertext<F>(
         self,
         context: EncryptionContext,
@@ -199,6 +201,7 @@ impl CoseRecipientBuilder {
     /// # Panics
     ///
     /// This function will panic if the `context` parameter does not refer to a recipient context.
+    #[must_use]
     fn aad(&self, context: EncryptionContext, external_aad: &[u8]) -> Vec<u8> {
         match context {
             EncryptionContext::EncRecipient
@@ -316,6 +319,7 @@ impl CoseEncryptBuilder {
     /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
     /// plaintext and combined AAD (in that order).  Any protected header values should be set
     /// before using this method.
+    #[must_use]
     pub fn create_ciphertext<F>(self, plaintext: &[u8], external_aad: &[u8], cipher: F) -> Self
     where
         F: FnOnce(&[u8], &[u8]) -> Vec<u8>,
@@ -349,6 +353,7 @@ impl CoseEncryptBuilder {
     }
 
     /// Add a [`CoseRecipient`].
+    #[must_use]
     pub fn add_recipient(mut self, recipient: CoseRecipient) -> Self {
         self.0.recipients.push(recipient);
         self
@@ -445,6 +450,7 @@ impl CoseEncrypt0Builder {
     /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
     /// plaintext and combined AAD (in that order).  Any protected header values should be set
     /// before using this method.
+    #[must_use]
     pub fn create_ciphertext<F>(self, plaintext: &[u8], external_aad: &[u8], cipher: F) -> Self
     where
         F: FnOnce(&[u8], &[u8]) -> Vec<u8>,

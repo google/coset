@@ -328,36 +328,42 @@ impl HeaderBuilder {
     builder_set! {key_id: Vec<u8>}
 
     /// Set the algorithm.
+    #[must_use]
     pub fn algorithm(mut self, alg: iana::Algorithm) -> Self {
         self.0.alg = Some(Algorithm::Assigned(alg));
         self
     }
 
     /// Add a critical header.
+    #[must_use]
     pub fn add_critical(mut self, param: iana::HeaderParameter) -> Self {
         self.0.crit.push(RegisteredLabel::Assigned(param));
         self
     }
 
     /// Add a critical header.
+    #[must_use]
     pub fn add_critical_label(mut self, label: RegisteredLabel<iana::HeaderParameter>) -> Self {
         self.0.crit.push(label);
         self
     }
 
     /// Set the content type to a numeric value.
+    #[must_use]
     pub fn content_format(mut self, content_type: iana::CoapContentFormat) -> Self {
         self.0.content_type = Some(ContentType::Assigned(content_type));
         self
     }
 
     /// Set the content type to a text value.
+    #[must_use]
     pub fn content_type(mut self, content_type: String) -> Self {
         self.0.content_type = Some(ContentType::Text(content_type));
         self
     }
 
     /// Set the IV, and clear any partial IV already set.
+    #[must_use]
     pub fn iv(mut self, iv: Vec<u8>) -> Self {
         self.0.iv = iv;
         self.0.partial_iv.clear();
@@ -365,6 +371,7 @@ impl HeaderBuilder {
     }
 
     /// Set the partial IV, and clear any IV already set.
+    #[must_use]
     pub fn partial_iv(mut self, iv: Vec<u8>) -> Self {
         self.0.partial_iv = iv;
         self.0.iv.clear();
@@ -372,6 +379,7 @@ impl HeaderBuilder {
     }
 
     /// Add a counter signature.
+    #[must_use]
     pub fn add_counter_signature(mut self, sig: CoseSignature) -> Self {
         self.0.counter_signatures.push(sig);
         self
@@ -383,6 +391,7 @@ impl HeaderBuilder {
     /// # Panics
     ///
     /// This function will panic if it used to set a header label from the range [1, 6].
+    #[must_use]
     pub fn value(mut self, label: i64, value: Value) -> Self {
         if label >= iana::HeaderParameter::Alg.to_i64()
             && label <= iana::HeaderParameter::CounterSignature.to_i64()
@@ -394,6 +403,7 @@ impl HeaderBuilder {
     }
 
     /// Set a header label:value pair where the `label` is text.
+    #[must_use]
     pub fn text_value(mut self, label: String, value: Value) -> Self {
         self.0.rest.push((Label::Text(label), value));
         self
