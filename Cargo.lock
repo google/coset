@@ -5,15 +5,13 @@ version = 3
 [[package]]
 name = "ciborium"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0c137568cc60b904a7724001b35ce2630fd00d5d84805fbb608ab89509d788f"
 dependencies = [
- "ciborium-io 0.2.0",
+ "ciborium-io",
  "ciborium-ll",
  "serde",
 ]
-
-[[package]]
-name = "ciborium-io"
-version = "0.2.0"
 
 [[package]]
 name = "ciborium-io"
@@ -24,8 +22,10 @@ checksum = "346de753af073cc87b52b2083a506b38ac176a44cfb05497b622e27be899b369"
 [[package]]
 name = "ciborium-ll"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "213030a2b5a4e0c0892b6652260cf6ccac84827b83a85a534e178e3906c4cf1b"
 dependencies = [
- "ciborium-io 0.2.0",
+ "ciborium-io",
  "half",
 ]
 
@@ -34,7 +34,7 @@ name = "coset"
 version = "0.3.0-alpha.1"
 dependencies = [
  "ciborium",
- "ciborium-io 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ciborium-io",
  "hex",
 ]
 
