@@ -15,12 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{
-    cbor::value::Value,
-    iana,
-    util::expect_err,
-    CborSerializable, Label,
-};
+use crate::{cbor::value::Value, iana, util::expect_err, CborSerializable, Label};
 use alloc::{borrow::ToOwned, vec};
 
 #[test]
@@ -449,7 +444,5 @@ fn test_header_builder() {
 #[should_panic]
 fn test_header_builder_core_param_panic() {
     // Attempting to set a core header parameter (in range [1,7]) via `.param()` panics.
-    let _hdr = HeaderBuilder::new()
-        .value(1, Value::Null)
-        .build();
+    let _hdr = HeaderBuilder::new().value(1, Value::Null).build();
 }

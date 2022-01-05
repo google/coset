@@ -162,7 +162,9 @@ impl AsCborValue for SuppPubInfo {
             },
             protected: Header::from_cbor_bstr(a.remove(1))?,
             key_data_length: match a.remove(0) {
-                Value::Integer(u) => u.try_into().map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
+                Value::Integer(u) => u
+                    .try_into()
+                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
                 v => return cbor_type_error(&v, "uint"),
             },
         })

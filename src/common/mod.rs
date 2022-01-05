@@ -55,7 +55,6 @@ impl<T> core::convert::From<cbor::ser::Error<T>> for CoseError {
     }
 }
 
-
 impl core::fmt::Debug for CoseError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -82,7 +81,7 @@ pub trait CborSerializable: AsCborValue {
     fn to_vec(self) -> Result<Vec<u8>, CoseError> {
         let mut data = Vec::new();
         cbor::ser::into_writer(&self.to_cbor_value()?, &mut data)
-        .map_err(|_| CoseError::EncodeFailed)?;
+            .map_err(|_| CoseError::EncodeFailed)?;
         Ok(data)
     }
 }
@@ -167,7 +166,10 @@ impl PartialOrd for Label {
 impl AsCborValue for Label {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
-            Value::Integer(i) => Ok(Label::Int(i.try_into().map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?)),
+            Value::Integer(i) => Ok(Label::Int(
+                i.try_into()
+                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
+            )),
             Value::Text(t) => Ok(Label::Text(t)),
             v => cbor_type_error(&v, "int/tstr"),
         }
@@ -216,8 +218,10 @@ impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
             Value::Integer(i) => {
-                if let Some(a) = T::from_i64(i.try_into()
-                .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?) {
+                if let Some(a) = T::from_i64(
+                    i.try_into()
+                        .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
+                ) {
                     Ok(RegisteredLabel::Assigned(a))
                 } else {
                     Err(CoseError::UnregisteredIanaValue)
