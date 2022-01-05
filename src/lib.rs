@@ -96,7 +96,7 @@
 //! [CBOR]: https://tools.ietf.org/html/rfc7049
 
 #![no_std]
-#![deny(broken_intra_doc_links)]
+#![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;
 
 /// Re-export of the `ciborium` crate used for underlying CBOR encoding.
