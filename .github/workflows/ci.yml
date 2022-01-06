@@ -47,6 +47,26 @@ jobs:
           override: true
       - run: cargo test --workspace -- --nocapture
 
+  no_std:
+    name: Build for a no_std target
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - nightly-2021-07-01
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          components: rustfmt
+          target: thumbv6m-none-eabi
+          override: true
+      - run: cargo build --release --workspace --target thumbv6m-none-eabi
+
   msrv:
     name: Rust ${{matrix.rust}} MSRV
     runs-on: ubuntu-latest
