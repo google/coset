@@ -1,7 +1,7 @@
 [package]
 name = "coset"
-version = "0.2.1-alpha.1"
-authors = ["David Drysdale <drysdale@google.com>"]
+version = "0.3.0-alpha.1"
+authors = ["David Drysdale <drysdale@google.com>", "Paul Crowley <paulcrowley@google.com>"]
 edition = "2018"
 license = "Apache-2.0"
 description = "Set of types for supporting COSE"
