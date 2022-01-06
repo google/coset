@@ -670,7 +670,7 @@ fn test_cose_recipient_roundtrip() {
     let external_aad = b"This is the external aad";
     let cipher = FakeCipher {};
 
-    for context in [
+    for context in &[
         EncryptionContext::EncRecipient,
         EncryptionContext::MacRecipient,
         EncryptionContext::RecRecipient,
@@ -682,31 +682,35 @@ fn test_cose_recipient_roundtrip() {
 
         let mut recipient = CoseRecipientBuilder::new()
             .protected(protected)
-            .create_ciphertext(context, pt, external_aad, |pt, aad| {
+            .create_ciphertext(*context, pt, external_aad, |pt, aad| {
                 cipher.encrypt(pt, aad).unwrap()
             })
             .build();
 
         let recovered_pt = recipient
-            .decrypt(context, external_aad, |ct, aad| cipher.decrypt(ct, aad))
+            .decrypt(*context, external_aad, |ct, aad| cipher.decrypt(ct, aad))
             .unwrap();
         assert_eq!(&pt[..], recovered_pt);
 
         // Changing an unprotected header leaves the ciphertext decipherable.
         recipient.unprotected.content_type = Some(ContentType::Text("text/plain".to_owned()));
         assert!(recipient
-            .decrypt(context, external_aad, |ct, aad| { cipher.decrypt(ct, aad) })
+            .decrypt(*context, external_aad, |ct, aad| {
+                cipher.decrypt(ct, aad)
+            })
             .is_ok());
 
         // Providing a different `aad` means the signature won't validate.
         assert!(recipient
-            .decrypt(context, b"not aad", |ct, aad| { cipher.decrypt(ct, aad) })
+            .decrypt(*context, b"not aad", |ct, aad| { cipher.decrypt(ct, aad) })
             .is_err());
 
         // Changing a protected header invalidates the signature.
         recipient.protected = Header::default();
         assert!(recipient
-            .decrypt(context, external_aad, |ct, aad| { cipher.decrypt(ct, aad) })
+            .decrypt(*context, external_aad, |ct, aad| {
+                cipher.decrypt(ct, aad)
+            })
             .is_err());
     }
 }
