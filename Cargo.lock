@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "coset"
-version = "0.2.1-alpha.1"
+version = "0.3.0-alpha.1"
 dependencies = [
  "hex",
  "sk-cbor",
