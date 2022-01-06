@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.3.0 - TBD
+
+- Change to use `ciborium` as CBOR library. Breaking change with many knock-on effects:
+    - Re-export `ciborium` as `coset::cbor` (rather than `sk-cbor`).
+    - Use `ciborium`'s `Value` type rather than `sk-cbor`'s version.
+    - Change `CoseError` to no longer wrap `sk-cbor` errors.
+    - Drop `derive` of `Eq` for data types (`ciborium` supports float values, which are inherently non-`Eq`)
+    - Add `#[must_use]` attributes to builder methods.
+    - Update MSRV to 1.56.0, as `ciborium` is `edition=2021`
+
 ## 0.2.0 - 2021-12-09
 
 - Change to use `sk-cbor` as CBOR library, due to deprecation of `serde-cbor`. Breaking change with many knock-on
