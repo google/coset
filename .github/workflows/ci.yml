@@ -25,7 +25,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           components: rustfmt
           override: true
-      - run: cargo build --release --all
+      - run: cargo build --release --workspace
 
   test:
     runs-on: ubuntu-latest
@@ -45,7 +45,27 @@ jobs:
           toolchain: ${{ matrix.rust }}
           components: rustfmt
           override: true
-      - run: cargo test --all -- --nocapture
+      - run: cargo test --workspace -- --nocapture
+
+  msrv:
+    name: Rust ${{matrix.rust}} MSRV
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [1.49.0, 1.50.0]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          components: rustfmt
+          override: true
+      - run: rustc --version
+      - run: cargo build --release --workspace --all-features
 
   formatting:
     runs-on: ubuntu-latest
