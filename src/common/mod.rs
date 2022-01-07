@@ -29,10 +29,12 @@ use core::{cmp::Ordering, convert::TryInto};
 #[cfg(test)]
 mod tests;
 
+type DecodeIoError = <&'static [u8] as ciborium_io::Read>::Error;
+
 /// Error type for failures in encoding or decoding COSE types.
 pub enum CoseError {
     /// CBOR decoding failure.
-    DecodeFailed,
+    DecodeFailed(cbor::de::Error<DecodeIoError>),
     /// Duplicate map key detected.
     DuplicateMapKey,
     /// CBOR encoding failure.
@@ -48,9 +50,9 @@ pub enum CoseError {
     UnregisteredIanaNonPrivateValue,
 }
 
-impl<T> core::convert::From<cbor::de::Error<T>> for CoseError {
-    fn from(_e: cbor::de::Error<T>) -> Self {
-        CoseError::DecodeFailed
+impl core::convert::From<cbor::de::Error<DecodeIoError>> for CoseError {
+    fn from(e: cbor::de::Error<DecodeIoError>) -> Self {
+        CoseError::DecodeFailed(e)
     }
 }
 
@@ -69,7 +71,7 @@ impl core::convert::From<core::num::TryFromIntError> for CoseError {
 impl core::fmt::Debug for CoseError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            CoseError::DecodeFailed => write!(f, "decode CBOR failure"),
+            CoseError::DecodeFailed(e) => write!(f, "decode CBOR failure: {}", e),
             CoseError::DuplicateMapKey => write!(f, "duplicate map key"),
             CoseError::EncodeFailed => write!(f, "encode CBOR failure"),
             CoseError::OutOfRangeIntegerValue => write!(f, "out of range integer value"),
@@ -86,15 +88,14 @@ impl core::fmt::Debug for CoseError {
 pub trait CborSerializable: AsCborValue {
     /// Create an object instance from serialized CBOR data in a slice.
     fn from_slice(slice: &[u8]) -> Result<Self, CoseError> {
-        let value = cbor::de::from_reader(slice).map_err(|_| CoseError::DecodeFailed)?;
+        let value = cbor::de::from_reader(slice)?;
         Self::from_cbor_value(value)
     }
 
     /// Serialize this object to a vector, consuming it along the way.
     fn to_vec(self) -> Result<Vec<u8>, CoseError> {
         let mut data = Vec::new();
-        cbor::ser::into_writer(&self.to_cbor_value()?, &mut data)
-            .map_err(|_| CoseError::EncodeFailed)?;
+        cbor::ser::into_writer(&self.to_cbor_value()?, &mut data)?;
         Ok(data)
     }
 }
