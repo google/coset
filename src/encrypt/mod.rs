@@ -19,10 +19,9 @@
 use crate::{
     cbor,
     cbor::value::Value,
-    common::CborSerializable,
     iana,
     util::{cbor_type_error, AsCborValue},
-    CoseError, Header,
+    CoseError, Header, ProtectedHeader,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
@@ -40,7 +39,7 @@ mod tests;
 /// ```
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseRecipient {
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub unprotected: Header,
     pub ciphertext: Option<Vec<u8>>,
     pub recipients: Vec<CoseRecipient>,
@@ -82,7 +81,7 @@ impl AsCborValue for CoseRecipient {
                 v => return cbor_type_error(&v, "bstr / null"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
-            protected: Header::from_cbor_bstr(a.remove(0))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
     }
 
@@ -141,7 +140,7 @@ pub struct CoseRecipientBuilder(CoseRecipient);
 
 impl CoseRecipientBuilder {
     builder! {CoseRecipient}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set! {unprotected: Header}
     builder_set_optional! {ciphertext: Vec<u8>}
 
@@ -224,7 +223,7 @@ impl CoseRecipientBuilder {
 ///  ```
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseEncrypt {
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub unprotected: Header,
     pub ciphertext: Option<Vec<u8>>,
     pub recipients: Vec<CoseRecipient>,
@@ -264,7 +263,7 @@ impl AsCborValue for CoseEncrypt {
                 v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
-            protected: Header::from_cbor_bstr(a.remove(0))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
     }
 
@@ -312,7 +311,7 @@ pub struct CoseEncryptBuilder(CoseEncrypt);
 
 impl CoseEncryptBuilder {
     builder! {CoseEncrypt}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set! {unprotected: Header}
     builder_set_optional! {ciphertext: Vec<u8>}
 
@@ -370,7 +369,7 @@ impl CoseEncryptBuilder {
 ///  ```
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseEncrypt0 {
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub unprotected: Header,
     pub ciphertext: Option<Vec<u8>>,
 }
@@ -400,7 +399,7 @@ impl AsCborValue for CoseEncrypt0 {
             },
 
             unprotected: Header::from_cbor_value(a.remove(1))?,
-            protected: Header::from_cbor_bstr(a.remove(0))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
     }
 
@@ -443,7 +442,7 @@ pub struct CoseEncrypt0Builder(CoseEncrypt0);
 
 impl CoseEncrypt0Builder {
     builder! {CoseEncrypt0}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set! {unprotected: Header}
     builder_set_optional! {ciphertext: Vec<u8>}
 
@@ -519,19 +518,12 @@ impl EncryptionContext {
 /// ```
 pub fn enc_structure_data(
     context: EncryptionContext,
-    protected: Header,
+    protected: ProtectedHeader,
     external_aad: &[u8],
 ) -> Vec<u8> {
     let arr = vec![
         Value::Text(context.text().to_owned()),
-        if protected.is_empty() {
-            Value::Bytes(vec![])
-        } else {
-            Value::Bytes(
-                protected.to_vec().expect("failed to serialize header"), /* safe: always
-                                                                          * serializable */
-            )
-        },
+        protected.cbor_bstr().expect("failed to serialize header"), // safe: always serializable
         Value::Bytes(external_aad.to_vec()),
     ];
 

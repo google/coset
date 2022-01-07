@@ -21,7 +21,7 @@ use crate::{
     cbor::value::Value,
     iana,
     util::{cbor_type_error, AsCborValue},
-    CborSerializable, CoseError, CoseRecipient, Header,
+    CoseError, CoseRecipient, Header, ProtectedHeader,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
@@ -40,7 +40,7 @@ mod tests;
 /// ```
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseMac {
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub unprotected: Header,
     pub payload: Option<Vec<u8>>,
     pub tag: Vec<u8>,
@@ -85,7 +85,7 @@ impl AsCborValue for CoseMac {
                 v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
-            protected: Header::from_cbor_bstr(a.remove(0))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
     }
 
@@ -145,7 +145,7 @@ pub struct CoseMacBuilder(CoseMac);
 
 impl CoseMacBuilder {
     builder! {CoseMac}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set! {unprotected: Header}
     builder_set! {tag: Vec<u8>}
     builder_set_optional! {payload: Vec<u8>}
@@ -199,7 +199,7 @@ impl CoseMacBuilder {
 /// ```
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseMac0 {
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub unprotected: Header,
     pub payload: Option<Vec<u8>>,
     pub tag: Vec<u8>,
@@ -233,7 +233,7 @@ impl AsCborValue for CoseMac0 {
                 v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
-            protected: Header::from_cbor_bstr(a.remove(0))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
     }
 
@@ -287,7 +287,7 @@ pub struct CoseMac0Builder(CoseMac0);
 
 impl CoseMac0Builder {
     builder! {CoseMac0}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set! {unprotected: Header}
     builder_set! {tag: Vec<u8>}
     builder_set_optional! {payload: Vec<u8>}
@@ -351,20 +351,13 @@ impl MacContext {
 /// ```
 pub fn mac_structure_data(
     context: MacContext,
-    protected: Header,
+    protected: ProtectedHeader,
     external_aad: &[u8],
     payload: &[u8],
 ) -> Vec<u8> {
     let arr = vec![
         Value::Text(context.text().to_owned()),
-        if protected.is_empty() {
-            Value::Bytes(vec![])
-        } else {
-            Value::Bytes(
-                protected.to_vec().expect("failed to serialize header"), /* safe: always
-                                                                          * serializable */
-            )
-        },
+        protected.cbor_bstr().expect("failed to serialize header"), // safe: always serializable
         Value::Bytes(external_aad.to_vec()),
         Value::Bytes(payload.to_vec()),
     ];

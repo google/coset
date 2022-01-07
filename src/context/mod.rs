@@ -20,7 +20,7 @@ use crate::{
     cbor::value::Value,
     iana,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, CoseError, Header,
+    Algorithm, CoseError, ProtectedHeader,
 };
 use alloc::{vec, vec::Vec};
 use core::convert::TryInto;
@@ -129,7 +129,7 @@ impl PartyInfoBuilder {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SuppPubInfo {
     pub key_data_length: u64,
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub other: Option<Vec<u8>>,
 }
 
@@ -160,7 +160,7 @@ impl AsCborValue for SuppPubInfo {
                     None
                 }
             },
-            protected: Header::from_cbor_bstr(a.remove(1))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(1))?,
             key_data_length: match a.remove(0) {
                 Value::Integer(u) => u
                     .try_into()
@@ -189,7 +189,7 @@ pub struct SuppPubInfoBuilder(SuppPubInfo);
 impl SuppPubInfoBuilder {
     builder! {SuppPubInfo}
     builder_set! {key_data_length: u64}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set_optional! {other: Vec<u8>}
 }
 

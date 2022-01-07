@@ -201,7 +201,8 @@ fn test_context_encode() {
         let got = key.clone().to_vec().unwrap();
         assert_eq!(*key_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseKdfContext::from_slice(&got).unwrap();
+        let mut got = CoseKdfContext::from_slice(&got).unwrap();
+        got.supp_pub_info.protected.original_data = None;
         assert_eq!(*key, got);
     }
 }

@@ -16,8 +16,8 @@
 
 use super::*;
 use crate::{
-    cbor::value::Value, iana, util::expect_err, ContentType, CoseKeyBuilder, CoseRecipientBuilder,
-    CoseSignatureBuilder, HeaderBuilder, TaggedCborSerializable,
+    cbor::value::Value, iana, util::expect_err, CborSerializable, ContentType, CoseKeyBuilder,
+    CoseRecipientBuilder, CoseSignatureBuilder, HeaderBuilder, TaggedCborSerializable,
 };
 use alloc::{
     string::{String, ToString},
@@ -69,7 +69,11 @@ fn test_cose_recipient_decode() {
         let got = recipient.clone().to_vec().unwrap();
         assert_eq!(*recipient_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseRecipient::from_slice(&got).unwrap();
+        let mut got = CoseRecipient::from_slice(&got).unwrap();
+        got.protected.original_data = None;
+        for mut recip in &mut got.recipients {
+            recip.protected.original_data = None;
+        }
         assert_eq!(*recipient, got);
     }
 }
@@ -172,7 +176,8 @@ fn test_cose_encrypt_decode() {
         let got = encrypt.clone().to_vec().unwrap();
         assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseEncrypt::from_slice(&got).unwrap();
+        let mut got = CoseEncrypt::from_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*encrypt, got);
     }
 }
@@ -466,7 +471,14 @@ fn test_rfc8152_cose_encrypt_decode() {
         let got = encrypt.clone().to_tagged_vec().unwrap();
         assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseEncrypt::from_tagged_slice(&got).unwrap();
+        let mut got = CoseEncrypt::from_tagged_slice(&got).unwrap();
+        got.protected.original_data = None;
+        for mut recip in &mut got.recipients {
+            recip.protected.original_data = None;
+        }
+        for mut sig in &mut got.unprotected.counter_signatures {
+            sig.protected.original_data = None;
+        }
         assert_eq!(*encrypt, got);
     }
 }
@@ -498,7 +510,8 @@ fn test_cose_encrypt0_decode() {
         let got = encrypt.clone().to_vec().unwrap();
         assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseEncrypt0::from_slice(&got).unwrap();
+        let mut got = CoseEncrypt0::from_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*encrypt, got);
     }
 }
@@ -629,7 +642,8 @@ fn test_rfc8152_cose_encrypt0_decode() {
         let got = encrypt.clone().to_tagged_vec().unwrap();
         assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
 
-        let got = CoseEncrypt0::from_tagged_slice(&got).unwrap();
+        let mut got = CoseEncrypt0::from_tagged_slice(&got).unwrap();
+        got.protected.original_data = None;
         assert_eq!(*encrypt, got);
     }
 }
@@ -700,19 +714,59 @@ fn test_cose_recipient_roundtrip() {
             })
             .is_ok());
 
-        // Providing a different `aad` means the signature won't validate.
+        // Providing a different `aad` means the ciphertext won't validate.
         assert!(recipient
             .decrypt(*context, b"not aad", |ct, aad| { cipher.decrypt(ct, aad) })
             .is_err());
 
-        // Changing a protected header invalidates the signature.
-        recipient.protected = Header::default();
+        // Changing a protected header invalidates the ciphertext.
+        recipient.protected = ProtectedHeader::default();
         assert!(recipient
             .decrypt(*context, external_aad, |ct, aad| {
                 cipher.decrypt(ct, aad)
             })
             .is_err());
     }
+}
+
+#[test]
+fn test_cose_recipient_noncanonical() {
+    let pt = b"aa";
+    let aad = b"bb";
+    let cipher = FakeCipher {};
+    let context = EncryptionContext::EncRecipient;
+
+    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
+    assert_eq!(protected.header, Header::default());
+    assert_eq!(protected.original_data, Some(vec![0xa0]));
+
+    let mut recipient = CoseRecipient {
+        protected: protected.clone(),
+        ..Default::default()
+    };
+    let internal_aad = crate::encrypt::enc_structure_data(context, protected, aad);
+    recipient.ciphertext = Some(cipher.encrypt(pt, &internal_aad).unwrap());
+
+    // Deciphering the ciphertext should still succeed, because the `ProtectedHeader`
+    // includes the wire data and uses it for building the decryption input.
+    let recovered_pt = recipient
+        .decrypt(context, aad, |ct, aad| cipher.decrypt(ct, aad))
+        .unwrap();
+    assert_eq!(&pt[..], recovered_pt);
+
+    // However, if we attempt to build the same decryption inputs by hand (thus not including the
+    // non-canonical wire data)...
+    let recreated_recipient = CoseRecipientBuilder::new()
+        .ciphertext(recipient.ciphertext.unwrap())
+        .build();
+
+    // ...then the transplanted cipher text will not decipher, because the re-building of the
+    // inputs will use the canonical encoding of the protected header, which is not what was
+    // originally used for the input.
+    assert!(recreated_recipient
+        .decrypt(context, aad, |ct, aad| cipher.decrypt(ct, aad))
+        .is_err());
 }
 
 #[test]
@@ -831,9 +885,53 @@ fn test_cose_encrypt_roundtrip() {
         .decrypt(b"not aad", |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 
-    // Changing a protected header invalidates the signature.
-    encrypt.protected = Header::default();
+    // Changing a protected header invalidates the ciphertext.
+    encrypt.protected = ProtectedHeader::default();
     assert!(encrypt
+        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .is_err());
+}
+
+#[test]
+fn test_cose_encrypt_noncanonical() {
+    let pt = b"aa";
+    let external_aad = b"bb";
+    let cipher = FakeCipher {};
+
+    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
+    assert_eq!(protected.header, Header::default());
+    assert_eq!(protected.original_data, Some(vec![0xa0]));
+
+    let mut encrypt = CoseEncrypt {
+        protected: protected.clone(),
+        ..Default::default()
+    };
+    let aad = enc_structure_data(
+        EncryptionContext::CoseEncrypt,
+        protected.clone(),
+        external_aad,
+    );
+    encrypt.ciphertext = Some(cipher.encrypt(pt, &aad).unwrap());
+
+    // Deciphering the ciphertext should still succeed, because the `ProtectedHeader`
+    // includes the wire data and uses it for building the decryption input.
+    let recovered_pt = encrypt
+        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .unwrap();
+    assert_eq!(&pt[..], recovered_pt);
+
+    // However, if we attempt to build the same decryption inputs by hand (thus not including the
+    // non-canonical wire data)...
+    let recreated_encrypt = CoseEncryptBuilder::new()
+        .protected(protected.header)
+        .ciphertext(encrypt.ciphertext.unwrap())
+        .build();
+
+    // ...then the transplanted cipher text will not decipher, because the re-building of the
+    // inputs will use the canonical encoding of the protected header, which is not what was
+    // originally used for the input.
+    assert!(recreated_encrypt
         .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 }
@@ -903,12 +1001,55 @@ fn test_cose_encrypt0_roundtrip() {
         .is_err());
 
     // Changing a protected header invalidates the ciphertext.
-    encrypt.protected = Header::default();
+    encrypt.protected = ProtectedHeader::default();
     assert!(encrypt
         .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 }
 
+#[test]
+fn test_cose_encrypt0_noncanonical() {
+    let pt = b"aa";
+    let external_aad = b"bb";
+    let cipher = FakeCipher {};
+
+    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
+    assert_eq!(protected.header, Header::default());
+    assert_eq!(protected.original_data, Some(vec![0xa0]));
+
+    let mut encrypt = CoseEncrypt0 {
+        protected: protected.clone(),
+        ..Default::default()
+    };
+    let aad = enc_structure_data(
+        EncryptionContext::CoseEncrypt0,
+        protected.clone(),
+        external_aad,
+    );
+    encrypt.ciphertext = Some(cipher.encrypt(pt, &aad).unwrap());
+
+    // Deciphering the ciphertext should still succeed, because the `ProtectedHeader`
+    // includes the wire data and uses it for building the decryption input.
+    let recovered_pt = encrypt
+        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .unwrap();
+    assert_eq!(&pt[..], recovered_pt);
+
+    // However, if we attempt to build the same decryption inputs by hand (thus not including the
+    // non-canonical wire data)...
+    let recreated_encrypt = CoseEncrypt0Builder::new()
+        .protected(protected.header)
+        .ciphertext(encrypt.ciphertext.unwrap())
+        .build();
+
+    // ...then the transplanted cipher text will not decipher, because the re-building of the
+    // inputs will use the canonical encoding of the protected header, which is not what was
+    // originally used for the input.
+    assert!(recreated_encrypt
+        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .is_err());
+}
 #[test]
 fn test_cose_encrypt0_status() {
     let pt = b"This is the plaintext";

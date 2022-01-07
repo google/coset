@@ -21,7 +21,7 @@ use crate::{
     cbor::value::Value,
     iana,
     util::{cbor_type_error, AsCborValue},
-    CborSerializable, CoseError, Header,
+    CoseError, Header, ProtectedHeader,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
@@ -38,7 +38,7 @@ mod tests;
 ///  ```
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseSignature {
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub unprotected: Header,
     pub signature: Vec<u8>,
 }
@@ -62,7 +62,7 @@ impl AsCborValue for CoseSignature {
                 v => return cbor_type_error(&v, "bstr"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
-            protected: Header::from_cbor_bstr(a.remove(0))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
     }
 
@@ -81,7 +81,7 @@ pub struct CoseSignatureBuilder(CoseSignature);
 
 impl CoseSignatureBuilder {
     builder! {CoseSignature}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set! {unprotected: Header}
     builder_set! {signature: Vec<u8>}
 }
@@ -97,7 +97,7 @@ impl CoseSignatureBuilder {
 /// ```
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseSign {
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub unprotected: Header,
     pub payload: Option<Vec<u8>>,
     pub signatures: Vec<CoseSignature>,
@@ -147,7 +147,7 @@ impl AsCborValue for CoseSign {
                 v => return cbor_type_error(&v, "bstr or nil"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
-            protected: Header::from_cbor_bstr(a.remove(0))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
     }
 
@@ -203,7 +203,7 @@ pub struct CoseSignBuilder(CoseSign);
 
 impl CoseSignBuilder {
     builder! {CoseSign}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set! {unprotected: Header}
     builder_set_optional! {payload: Vec<u8>}
 
@@ -256,7 +256,7 @@ impl CoseSignBuilder {
 /// ```
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CoseSign1 {
-    pub protected: Header,
+    pub protected: ProtectedHeader,
     pub unprotected: Header,
     pub payload: Option<Vec<u8>>,
     pub signature: Vec<u8>,
@@ -289,7 +289,7 @@ impl AsCborValue for CoseSign1 {
                 v => return cbor_type_error(&v, "bstr or nil"),
             },
             unprotected: Header::from_cbor_value(a.remove(1))?,
-            protected: Header::from_cbor_bstr(a.remove(0))?,
+            protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
     }
 
@@ -335,7 +335,7 @@ pub struct CoseSign1Builder(CoseSign1);
 
 impl CoseSign1Builder {
     builder! {CoseSign1}
-    builder_set! {protected: Header}
+    builder_set_protected! {protected}
     builder_set! {unprotected: Header}
     builder_set! {signature: Vec<u8>}
     builder_set_optional! {payload: Vec<u8>}
@@ -394,29 +394,18 @@ impl SignatureContext {
 /// ```
 pub fn sig_structure_data(
     context: SignatureContext,
-    body: Header,
-    sign: Option<Header>,
+    body: ProtectedHeader,
+    sign: Option<ProtectedHeader>,
     aad: &[u8],
     payload: &[u8],
 ) -> Vec<u8> {
     let mut arr = vec![
         Value::Text(context.text().to_owned()),
-        if body.is_empty() {
-            Value::Bytes(vec![])
-        } else {
-            Value::Bytes(
-                body.to_vec().expect("failed to serialize header"), // safe: always serializable
-            )
-        },
+        body.cbor_bstr().expect("failed to serialize header"), // safe: always serializable
     ];
     if let Some(sign) = sign {
-        if sign.is_empty() {
-            arr.push(Value::Bytes(vec![]));
-        } else {
-            arr.push(Value::Bytes(
-                sign.to_vec().expect("failed to serialize header"), // safe: always serializable
-            ));
-        }
+        arr.push(sign.cbor_bstr().expect("failed to serialize header")); // safe: always
+                                                                         // serializable
     }
     arr.push(Value::Bytes(aad.to_vec()));
     arr.push(Value::Bytes(payload.to_vec()));
