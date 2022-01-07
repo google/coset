@@ -33,6 +33,8 @@ mod tests;
 pub enum CoseError {
     /// CBOR decoding failure.
     DecodeFailed,
+    /// Duplicate map key detected.
+    DuplicateMapKey,
     /// CBOR encoding failure.
     EncodeFailed,
     /// Integer value on the wire is outside the range of integers representable in this crate.
@@ -68,6 +70,7 @@ impl core::fmt::Debug for CoseError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             CoseError::DecodeFailed => write!(f, "decode CBOR failure"),
+            CoseError::DuplicateMapKey => write!(f, "duplicate map key"),
             CoseError::EncodeFailed => write!(f, "encode CBOR failure"),
             CoseError::OutOfRangeIntegerValue => write!(f, "out of range integer value"),
             CoseError::UnexpectedType(got, want) => write!(f, "got {}, expected {}", got, want),

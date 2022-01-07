@@ -595,7 +595,7 @@ fn test_cose_key_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "1866", "1847", // 66 => 47
             ),
-            "decode CBOR failure",
+            "duplicate map key",
         ),
         (
             concat!(
@@ -604,7 +604,7 @@ fn test_cose_key_decode_dup_fail() {
                 "02", "41", "01", // 2 (kid) => 1-bstr
                 "01", "01", // 1 (kty) => OKP  (duplicate label)
             ),
-            "decode CBOR failure",
+            "duplicate map key",
         ),
     ];
     for (key_data, err_msg) in tests.iter() {
@@ -622,7 +622,7 @@ fn test_cose_key_encode_dup_fail() {
         .build()];
     for key in tests {
         let result = key.clone().to_vec();
-        expect_err(result, "encode CBOR failure");
+        expect_err(result, "duplicate map key");
     }
 }
 
