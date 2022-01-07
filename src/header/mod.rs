@@ -122,7 +122,7 @@ impl AsCborValue for Header {
             // RFC 8152 section 14 requires that COSE does police duplicates, so do it here.
             let label = Label::from_cbor_value(l.clone())?;
             if seen.contains(&label) {
-                return Err(CoseError::DecodeFailed);
+                return Err(CoseError::DuplicateMapKey);
             }
             seen.insert(label.clone());
             match l {
@@ -285,7 +285,7 @@ impl AsCborValue for Header {
         let mut seen = BTreeSet::new();
         for (label, value) in self.rest.into_iter() {
             if seen.contains(&label) {
-                return Err(CoseError::EncodeFailed);
+                return Err(CoseError::DuplicateMapKey);
             }
             seen.insert(label.clone());
             map.push((label.to_cbor_value()?, value));

@@ -361,7 +361,7 @@ fn test_header_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "1866", "1847", // 66 => 47
             ),
-            "decode CBOR failure",
+            "duplicate map key",
         ),
         (
             concat!(
@@ -370,7 +370,7 @@ fn test_header_decode_dup_fail() {
                 "1866", "1867", // 66 => 67
                 "01", "01", // 1 (alg) => A128GCM (duplicate label)
             ),
-            "decode CBOR failure",
+            "duplicate map key",
         ),
     ];
     for (header_data, err_msg) in tests.iter() {
@@ -402,7 +402,7 @@ fn test_header_encode_dup_fail() {
     ];
     for header in tests {
         let result = header.clone().to_vec();
-        expect_err(result, "encode CBOR failure");
+        expect_err(result, "duplicate map key");
     }
 }
 
