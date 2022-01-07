@@ -35,6 +35,9 @@ pub enum CoseError {
     DecodeFailed,
     /// CBOR encoding failure.
     EncodeFailed,
+    /// Integer value on the wire is outside the range of integers representable in this crate.
+    /// See <https://crates.io/crates/coset/#integer-ranges>.
+    OutOfRangeIntegerValue,
     /// Unexpected CBOR type encountered (got, want).
     UnexpectedType(&'static str, &'static str),
     /// Unrecognized value in IANA-controlled range (with no private range).
@@ -55,11 +58,18 @@ impl<T> core::convert::From<cbor::ser::Error<T>> for CoseError {
     }
 }
 
+impl core::convert::From<core::num::TryFromIntError> for CoseError {
+    fn from(_: core::num::TryFromIntError) -> Self {
+        CoseError::OutOfRangeIntegerValue
+    }
+}
+
 impl core::fmt::Debug for CoseError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             CoseError::DecodeFailed => write!(f, "decode CBOR failure"),
             CoseError::EncodeFailed => write!(f, "encode CBOR failure"),
+            CoseError::OutOfRangeIntegerValue => write!(f, "out of range integer value"),
             CoseError::UnexpectedType(got, want) => write!(f, "got {}, expected {}", got, want),
             CoseError::UnregisteredIanaValue => write!(f, "expected recognized IANA value"),
             CoseError::UnregisteredIanaNonPrivateValue => {
@@ -166,10 +176,7 @@ impl PartialOrd for Label {
 impl AsCborValue for Label {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
-            Value::Integer(i) => Ok(Label::Int(
-                i.try_into()
-                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
-            )),
+            Value::Integer(i) => Ok(Label::Int(i.try_into()?)),
             Value::Text(t) => Ok(Label::Text(t)),
             v => cbor_type_error(&v, "int/tstr"),
         }
@@ -218,10 +225,7 @@ impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
             Value::Integer(i) => {
-                if let Some(a) = T::from_i64(
-                    i.try_into()
-                        .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
-                ) {
+                if let Some(a) = T::from_i64(i.try_into()?) {
                     Ok(RegisteredLabel::Assigned(a))
                 } else {
                     Err(CoseError::UnregisteredIanaValue)
@@ -280,9 +284,7 @@ impl<T: EnumI64 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
         match value {
             Value::Integer(i) => {
-                let i = i
-                    .try_into()
-                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?;
+                let i = i.try_into()?;
                 if let Some(a) = T::from_i64(i) {
                     Ok(RegisteredLabelWithPrivate::Assigned(a))
                 } else if T::is_private(i) {

@@ -330,8 +330,8 @@ fn test_large_label_decode() {
 #[test]
 fn test_large_label_decode_fail() {
     let tests = vec![
-        (CBOR_NINT_OUT_OF_RANGE_HEX, "got u64, expected u63"),
-        (CBOR_INT_OUT_OF_RANGE_HEX, "expected u63"),
+        (CBOR_NINT_OUT_OF_RANGE_HEX, "out of range integer value"),
+        (CBOR_INT_OUT_OF_RANGE_HEX, "out of range integer value"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
@@ -343,8 +343,8 @@ fn test_large_label_decode_fail() {
 #[test]
 fn test_large_registered_label_decode_fail() {
     let tests = vec![
-        (CBOR_NINT_OUT_OF_RANGE_HEX, "got u64, expected u63"),
-        (CBOR_INT_OUT_OF_RANGE_HEX, "expected u63"),
+        (CBOR_NINT_OUT_OF_RANGE_HEX, "out of range integer value"),
+        (CBOR_INT_OUT_OF_RANGE_HEX, "out of range integer value"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
@@ -356,8 +356,8 @@ fn test_large_registered_label_decode_fail() {
 #[test]
 fn test_large_registered_label_with_private_decode_fail() {
     let tests = vec![
-        (CBOR_NINT_OUT_OF_RANGE_HEX, "got u64, expected u63"),
-        (CBOR_INT_OUT_OF_RANGE_HEX, "expected u63"),
+        (CBOR_NINT_OUT_OF_RANGE_HEX, "out of range integer value"),
+        (CBOR_INT_OUT_OF_RANGE_HEX, "out of range integer value"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();

@@ -380,7 +380,7 @@ fn test_context_decode_fail() {
                 "82", // 2-tuple: [0, 0-bstr]
                 "0040",
             ),
-            "got u64, expected u63",
+            "out of range integer value",
         ),
     ];
     for (context_data, err_msg) in tests.iter() {
