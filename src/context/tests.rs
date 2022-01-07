@@ -236,7 +236,7 @@ fn test_context_decode_fail() {
                 "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
                 "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
             ),
-            "decode CBOR failure",
+            "decode CBOR failure: Io(EndOfFile",
         ),
         (
             concat!(

@@ -580,7 +580,7 @@ fn test_cose_sign_tagged_decode_fail() {
             concat!(
                 "18",     // incomplete int
             ),
-            "decode CBOR failure",
+            "decode CBOR failure: Io(EndOfFile",
         ),
     ];
     for (sign_data, err_msg) in tests.iter() {

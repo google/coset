@@ -99,7 +99,8 @@ fn test_label_sort() {
 fn test_label_decode_fail() {
     let tests = vec![
         ("43010203", "expected int/tstr"),
-        ("", "decode CBOR failure"),
+        ("", "decode CBOR failure: Io(EndOfFile"),
+        ("1e", "decode CBOR failure: Syntax"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
@@ -178,7 +179,7 @@ fn test_registered_label_sort() {
 fn test_registered_label_decode_fail() {
     let tests = vec![
         ("43010203", "expected int/tstr"),
-        ("", "decode CBOR failure"),
+        ("", "decode CBOR failure: Io(EndOfFile"),
         ("09", "expected recognized IANA value"),
         ("394e1f", "expected recognized IANA value"),
     ];
@@ -288,7 +289,7 @@ fn test_registered_label_with_private_sort() {
 fn test_registered_label_with_private_decode_fail() {
     let tests = vec![
         ("43010203", "expected int/tstr"),
-        ("", "decode CBOR failure"),
+        ("", "decode CBOR failure: Io(EndOfFile"),
         ("09", "expected value in IANA or private use range"),
         ("394e1f", "expected value in IANA or private use range"),
     ];
