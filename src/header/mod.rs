@@ -21,7 +21,7 @@ use crate::{
     iana,
     iana::EnumI64,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel,
+    Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel, Result,
 };
 use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
 
@@ -109,7 +109,7 @@ fn counter_sig_value() -> Value {
 }
 
 impl AsCborValue for Header {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let m = match value {
             Value::Map(m) => m,
             v => return cbor_type_error(&v, "map"),
@@ -243,7 +243,7 @@ impl AsCborValue for Header {
         Ok(headers)
     }
 
-    fn to_cbor_value(mut self) -> Result<Value, CoseError> {
+    fn to_cbor_value(mut self) -> Result<Value> {
         let mut map = Vec::<(Value, Value)>::new();
         if let Some(alg) = self.alg {
             map.push((alg_value(), alg.to_cbor_value()?));
@@ -398,7 +398,7 @@ pub struct ProtectedHeader {
 impl ProtectedHeader {
     /// Constructor from a [`Value`] that holds a `bstr` encoded header.
     #[inline]
-    pub fn from_cbor_bstr(val: Value) -> Result<Self, CoseError> {
+    pub fn from_cbor_bstr(val: Value) -> Result<Self> {
         let data = match val {
             Value::Bytes(b) => b,
             v => return cbor_type_error(&v, "bstr encoded map"),
@@ -418,7 +418,7 @@ impl ProtectedHeader {
     /// Convert this header to a `bstr` encoded map, as a [`Value`], consuming the object along the
     /// way.
     #[inline]
-    pub fn cbor_bstr(self) -> Result<Value, CoseError> {
+    pub fn cbor_bstr(self) -> Result<Value> {
         Ok(Value::Bytes(
             if let Some(original_data) = self.original_data {
                 original_data
@@ -439,14 +439,14 @@ impl ProtectedHeader {
 impl crate::CborSerializable for ProtectedHeader {}
 
 impl AsCborValue for ProtectedHeader {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         Ok(ProtectedHeader {
             original_data: None,
             header: Header::from_cbor_value(value)?,
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         self.header.to_cbor_value()
     }
 }
