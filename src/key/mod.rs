@@ -21,7 +21,7 @@ use crate::{
     iana,
     iana::EnumI64,
     util::{cbor_type_error, AsCborValue},
-    Algorithm, CoseError, Label,
+    Algorithm, CoseError, Label, Result,
 };
 use alloc::{collections::BTreeSet, vec, vec::Vec};
 
@@ -47,7 +47,7 @@ pub struct CoseKeySet(pub Vec<CoseKey>);
 impl crate::CborSerializable for CoseKeySet {}
 
 impl AsCborValue for CoseKeySet {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let a = match value {
             Value::Array(a) => a,
             v => return cbor_type_error(&v, "array"),
@@ -59,7 +59,7 @@ impl AsCborValue for CoseKeySet {
         Ok(Self(keys))
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         let mut arr = Vec::new();
         for k in self.0 {
             arr.push(k.to_cbor_value()?);
@@ -116,7 +116,7 @@ fn base_iv_value() -> Value {
 }
 
 impl AsCborValue for CoseKey {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let m = match value {
             Value::Map(m) => m,
             v => return cbor_type_error(&v, "map"),
@@ -191,7 +191,7 @@ impl AsCborValue for CoseKey {
         Ok(key)
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         let mut map: Vec<(Value, Value)> = vec![(kty_value(), self.kty.to_cbor_value()?)];
         if !self.key_id.is_empty() {
             map.push((kid_value(), Value::Bytes(self.key_id)));

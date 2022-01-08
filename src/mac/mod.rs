@@ -21,7 +21,7 @@ use crate::{
     cbor::value::Value,
     iana,
     util::{cbor_type_error, AsCborValue},
-    CoseError, CoseRecipient, Header, ProtectedHeader,
+    CoseError, CoseRecipient, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
@@ -54,7 +54,7 @@ impl crate::TaggedCborSerializable for CoseMac {
 }
 
 impl AsCborValue for CoseMac {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = match value {
             Value::Array(a) => a,
             v => return cbor_type_error(&v, "array"),
@@ -89,7 +89,7 @@ impl AsCborValue for CoseMac {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         let mut v = vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
@@ -212,7 +212,7 @@ impl crate::TaggedCborSerializable for CoseMac0 {
 }
 
 impl AsCborValue for CoseMac0 {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = match value {
             Value::Array(a) => a,
             v => return cbor_type_error(&v, "array"),
@@ -237,7 +237,7 @@ impl AsCborValue for CoseMac0 {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,

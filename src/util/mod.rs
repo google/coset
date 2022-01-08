@@ -16,13 +16,13 @@
 
 //! Common internal utilities.
 
-use crate::{cbor::value::Value, CoseError};
+use crate::{cbor::value::Value, CoseError, Result};
 
 #[cfg(test)]
 mod tests;
 
 /// Return an error indicating that an unexpected CBOR type was encountered.
-pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T, CoseError> {
+pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T> {
     let got = match value {
         Value::Integer(_) => "int",
         Value::Bytes(_) => "bstr",
@@ -41,9 +41,9 @@ pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T,
 /// Trait for types that can be converted to/from a [`Value`].
 pub trait AsCborValue: Sized {
     /// Convert a [`Value`] into an instance of the type.
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError>;
+    fn from_cbor_value(value: Value) -> Result<Self>;
     /// Convert the object into a [`Value`], consuming it along the way.
-    fn to_cbor_value(self) -> Result<Value, CoseError>;
+    fn to_cbor_value(self) -> Result<Value>;
 }
 
 /// Check for an expected error.
