@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
     CoseError, Header, ProtectedHeader,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -90,12 +90,7 @@ impl AsCborValue for CoseRecipient {
             },
         ];
         if !self.recipients.is_empty() {
-            v.push(Value::Array(
-                self.recipients
-                    .into_iter()
-                    .map(|r| r.to_cbor_value())
-                    .collect::<Result<Vec<_>, _>>()?,
-            ));
+            v.push(to_cbor_array(self.recipients)?);
         }
         Ok(Value::Array(v))
     }
@@ -258,11 +253,6 @@ impl AsCborValue for CoseEncrypt {
     }
 
     fn to_cbor_value(self) -> Result<Value, CoseError> {
-        let arr = self
-            .recipients
-            .into_iter()
-            .map(|r| r.to_cbor_value())
-            .collect::<Result<Vec<_>, _>>()?;
         Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
@@ -270,7 +260,7 @@ impl AsCborValue for CoseEncrypt {
                 None => Value::Null,
                 Some(b) => Value::Bytes(b),
             },
-            Value::Array(arr),
+            to_cbor_array(self.recipients)?,
         ]))
     }
 }

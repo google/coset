@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
     CoseError, Header, ProtectedHeader,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -138,12 +138,7 @@ impl AsCborValue for CoseSign {
                 Some(b) => Value::Bytes(b),
                 None => Value::Null,
             },
-            Value::Array(
-                self.signatures
-                    .into_iter()
-                    .map(|sig| sig.to_cbor_value())
-                    .collect::<Result<Vec<_>, _>>()?,
-            ),
+            to_cbor_array(self.signatures)?,
         ]))
     }
 }

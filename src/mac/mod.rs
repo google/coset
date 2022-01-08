@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
     CoseError, CoseRecipient, Header, ProtectedHeader,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -90,12 +90,7 @@ impl AsCborValue for CoseMac {
                 Some(b) => Value::Bytes(b),
             },
             Value::Bytes(self.tag),
-            Value::Array(
-                self.recipients
-                    .into_iter()
-                    .map(|r| r.to_cbor_value())
-                    .collect::<Result<Vec<_>, _>>()?,
-            ),
+            to_cbor_array(self.recipients)?,
         ]))
     }
 }

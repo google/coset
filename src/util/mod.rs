@@ -116,6 +116,20 @@ pub trait AsCborValue: Sized {
     fn to_cbor_value(self) -> Result<Value, CoseError>;
 }
 
+/// Convert each item to CBOR, and wrap the lot in
+/// a Value::Array
+pub fn to_cbor_array<C>(c: C) -> Result<Value, CoseError>
+where
+    C: IntoIterator,
+    C::Item: AsCborValue,
+{
+    Ok(Value::Array(
+        c.into_iter()
+            .map(|e| e.to_cbor_value())
+            .collect::<Result<Vec<_>, _>>()?,
+    ))
+}
+
 /// Check for an expected error.
 #[cfg(test)]
 pub fn expect_err<T: core::fmt::Debug, E: core::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
