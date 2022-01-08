@@ -86,27 +86,13 @@ impl Header {
 
 impl crate::CborSerializable for Header {}
 
-fn alg_value() -> Value {
-    Value::from(iana::HeaderParameter::Alg as u64)
-}
-fn crit_value() -> Value {
-    Value::from(iana::HeaderParameter::Crit as u64)
-}
-fn content_type_value() -> Value {
-    Value::from(iana::HeaderParameter::ContentType as u64)
-}
-fn kid_value() -> Value {
-    Value::from(iana::HeaderParameter::Kid as u64)
-}
-fn iv_value() -> Value {
-    Value::from(iana::HeaderParameter::Iv as u64)
-}
-fn partial_iv_value() -> Value {
-    Value::from(iana::HeaderParameter::PartialIv as u64)
-}
-fn counter_sig_value() -> Value {
-    Value::from(iana::HeaderParameter::CounterSignature as u64)
-}
+const ALG: Label = Label::Int(iana::HeaderParameter::Alg as i64);
+const CRIT: Label = Label::Int(iana::HeaderParameter::Crit as i64);
+const CONTENT_TYPE: Label = Label::Int(iana::HeaderParameter::ContentType as i64);
+const KID: Label = Label::Int(iana::HeaderParameter::Kid as i64);
+const IV: Label = Label::Int(iana::HeaderParameter::Iv as i64);
+const PARTIAL_IV: Label = Label::Int(iana::HeaderParameter::PartialIv as i64);
+const COUNTER_SIG: Label = Label::Int(iana::HeaderParameter::CounterSignature as i64);
 
 impl AsCborValue for Header {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
@@ -121,10 +107,9 @@ impl AsCborValue for Header {
                 return Err(CoseError::DuplicateMapKey);
             }
             seen.insert(label.clone());
-            match l {
-                x if x == alg_value() => headers.alg = Some(Algorithm::from_cbor_value(value)?),
-
-                x if x == crit_value() => match value {
+            match label {
+                ALG => headers.alg = Some(Algorithm::from_cbor_value(value)?),
+                CRIT => match value {
                     Value::Array(a) => {
                         if a.is_empty() {
                             return Err(CoseError::UnexpectedType(
@@ -141,7 +126,7 @@ impl AsCborValue for Header {
                     v => return cbor_type_error(&v, "array value"),
                 },
 
-                x if x == content_type_value() => {
+                CONTENT_TYPE => {
                     headers.content_type = Some(ContentType::from_cbor_value(value)?);
                     if let Some(ContentType::Text(text)) = &headers.content_type {
                         if text.is_empty() {
@@ -164,18 +149,18 @@ impl AsCborValue for Header {
                     }
                 }
 
-                x if x == kid_value() => {
+                KID => {
                     headers.key_id = value.try_as_nonempty_bytes()?;
                 }
 
-                x if x == iv_value() => {
+                IV => {
                     headers.iv = value.try_as_nonempty_bytes()?;
                 }
 
-                x if x == partial_iv_value() => {
+                PARTIAL_IV => {
                     headers.partial_iv = value.try_as_nonempty_bytes()?;
                 }
-                x if x == counter_sig_value() => {
+                COUNTER_SIG => {
                     let sig_or_sigs = value.try_as_array()?;
                     if sig_or_sigs.is_empty() {
                         return Err(CoseError::UnexpectedType(
@@ -205,7 +190,7 @@ impl AsCborValue for Header {
                     }
                 }
 
-                _l => headers.rest.push((label, value)),
+                label => headers.rest.push((label, value)),
             }
             // RFC 8152 section 3.1: "The 'Initialization Vector' and 'Partial Initialization
             // Vector' parameters MUST NOT both be present in the same security layer."
@@ -222,7 +207,7 @@ impl AsCborValue for Header {
     fn to_cbor_value(mut self) -> Result<Value, CoseError> {
         let mut map = Vec::<(Value, Value)>::new();
         if let Some(alg) = self.alg {
-            map.push((alg_value(), alg.to_cbor_value()?));
+            map.push((ALG.to_cbor_value()?, alg.to_cbor_value()?));
         }
         if !self.crit.is_empty() {
             let arr = self
@@ -230,25 +215,25 @@ impl AsCborValue for Header {
                 .into_iter()
                 .map(|c| c.to_cbor_value())
                 .collect::<Result<Vec<_>, _>>()?;
-            map.push((crit_value(), Value::Array(arr)));
+            map.push((CRIT.to_cbor_value()?, Value::Array(arr)));
         }
         if let Some(content_type) = self.content_type {
-            map.push((content_type_value(), content_type.to_cbor_value()?));
+            map.push((CONTENT_TYPE.to_cbor_value()?, content_type.to_cbor_value()?));
         }
         if !self.key_id.is_empty() {
-            map.push((kid_value(), Value::Bytes(self.key_id)));
+            map.push((KID.to_cbor_value()?, Value::Bytes(self.key_id)));
         }
         if !self.iv.is_empty() {
-            map.push((iv_value(), Value::Bytes(self.iv)));
+            map.push((IV.to_cbor_value()?, Value::Bytes(self.iv)));
         }
         if !self.partial_iv.is_empty() {
-            map.push((partial_iv_value(), Value::Bytes(self.partial_iv)));
+            map.push((PARTIAL_IV.to_cbor_value()?, Value::Bytes(self.partial_iv)));
         }
         if !self.counter_signatures.is_empty() {
             if self.counter_signatures.len() == 1 {
                 // A single counter signature is encoded differently.
                 map.push((
-                    counter_sig_value(),
+                    COUNTER_SIG.to_cbor_value()?,
                     self.counter_signatures.remove(0).to_cbor_value()?,
                 ));
             } else {
@@ -257,7 +242,7 @@ impl AsCborValue for Header {
                     .into_iter()
                     .map(|cs| cs.to_cbor_value())
                     .collect::<Result<Vec<_>, _>>()?;
-                map.push((counter_sig_value(), Value::Array(arr)));
+                map.push((COUNTER_SIG.to_cbor_value()?, Value::Array(arr)));
             }
         }
         let mut seen = BTreeSet::new();

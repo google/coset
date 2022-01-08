@@ -98,21 +98,11 @@ pub struct CoseKey {
 
 impl crate::CborSerializable for CoseKey {}
 
-fn kty_value() -> Value {
-    Value::from(iana::KeyParameter::Kty.to_i64())
-}
-fn kid_value() -> Value {
-    Value::from(iana::KeyParameter::Kid.to_i64())
-}
-fn alg_value() -> Value {
-    Value::from(iana::KeyParameter::Alg.to_i64())
-}
-fn key_ops_value() -> Value {
-    Value::from(iana::KeyParameter::KeyOps.to_i64())
-}
-fn base_iv_value() -> Value {
-    Value::from(iana::KeyParameter::BaseIv.to_i64())
-}
+const KTY: Label = Label::Int(iana::KeyParameter::Kty as i64);
+const KID: Label = Label::Int(iana::KeyParameter::Kid as i64);
+const ALG: Label = Label::Int(iana::KeyParameter::Alg as i64);
+const KEY_OPS: Label = Label::Int(iana::KeyParameter::KeyOps as i64);
+const BASE_IV: Label = Label::Int(iana::KeyParameter::BaseIv as i64);
 
 impl AsCborValue for CoseKey {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
@@ -127,16 +117,16 @@ impl AsCborValue for CoseKey {
                 return Err(CoseError::DuplicateMapKey);
             }
             seen.insert(label.clone());
-            match l {
-                x if x == kty_value() => key.kty = KeyType::from_cbor_value(value)?,
+            match label {
+                KTY => key.kty = KeyType::from_cbor_value(value)?,
 
-                x if x == kid_value() => {
+                KID => {
                     key.key_id = value.try_as_nonempty_bytes()?;
                 }
 
-                x if x == alg_value() => key.alg = Some(Algorithm::from_cbor_value(value)?),
+                ALG => key.alg = Some(Algorithm::from_cbor_value(value)?),
 
-                x if x == key_ops_value() => {
+                KEY_OPS => {
                     let key_ops = value.try_as_array()?;
                     for key_op in key_ops.into_iter() {
                         if !key.key_ops.insert(KeyOperation::from_cbor_value(key_op)?) {
@@ -151,11 +141,11 @@ impl AsCborValue for CoseKey {
                     }
                 }
 
-                x if x == base_iv_value() => {
+                BASE_IV => {
                     key.base_iv = value.try_as_nonempty_bytes()?;
                 }
 
-                _l => key.params.push((label, value)),
+                label => key.params.push((label, value)),
             }
         }
         // Check that key type has been set.
@@ -170,12 +160,12 @@ impl AsCborValue for CoseKey {
     }
 
     fn to_cbor_value(self) -> Result<Value, CoseError> {
-        let mut map: Vec<(Value, Value)> = vec![(kty_value(), self.kty.to_cbor_value()?)];
+        let mut map: Vec<(Value, Value)> = vec![(KTY.to_cbor_value()?, self.kty.to_cbor_value()?)];
         if !self.key_id.is_empty() {
-            map.push((kid_value(), Value::Bytes(self.key_id)));
+            map.push((KID.to_cbor_value()?, Value::Bytes(self.key_id)));
         }
         if let Some(alg) = self.alg {
-            map.push((alg_value(), alg.to_cbor_value()?));
+            map.push((ALG.to_cbor_value()?, alg.to_cbor_value()?));
         }
         if !self.key_ops.is_empty() {
             let arr = self
@@ -183,10 +173,10 @@ impl AsCborValue for CoseKey {
                 .into_iter()
                 .map(|op| op.to_cbor_value())
                 .collect::<Result<Vec<_>, _>>()?;
-            map.push((key_ops_value(), Value::Array(arr)));
+            map.push((KEY_OPS.to_cbor_value()?, Value::Array(arr)));
         }
         if !self.base_iv.is_empty() {
-            map.push((base_iv_value(), Value::Bytes(self.base_iv)));
+            map.push((BASE_IV.to_cbor_value()?, Value::Bytes(self.base_iv)));
         }
         let mut seen = BTreeSet::new();
         for (label, value) in self.params {
