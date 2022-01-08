@@ -16,6 +16,9 @@
 
 //! Common internal utilities.
 
+use alloc::{boxed::Box, vec::Vec};
+use ciborium::value::Integer;
+
 use crate::{cbor::value::Value, CoseError};
 
 #[cfg(test)]
@@ -36,6 +39,73 @@ pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T,
         _ => "other",
     };
     Err(CoseError::UnexpectedType(got, want))
+}
+
+pub(crate) trait ValueTryAs
+where
+    Self: Sized,
+{
+    fn try_as_integer(self) -> Result<Integer, CoseError>;
+
+    fn try_as_bytes(self) -> Result<Vec<u8>, CoseError>;
+
+    fn try_as_nonempty_bytes(self) -> Result<Vec<u8>, CoseError>;
+
+    fn try_as_array(self) -> Result<Vec<Self>, CoseError>;
+
+    fn try_as_map(self) -> Result<Vec<(Self, Self)>, CoseError>;
+
+    fn try_as_tag(self) -> Result<(u64, Box<Value>), CoseError>;
+}
+
+impl ValueTryAs for Value {
+    fn try_as_integer(self) -> Result<Integer, CoseError> {
+        if let Value::Integer(i) = self {
+            Ok(i)
+        } else {
+            cbor_type_error(&self, "int")
+        }
+    }
+
+    fn try_as_bytes(self) -> Result<Vec<u8>, CoseError> {
+        if let Value::Bytes(b) = self {
+            Ok(b)
+        } else {
+            cbor_type_error(&self, "bstr")
+        }
+    }
+
+    fn try_as_nonempty_bytes(self) -> Result<Vec<u8>, CoseError> {
+        let v = self.try_as_bytes()?;
+        if v.is_empty() {
+            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
+        }
+        Ok(v)
+    }
+
+    fn try_as_array(self) -> Result<Vec<Self>, CoseError> {
+        if let Value::Array(a) = self {
+            Ok(a)
+        } else {
+            cbor_type_error(&self, "array")
+        }
+    }
+
+    fn try_as_map(self) -> Result<Vec<(Self, Self)>, CoseError> {
+        if let Value::Map(a) = self {
+            Ok(a)
+        } else {
+            cbor_type_error(&self, "map")
+        }
+    }
+
+    fn try_as_tag(self) -> Result<(u64, Box<Value>), CoseError> {
+        if let Value::Tag(a, v) = self {
+            Ok((a, v))
+        } else {
+            cbor_type_error(&self, "tag")
+        }
+    }
 }
 
 /// Trait for types that can be converted to/from a [`Value`].

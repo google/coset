@@ -21,7 +21,7 @@ use crate::{
     cbor::value::Value,
     iana,
     iana::{EnumI64, WithPrivateRange},
-    util::{cbor_type_error, AsCborValue},
+    util::{cbor_type_error, AsCborValue, ValueTryAs},
 };
 use alloc::{boxed::Box, string::String, vec::Vec};
 use core::{cmp::Ordering, convert::TryInto};
@@ -46,6 +46,8 @@ pub enum CoseError {
     /// Integer value on the wire is outside the range of integers representable in this crate.
     /// See <https://crates.io/crates/coset/#integer-ranges>.
     OutOfRangeIntegerValue,
+    /// Unexpected CBOR tag encountered (got, want).
+    UnexpectedTag(u64, u64),
     /// Unexpected CBOR type encountered (got, want).
     UnexpectedType(&'static str, &'static str),
     /// Unrecognized value in IANA-controlled range (with no private range).
@@ -80,6 +82,9 @@ impl core::fmt::Debug for CoseError {
             CoseError::EncodeFailed => write!(f, "encode CBOR failure"),
             CoseError::ExtraneousData => write!(f, "extraneous data in CBOR input"),
             CoseError::OutOfRangeIntegerValue => write!(f, "out of range integer value"),
+            CoseError::UnexpectedTag(got, want) => {
+                write!(f, "unexpected tag, got {}, expected {}", got, want)
+            }
             CoseError::UnexpectedType(got, want) => write!(f, "got {}, expected {}", got, want),
             CoseError::UnregisteredIanaValue => write!(f, "expected recognized IANA value"),
             CoseError::UnregisteredIanaNonPrivateValue => {
@@ -152,10 +157,11 @@ pub trait TaggedCborSerializable: AsCborValue {
     /// Create an object instance from serialized CBOR data in a slice, expecting an initial
     /// tag value.
     fn from_tagged_slice(slice: &[u8]) -> Result<Self, CoseError> {
-        match read_to_value(slice)? {
-            Value::Tag(t, v) if t == Self::TAG => Self::from_cbor_value(*v),
-            v => cbor_type_error(&v, "tag"),
+        let (t, v) = read_to_value(slice)?.try_as_tag()?;
+        if t != Self::TAG {
+            return Err(CoseError::UnexpectedTag(t, Self::TAG));
         }
+        Self::from_cbor_value(*v)
     }
 
     /// Serialize this object to a vector, including initial tag, consuming the object along the

@@ -20,7 +20,7 @@ use crate::{
     cbor::value::Value,
     iana,
     iana::EnumI64,
-    util::{cbor_type_error, AsCborValue},
+    util::{cbor_type_error, AsCborValue, ValueTryAs},
     Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel,
 };
 use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
@@ -110,11 +110,7 @@ fn counter_sig_value() -> Value {
 
 impl AsCborValue for Header {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
-        let m = match value {
-            Value::Map(m) => m,
-            v => return cbor_type_error(&v, "map"),
-        };
-
+        let m = value.try_as_map()?;
         let mut headers = Self::default();
         let mut seen = BTreeSet::new();
         for (l, value) in m.into_iter() {
@@ -168,66 +164,46 @@ impl AsCborValue for Header {
                     }
                 }
 
-                x if x == kid_value() => match value {
-                    Value::Bytes(v) => {
-                        if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
-                        }
-                        headers.key_id = v;
-                    }
-                    v => return cbor_type_error(&v, "bstr value"),
-                },
+                x if x == kid_value() => {
+                    headers.key_id = value.try_as_nonempty_bytes()?;
+                }
 
-                x if x == iv_value() => match value {
-                    Value::Bytes(v) => {
-                        if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
-                        }
-                        headers.iv = v;
-                    }
-                    v => return cbor_type_error(&v, "bstr value"),
-                },
+                x if x == iv_value() => {
+                    headers.iv = value.try_as_nonempty_bytes()?;
+                }
 
-                x if x == partial_iv_value() => match value {
-                    Value::Bytes(v) => {
-                        if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
-                        }
-                        headers.partial_iv = v;
+                x if x == partial_iv_value() => {
+                    headers.partial_iv = value.try_as_nonempty_bytes()?;
+                }
+                x if x == counter_sig_value() => {
+                    let sig_or_sigs = value.try_as_array()?;
+                    if sig_or_sigs.is_empty() {
+                        return Err(CoseError::UnexpectedType(
+                            "empty sig array",
+                            "non-empty sig array",
+                        ));
                     }
-                    v => return cbor_type_error(&v, "bstr value"),
-                },
-                x if x == counter_sig_value() => match value {
-                    Value::Array(sig_or_sigs) => {
-                        if sig_or_sigs.is_empty() {
-                            return Err(CoseError::UnexpectedType(
-                                "empty sig array",
-                                "non-empty sig array",
-                            ));
-                        }
-                        // The encoding of counter signature[s] is pesky:
-                        // - a single counter signature is encoded as `COSE_Signature` (a 3-tuple)
-                        // - multiple counter signatures are encoded as `[+ COSE_Signature]`
-                        //
-                        // Determine which is which by looking at the first entry of the array:
-                        // - If it's a bstr, sig_or_sigs is a single signature.
-                        // - If it's an array, sig_or_sigs is an array of signatures
-                        match &sig_or_sigs[0] {
-                            Value::Bytes(_) => headers
-                                .counter_signatures
-                                .push(CoseSignature::from_cbor_value(Value::Array(sig_or_sigs))?),
-                            Value::Array(_) => {
-                                for sig in sig_or_sigs.into_iter() {
-                                    headers
-                                        .counter_signatures
-                                        .push(CoseSignature::from_cbor_value(sig)?);
-                                }
+                    // The encoding of counter signature[s] is pesky:
+                    // - a single counter signature is encoded as `COSE_Signature` (a 3-tuple)
+                    // - multiple counter signatures are encoded as `[+ COSE_Signature]`
+                    //
+                    // Determine which is which by looking at the first entry of the array:
+                    // - If it's a bstr, sig_or_sigs is a single signature.
+                    // - If it's an array, sig_or_sigs is an array of signatures
+                    match &sig_or_sigs[0] {
+                        Value::Bytes(_) => headers
+                            .counter_signatures
+                            .push(CoseSignature::from_cbor_value(Value::Array(sig_or_sigs))?),
+                        Value::Array(_) => {
+                            for sig in sig_or_sigs.into_iter() {
+                                headers
+                                    .counter_signatures
+                                    .push(CoseSignature::from_cbor_value(sig)?);
                             }
-                            v => return cbor_type_error(v, "array or bstr value"),
                         }
+                        v => return cbor_type_error(v, "array or bstr value"),
                     }
-                    v => return cbor_type_error(&v, "array value"),
-                },
+                }
 
                 _l => headers.rest.push((label, value)),
             }
@@ -399,10 +375,7 @@ impl ProtectedHeader {
     /// Constructor from a [`Value`] that holds a `bstr` encoded header.
     #[inline]
     pub fn from_cbor_bstr(val: Value) -> Result<Self, CoseError> {
-        let data = match val {
-            Value::Bytes(b) => b,
-            v => return cbor_type_error(&v, "bstr encoded map"),
-        };
+        let data = val.try_as_bytes()?;
         let header = if data.is_empty() {
             // An empty bstr is used as a short cut for an empty header map.
             Header::default()

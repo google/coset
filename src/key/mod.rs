@@ -20,7 +20,7 @@ use crate::{
     cbor::value::Value,
     iana,
     iana::EnumI64,
-    util::{cbor_type_error, AsCborValue},
+    util::{AsCborValue, ValueTryAs},
     Algorithm, CoseError, Label,
 };
 use alloc::{collections::BTreeSet, vec, vec::Vec};
@@ -48,10 +48,7 @@ impl crate::CborSerializable for CoseKeySet {}
 
 impl AsCborValue for CoseKeySet {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
-        let a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let a = value.try_as_array()?;
         let mut keys = Vec::new();
         for v in a {
             keys.push(CoseKey::from_cbor_value(v)?);
@@ -117,11 +114,7 @@ fn base_iv_value() -> Value {
 
 impl AsCborValue for CoseKey {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
-        let m = match value {
-            Value::Map(m) => m,
-            v => return cbor_type_error(&v, "map"),
-        };
-
+        let m = value.try_as_map()?;
         let mut key = Self::default();
         let mut seen = BTreeSet::new();
         for (l, value) in m.into_iter() {
@@ -135,47 +128,30 @@ impl AsCborValue for CoseKey {
             match l {
                 x if x == kty_value() => key.kty = KeyType::from_cbor_value(value)?,
 
-                x if x == kid_value() => match value {
-                    Value::Bytes(v) => {
-                        if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
-                        }
-                        key.key_id = v;
-                    }
-                    v => return cbor_type_error(&v, "bstr value"),
-                },
+                x if x == kid_value() => {
+                    key.key_id = value.try_as_nonempty_bytes()?;
+                }
 
                 x if x == alg_value() => key.alg = Some(Algorithm::from_cbor_value(value)?),
 
-                x if x == key_ops_value() => match value {
-                    Value::Array(key_ops) => {
-                        for key_op in key_ops.into_iter() {
-                            if !key.key_ops.insert(KeyOperation::from_cbor_value(key_op)?) {
-                                return Err(CoseError::UnexpectedType(
-                                    "repeated array entry",
-                                    "unique array label",
-                                ));
-                            }
-                        }
-                        if key.key_ops.is_empty() {
+                x if x == key_ops_value() => {
+                    let key_ops = value.try_as_array()?;
+                    for key_op in key_ops.into_iter() {
+                        if !key.key_ops.insert(KeyOperation::from_cbor_value(key_op)?) {
                             return Err(CoseError::UnexpectedType(
-                                "empty array",
-                                "non-empty array",
+                                "repeated array entry",
+                                "unique array label",
                             ));
                         }
                     }
-                    v => return cbor_type_error(&v, "array value"),
-                },
-
-                x if x == base_iv_value() => match value {
-                    Value::Bytes(v) => {
-                        if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
-                        }
-                        key.base_iv = v;
+                    if key.key_ops.is_empty() {
+                        return Err(CoseError::UnexpectedType("empty array", "non-empty array"));
                     }
-                    v => return cbor_type_error(&v, "bstr value"),
-                },
+                }
+
+                x if x == base_iv_value() => {
+                    key.base_iv = value.try_as_nonempty_bytes()?;
+                }
 
                 _l => key.params.push((label, value)),
             }
