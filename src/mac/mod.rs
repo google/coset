@@ -61,10 +61,13 @@ impl AsCborValue for CoseMac {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut recipients = Vec::new();
-        for val in a.remove(4).try_as_array()? {
-            recipients.push(CoseRecipient::from_cbor_value(val)?);
-        }
+        let recipients = a
+            .remove(4)
+            .try_as_array()?
+            .into_iter()
+            .map(|val| CoseRecipient::from_cbor_value(val))
+            .collect::<Result<Vec<_>, _>>()?;
+
         Ok(Self {
             recipients,
             tag: a.remove(3).try_as_bytes()?,
@@ -79,7 +82,7 @@ impl AsCborValue for CoseMac {
     }
 
     fn to_cbor_value(self) -> Result<Value, CoseError> {
-        let mut v = vec![
+        Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
             match self.payload {
@@ -87,13 +90,13 @@ impl AsCborValue for CoseMac {
                 Some(b) => Value::Bytes(b),
             },
             Value::Bytes(self.tag),
-        ];
-        let mut arr = Vec::new();
-        for r in self.recipients {
-            arr.push(r.to_cbor_value()?);
-        }
-        v.push(Value::Array(arr));
-        Ok(Value::Array(v))
+            Value::Array(
+                self.recipients
+                    .into_iter()
+                    .map(|r| r.to_cbor_value())
+                    .collect::<Result<Vec<_>, _>>()?,
+            ),
+        ]))
     }
 }
 

@@ -225,10 +225,11 @@ impl AsCborValue for Header {
             map.push((alg_value(), alg.to_cbor_value()?));
         }
         if !self.crit.is_empty() {
-            let mut arr = Vec::new();
-            for c in self.crit {
-                arr.push(c.to_cbor_value()?);
-            }
+            let arr = self
+                .crit
+                .into_iter()
+                .map(|c| c.to_cbor_value())
+                .collect::<Result<Vec<_>, _>>()?;
             map.push((crit_value(), Value::Array(arr)));
         }
         if let Some(content_type) = self.content_type {
@@ -251,10 +252,11 @@ impl AsCborValue for Header {
                     self.counter_signatures.remove(0).to_cbor_value()?,
                 ));
             } else {
-                let mut arr = Vec::new();
-                for cs in self.counter_signatures {
-                    arr.push(cs.to_cbor_value()?);
-                }
+                let arr = self
+                    .counter_signatures
+                    .into_iter()
+                    .map(|cs| cs.to_cbor_value())
+                    .collect::<Result<Vec<_>, _>>()?;
                 map.push((counter_sig_value(), Value::Array(arr)));
             }
         }

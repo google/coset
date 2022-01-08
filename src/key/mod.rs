@@ -48,20 +48,22 @@ impl crate::CborSerializable for CoseKeySet {}
 
 impl AsCborValue for CoseKeySet {
     fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
-        let a = value.try_as_array()?;
-        let mut keys = Vec::new();
-        for v in a {
-            keys.push(CoseKey::from_cbor_value(v)?);
-        }
-        Ok(Self(keys))
+        Ok(Self(
+            value
+                .try_as_array()?
+                .into_iter()
+                .map(|v| CoseKey::from_cbor_value(v))
+                .collect::<Result<Vec<_>, _>>()?,
+        ))
     }
 
     fn to_cbor_value(self) -> Result<Value, CoseError> {
-        let mut arr = Vec::new();
-        for k in self.0 {
-            arr.push(k.to_cbor_value()?);
-        }
-        Ok(Value::Array(arr))
+        Ok(Value::Array(
+            self.0
+                .into_iter()
+                .map(|k| k.to_cbor_value())
+                .collect::<Result<Vec<_>, _>>()?,
+        ))
     }
 }
 
@@ -176,10 +178,11 @@ impl AsCborValue for CoseKey {
             map.push((alg_value(), alg.to_cbor_value()?));
         }
         if !self.key_ops.is_empty() {
-            let mut arr = Vec::new();
-            for op in self.key_ops {
-                arr.push(op.to_cbor_value()?);
-            }
+            let arr = self
+                .key_ops
+                .into_iter()
+                .map(|op| op.to_cbor_value())
+                .collect::<Result<Vec<_>, _>>()?;
             map.push((key_ops_value(), Value::Array(arr)));
         }
         if !self.base_iv.is_empty() {
