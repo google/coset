@@ -20,7 +20,7 @@ use crate::{
     cbor::value::Value,
     iana,
     util::{cbor_type_error, AsCborValue, ValueTryAs},
-    Algorithm, CoseError, ProtectedHeader,
+    Algorithm, CoseError, ProtectedHeader, Result,
 };
 use alloc::{vec, vec::Vec};
 use core::convert::TryInto;
@@ -54,7 +54,7 @@ pub struct PartyInfo {
 impl crate::CborSerializable for PartyInfo {}
 
 impl AsCborValue for PartyInfo {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() != 3 {
             return Err(CoseError::UnexpectedType("array", "array with 3 items"));
@@ -81,7 +81,7 @@ impl AsCborValue for PartyInfo {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(Value::Array(vec![
             match self.identity {
                 None => Value::Null,
@@ -130,7 +130,7 @@ pub struct SuppPubInfo {
 impl crate::CborSerializable for SuppPubInfo {}
 
 impl AsCborValue for SuppPubInfo {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() != 2 && a.len() != 3 {
             return Err(CoseError::UnexpectedType(
@@ -153,7 +153,7 @@ impl AsCborValue for SuppPubInfo {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         let mut v = vec![
             Value::from(self.key_data_length),
             self.protected.cbor_bstr()?,
@@ -202,7 +202,7 @@ pub struct CoseKdfContext {
 impl crate::CborSerializable for CoseKdfContext {}
 
 impl AsCborValue for CoseKdfContext {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() < 4 {
             return Err(CoseError::UnexpectedType(
@@ -227,7 +227,7 @@ impl AsCborValue for CoseKdfContext {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         let mut v = vec![
             self.algorithm_id.to_cbor_value()?,
             self.party_u_info.to_cbor_value()?,

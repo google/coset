@@ -56,6 +56,9 @@ pub enum CoseError {
     UnregisteredIanaNonPrivateValue,
 }
 
+/// Crate-specific Result type
+pub type Result<T, E = CoseError> = core::result::Result<T, E>;
+
 impl core::convert::From<cbor::de::Error<EndOfFile>> for CoseError {
     fn from(e: cbor::de::Error<EndOfFile>) -> Self {
         CoseError::DecodeFailed(e)
@@ -124,7 +127,7 @@ impl<'a> ciborium_io::Read for &mut MeasuringReader<'a> {
 
 /// Read a CBOR [`Value`] from a byte slice, failing if any extra data remains after the `Value` has
 /// been read.
-fn read_to_value(slice: &[u8]) -> Result<Value, CoseError> {
+fn read_to_value(slice: &[u8]) -> Result<Value> {
     let mut mr = MeasuringReader::new(slice);
     let value = cbor::de::from_reader(&mut mr)?;
     if mr.is_empty() {
@@ -137,12 +140,12 @@ fn read_to_value(slice: &[u8]) -> Result<Value, CoseError> {
 /// Extension trait that adds serialization/deserialization methods.
 pub trait CborSerializable: AsCborValue {
     /// Create an object instance from serialized CBOR data in a slice.
-    fn from_slice(slice: &[u8]) -> Result<Self, CoseError> {
+    fn from_slice(slice: &[u8]) -> Result<Self> {
         Self::from_cbor_value(read_to_value(slice)?)
     }
 
     /// Serialize this object to a vector, consuming it along the way.
-    fn to_vec(self) -> Result<Vec<u8>, CoseError> {
+    fn to_vec(self) -> Result<Vec<u8>> {
         let mut data = Vec::new();
         cbor::ser::into_writer(&self.to_cbor_value()?, &mut data)?;
         Ok(data)
@@ -156,7 +159,7 @@ pub trait TaggedCborSerializable: AsCborValue {
 
     /// Create an object instance from serialized CBOR data in a slice, expecting an initial
     /// tag value.
-    fn from_tagged_slice(slice: &[u8]) -> Result<Self, CoseError> {
+    fn from_tagged_slice(slice: &[u8]) -> Result<Self> {
         let (t, v) = read_to_value(slice)?.try_as_tag()?;
         if t != Self::TAG {
             return Err(CoseError::UnexpectedTag(t, Self::TAG));
@@ -166,7 +169,7 @@ pub trait TaggedCborSerializable: AsCborValue {
 
     /// Serialize this object to a vector, including initial tag, consuming the object along the
     /// way.
-    fn to_tagged_vec(self) -> Result<Vec<u8>, CoseError> {
+    fn to_tagged_vec(self) -> Result<Vec<u8>> {
         let mut data = Vec::new();
         cbor::ser::into_writer(
             &Value::Tag(Self::TAG, Box::new(self.to_cbor_value()?)),
@@ -228,14 +231,14 @@ impl PartialOrd for Label {
 }
 
 impl AsCborValue for Label {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         match value {
             Value::Integer(i) => Ok(Label::Int(i.try_into()?)),
             Value::Text(t) => Ok(Label::Text(t)),
             v => cbor_type_error(&v, "int/tstr"),
         }
     }
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(match self {
             Label::Int(i) => Value::from(i),
             Label::Text(t) => Value::Text(t),
@@ -276,7 +279,7 @@ impl<T: EnumI64> PartialOrd for RegisteredLabel<T> {
 }
 
 impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         match value {
             Value::Integer(i) => {
                 if let Some(a) = T::from_i64(i.try_into()?) {
@@ -290,7 +293,7 @@ impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
         }
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(match self {
             RegisteredLabel::Assigned(e) => Value::from(e.to_i64()),
             RegisteredLabel::Text(t) => Value::Text(t),
@@ -335,7 +338,7 @@ impl<T: EnumI64 + WithPrivateRange> PartialOrd for RegisteredLabelWithPrivate<T>
 }
 
 impl<T: EnumI64 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T> {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         match value {
             Value::Integer(i) => {
                 let i = i.try_into()?;
@@ -351,7 +354,7 @@ impl<T: EnumI64 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T
             v => cbor_type_error(&v, "int/tstr"),
         }
     }
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(match self {
             RegisteredLabelWithPrivate::PrivateUse(i) => Value::from(i),
             RegisteredLabelWithPrivate::Assigned(i) => Value::from(i.to_i64()),

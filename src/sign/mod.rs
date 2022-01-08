@@ -21,7 +21,7 @@ use crate::{
     cbor::value::Value,
     iana,
     util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
-    CoseError, Header, ProtectedHeader,
+    CoseError, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
@@ -46,7 +46,7 @@ pub struct CoseSignature {
 impl crate::CborSerializable for CoseSignature {}
 
 impl AsCborValue for CoseSignature {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() != 3 {
             return Err(CoseError::UnexpectedType("array", "array with 3 items"));
@@ -60,7 +60,7 @@ impl AsCborValue for CoseSignature {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
@@ -103,7 +103,7 @@ impl crate::TaggedCborSerializable for CoseSign {
 }
 
 impl AsCborValue for CoseSign {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() != 4 {
             return Err(CoseError::UnexpectedType("array", "array with 4 items"));
@@ -130,7 +130,7 @@ impl AsCborValue for CoseSign {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
@@ -242,7 +242,7 @@ impl crate::TaggedCborSerializable for CoseSign1 {
 }
 
 impl AsCborValue for CoseSign1 {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() != 4 {
             return Err(CoseError::UnexpectedType("array", "array with 4 items"));
@@ -261,7 +261,7 @@ impl AsCborValue for CoseSign1 {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,

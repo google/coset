@@ -21,7 +21,7 @@ use crate::{
     iana,
     iana::EnumI64,
     util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
-    Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel,
+    Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel, Result,
 };
 use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
 
@@ -95,7 +95,7 @@ const PARTIAL_IV: Label = Label::Int(iana::HeaderParameter::PartialIv as i64);
 const COUNTER_SIG: Label = Label::Int(iana::HeaderParameter::CounterSignature as i64);
 
 impl AsCborValue for Header {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let m = value.try_as_map()?;
         let mut headers = Self::default();
         let mut seen = BTreeSet::new();
@@ -204,7 +204,7 @@ impl AsCborValue for Header {
         Ok(headers)
     }
 
-    fn to_cbor_value(mut self) -> Result<Value, CoseError> {
+    fn to_cbor_value(mut self) -> Result<Value> {
         let mut map = Vec::<(Value, Value)>::new();
         if let Some(alg) = self.alg {
             map.push((ALG.to_cbor_value()?, alg.to_cbor_value()?));
@@ -354,7 +354,7 @@ pub struct ProtectedHeader {
 impl ProtectedHeader {
     /// Constructor from a [`Value`] that holds a `bstr` encoded header.
     #[inline]
-    pub fn from_cbor_bstr(val: Value) -> Result<Self, CoseError> {
+    pub fn from_cbor_bstr(val: Value) -> Result<Self> {
         let data = val.try_as_bytes()?;
         let header = if data.is_empty() {
             // An empty bstr is used as a short cut for an empty header map.
@@ -371,7 +371,7 @@ impl ProtectedHeader {
     /// Convert this header to a `bstr` encoded map, as a [`Value`], consuming the object along the
     /// way.
     #[inline]
-    pub fn cbor_bstr(self) -> Result<Value, CoseError> {
+    pub fn cbor_bstr(self) -> Result<Value> {
         Ok(Value::Bytes(
             if let Some(original_data) = self.original_data {
                 original_data
@@ -392,14 +392,14 @@ impl ProtectedHeader {
 impl crate::CborSerializable for ProtectedHeader {}
 
 impl AsCborValue for ProtectedHeader {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         Ok(ProtectedHeader {
             original_data: None,
             header: Header::from_cbor_value(value)?,
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         self.header.to_cbor_value()
     }
 }

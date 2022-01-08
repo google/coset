@@ -19,13 +19,13 @@
 use alloc::{boxed::Box, vec::Vec};
 use ciborium::value::Integer;
 
-use crate::{cbor::value::Value, CoseError};
+use crate::{cbor::value::Value, CoseError, Result};
 
 #[cfg(test)]
 mod tests;
 
 /// Return an error indicating that an unexpected CBOR type was encountered.
-pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T, CoseError> {
+pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T> {
     let got = match value {
         Value::Integer(_) => "int",
         Value::Bytes(_) => "bstr",
@@ -45,21 +45,21 @@ pub(crate) trait ValueTryAs
 where
     Self: Sized,
 {
-    fn try_as_integer(self) -> Result<Integer, CoseError>;
+    fn try_as_integer(self) -> Result<Integer>;
 
-    fn try_as_bytes(self) -> Result<Vec<u8>, CoseError>;
+    fn try_as_bytes(self) -> Result<Vec<u8>>;
 
-    fn try_as_nonempty_bytes(self) -> Result<Vec<u8>, CoseError>;
+    fn try_as_nonempty_bytes(self) -> Result<Vec<u8>>;
 
-    fn try_as_array(self) -> Result<Vec<Self>, CoseError>;
+    fn try_as_array(self) -> Result<Vec<Self>>;
 
-    fn try_as_map(self) -> Result<Vec<(Self, Self)>, CoseError>;
+    fn try_as_map(self) -> Result<Vec<(Self, Self)>>;
 
-    fn try_as_tag(self) -> Result<(u64, Box<Value>), CoseError>;
+    fn try_as_tag(self) -> Result<(u64, Box<Value>)>;
 }
 
 impl ValueTryAs for Value {
-    fn try_as_integer(self) -> Result<Integer, CoseError> {
+    fn try_as_integer(self) -> Result<Integer> {
         if let Value::Integer(i) = self {
             Ok(i)
         } else {
@@ -67,7 +67,7 @@ impl ValueTryAs for Value {
         }
     }
 
-    fn try_as_bytes(self) -> Result<Vec<u8>, CoseError> {
+    fn try_as_bytes(self) -> Result<Vec<u8>> {
         if let Value::Bytes(b) = self {
             Ok(b)
         } else {
@@ -75,7 +75,7 @@ impl ValueTryAs for Value {
         }
     }
 
-    fn try_as_nonempty_bytes(self) -> Result<Vec<u8>, CoseError> {
+    fn try_as_nonempty_bytes(self) -> Result<Vec<u8>> {
         let v = self.try_as_bytes()?;
         if v.is_empty() {
             return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
@@ -83,7 +83,7 @@ impl ValueTryAs for Value {
         Ok(v)
     }
 
-    fn try_as_array(self) -> Result<Vec<Self>, CoseError> {
+    fn try_as_array(self) -> Result<Vec<Self>> {
         if let Value::Array(a) = self {
             Ok(a)
         } else {
@@ -91,7 +91,7 @@ impl ValueTryAs for Value {
         }
     }
 
-    fn try_as_map(self) -> Result<Vec<(Self, Self)>, CoseError> {
+    fn try_as_map(self) -> Result<Vec<(Self, Self)>> {
         if let Value::Map(a) = self {
             Ok(a)
         } else {
@@ -99,7 +99,7 @@ impl ValueTryAs for Value {
         }
     }
 
-    fn try_as_tag(self) -> Result<(u64, Box<Value>), CoseError> {
+    fn try_as_tag(self) -> Result<(u64, Box<Value>)> {
         if let Value::Tag(a, v) = self {
             Ok((a, v))
         } else {
@@ -111,14 +111,14 @@ impl ValueTryAs for Value {
 /// Trait for types that can be converted to/from a [`Value`].
 pub trait AsCborValue: Sized {
     /// Convert a [`Value`] into an instance of the type.
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError>;
+    fn from_cbor_value(value: Value) -> Result<Self>;
     /// Convert the object into a [`Value`], consuming it along the way.
-    fn to_cbor_value(self) -> Result<Value, CoseError>;
+    fn to_cbor_value(self) -> Result<Value>;
 }
 
 /// Convert each item to CBOR, and wrap the lot in
 /// a Value::Array
-pub fn to_cbor_array<C>(c: C) -> Result<Value, CoseError>
+pub fn to_cbor_array<C>(c: C) -> Result<Value>
 where
     C: IntoIterator,
     C::Item: AsCborValue,

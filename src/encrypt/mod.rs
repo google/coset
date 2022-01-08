@@ -21,7 +21,7 @@ use crate::{
     cbor::value::Value,
     iana,
     util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
-    CoseError, Header, ProtectedHeader,
+    CoseError, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 
@@ -48,7 +48,7 @@ pub struct CoseRecipient {
 impl crate::CborSerializable for CoseRecipient {}
 
 impl AsCborValue for CoseRecipient {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() != 3 && a.len() != 4 {
             return Err(CoseError::UnexpectedType(
@@ -80,7 +80,7 @@ impl AsCborValue for CoseRecipient {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         let mut v = vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
@@ -227,7 +227,7 @@ impl crate::TaggedCborSerializable for CoseEncrypt {
 }
 
 impl AsCborValue for CoseEncrypt {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() != 4 {
             return Err(CoseError::UnexpectedType("array", "array with 4 items"));
@@ -252,7 +252,7 @@ impl AsCborValue for CoseEncrypt {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
@@ -362,7 +362,7 @@ impl crate::TaggedCborSerializable for CoseEncrypt0 {
 }
 
 impl AsCborValue for CoseEncrypt0 {
-    fn from_cbor_value(value: Value) -> Result<Self, CoseError> {
+    fn from_cbor_value(value: Value) -> Result<Self> {
         let mut a = value.try_as_array()?;
         if a.len() != 3 {
             return Err(CoseError::UnexpectedType("array", "array with 3 items"));
@@ -381,7 +381,7 @@ impl AsCborValue for CoseEncrypt0 {
         })
     }
 
-    fn to_cbor_value(self) -> Result<Value, CoseError> {
+    fn to_cbor_value(self) -> Result<Value> {
         Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
