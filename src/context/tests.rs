@@ -336,7 +336,7 @@ fn test_context_decode_fail() {
                 "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
                 "82", "4040", // 2-tuple: [0-bstr, 0-bstr]
             ),
-            "expected uint",
+            "expected int",
         ),
         (
             concat!(
@@ -346,7 +346,7 @@ fn test_context_decode_fail() {
                 "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
                 "82", "0060", // 2-tuple: [0, 0-tstr]
             ),
-            "expected bstr encoded map",
+            "expected bstr",
         ),
         (
             concat!(

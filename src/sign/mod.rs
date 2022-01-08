@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue},
+    util::{cbor_type_error, AsCborValue, ValueTryAs},
     CoseError, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -47,20 +47,14 @@ impl crate::CborSerializable for CoseSignature {}
 
 impl AsCborValue for CoseSignature {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 3 {
             return Err(CoseError::UnexpectedItem("array", "array with 3 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
-            signature: match a.remove(2) {
-                Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, "bstr"),
-            },
+            signature: a.remove(2).try_as_bytes()?,
             unprotected: Header::from_cbor_value(a.remove(1))?,
             protected: ProtectedHeader::from_cbor_bstr(a.remove(0))?,
         })
@@ -110,34 +104,24 @@ impl crate::TaggedCborSerializable for CoseSign {
 
 impl AsCborValue for CoseSign {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 4 {
             return Err(CoseError::UnexpectedItem("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         let mut signatures = vec![];
-        match a.remove(3) {
-            Value::Array(sigs) => {
-                for sig in sigs.into_iter() {
-                    match CoseSignature::from_cbor_value(sig) {
-                        Ok(s) => signatures.push(s),
-                        Err(_e) => {
-                            return Err(CoseError::UnexpectedItem(
-                                "non-signature",
-                                "map for COSE_Signature",
-                            ));
-                        }
-                    }
+        for sig in a.remove(3).try_as_array()?.into_iter() {
+            match CoseSignature::from_cbor_value(sig) {
+                Ok(s) => signatures.push(s),
+                Err(_e) => {
+                    return Err(CoseError::UnexpectedItem(
+                        "non-signature",
+                        "map for COSE_Signature",
+                    ));
                 }
             }
-            v => {
-                return cbor_type_error(&v, "array of COSE_Signature");
-            }
-        };
+        }
 
         Ok(Self {
             signatures,
@@ -269,20 +253,14 @@ impl crate::TaggedCborSerializable for CoseSign1 {
 
 impl AsCborValue for CoseSign1 {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 4 {
             return Err(CoseError::UnexpectedItem("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
-            signature: match a.remove(3) {
-                Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, "bstr"),
-            },
+            signature: a.remove(3).try_as_bytes()?,
             payload: match a.remove(2) {
                 Value::Bytes(b) => Some(b),
                 Value::Null => None,

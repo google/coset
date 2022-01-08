@@ -16,7 +16,11 @@
 
 //! Common internal utilities.
 
-use crate::{cbor::value::Value, CoseError, Result};
+use crate::{
+    cbor::value::{Integer, Value},
+    CoseError, Result,
+};
+use alloc::{boxed::Box, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -36,6 +40,81 @@ pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T>
         _ => "other",
     };
     Err(CoseError::UnexpectedItem(got, want))
+}
+
+/// Trait which augments the [`Value`] type with methods for convenient conversions to contained
+/// types which throw a [`CoseError`] if the Value is not of the expected type.
+pub(crate) trait ValueTryAs
+where
+    Self: Sized,
+{
+    /// Extractor for [`Value::Integer`]
+    fn try_as_integer(self) -> Result<Integer>;
+
+    /// Extractor for [`Value::Bytes`]
+    fn try_as_bytes(self) -> Result<Vec<u8>>;
+
+    /// Extractor for [`Value::Bytes`] which also throws an error if the byte string is zero length
+    fn try_as_nonempty_bytes(self) -> Result<Vec<u8>>;
+
+    /// Extractor for [`Value::Array`]
+    fn try_as_array(self) -> Result<Vec<Self>>;
+
+    /// Extractor for [`Value::Map`]
+    fn try_as_map(self) -> Result<Vec<(Self, Self)>>;
+
+    /// Extractor for [`Value::Tag`]
+    fn try_as_tag(self) -> Result<(u64, Box<Value>)>;
+}
+
+impl ValueTryAs for Value {
+    fn try_as_integer(self) -> Result<Integer> {
+        if let Value::Integer(i) = self {
+            Ok(i)
+        } else {
+            cbor_type_error(&self, "int")
+        }
+    }
+
+    fn try_as_bytes(self) -> Result<Vec<u8>> {
+        if let Value::Bytes(b) = self {
+            Ok(b)
+        } else {
+            cbor_type_error(&self, "bstr")
+        }
+    }
+
+    fn try_as_nonempty_bytes(self) -> Result<Vec<u8>> {
+        let v = self.try_as_bytes()?;
+        if v.is_empty() {
+            return Err(CoseError::UnexpectedItem("empty bstr", "non-empty bstr"));
+        }
+        Ok(v)
+    }
+
+    fn try_as_array(self) -> Result<Vec<Self>> {
+        if let Value::Array(a) = self {
+            Ok(a)
+        } else {
+            cbor_type_error(&self, "array")
+        }
+    }
+
+    fn try_as_map(self) -> Result<Vec<(Self, Self)>> {
+        if let Value::Map(a) = self {
+            Ok(a)
+        } else {
+            cbor_type_error(&self, "map")
+        }
+    }
+
+    fn try_as_tag(self) -> Result<(u64, Box<Value>)> {
+        if let Value::Tag(a, v) = self {
+            Ok((a, v))
+        } else {
+            cbor_type_error(&self, "tag")
+        }
+    }
 }
 
 /// Trait for types that can be converted to/from a [`Value`].

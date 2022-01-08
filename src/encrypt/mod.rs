@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue},
+    util::{cbor_type_error, AsCborValue, ValueTryAs},
     CoseError, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -49,10 +49,7 @@ impl crate::CborSerializable for CoseRecipient {}
 
 impl AsCborValue for CoseRecipient {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 3 && a.len() != 4 {
             return Err(CoseError::UnexpectedItem(
                 "array",
@@ -63,13 +60,8 @@ impl AsCborValue for CoseRecipient {
         // Remove array elements in reverse order to avoid shifts.
         let mut recipients = Vec::new();
         if a.len() == 4 {
-            match a.remove(3) {
-                Value::Array(a) => {
-                    for val in a {
-                        recipients.push(CoseRecipient::from_cbor_value(val)?);
-                    }
-                }
-                v => return cbor_type_error(&v, "array"),
+            for val in a.remove(3).try_as_array()? {
+                recipients.push(CoseRecipient::from_cbor_value(val)?);
             }
         }
 
@@ -237,23 +229,15 @@ impl crate::TaggedCborSerializable for CoseEncrypt {
 
 impl AsCborValue for CoseEncrypt {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 4 {
             return Err(CoseError::UnexpectedItem("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         let mut recipients = Vec::new();
-        match a.remove(3) {
-            Value::Array(a) => {
-                for val in a {
-                    recipients.push(CoseRecipient::from_cbor_value(val)?);
-                }
-            }
-            v => return cbor_type_error(&v, "array"),
+        for val in a.remove(3).try_as_array()? {
+            recipients.push(CoseRecipient::from_cbor_value(val)?);
         }
         Ok(Self {
             recipients,
@@ -382,10 +366,7 @@ impl crate::TaggedCborSerializable for CoseEncrypt0 {
 
 impl AsCborValue for CoseEncrypt0 {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 3 {
             return Err(CoseError::UnexpectedItem("array", "array with 3 items"));
         }

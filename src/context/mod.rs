@@ -19,7 +19,7 @@
 use crate::{
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue},
+    util::{cbor_type_error, AsCborValue, ValueTryAs},
     Algorithm, CoseError, ProtectedHeader, Result,
 };
 use alloc::{vec, vec::Vec};
@@ -55,10 +55,7 @@ impl crate::CborSerializable for PartyInfo {}
 
 impl AsCborValue for PartyInfo {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 3 {
             return Err(CoseError::UnexpectedItem("array", "array with 3 items"));
         }
@@ -134,10 +131,7 @@ impl crate::CborSerializable for SuppPubInfo {}
 
 impl AsCborValue for SuppPubInfo {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 2 && a.len() != 3 {
             return Err(CoseError::UnexpectedItem(
                 "array",
@@ -149,19 +143,13 @@ impl AsCborValue for SuppPubInfo {
         Ok(Self {
             other: {
                 if a.len() == 3 {
-                    match a.remove(2) {
-                        Value::Bytes(b) => Some(b),
-                        v => return cbor_type_error(&v, "bstr"),
-                    }
+                    Some(a.remove(2).try_as_bytes()?)
                 } else {
                     None
                 }
             },
             protected: ProtectedHeader::from_cbor_bstr(a.remove(1))?,
-            key_data_length: match a.remove(0) {
-                Value::Integer(u) => u.try_into()?,
-                v => return cbor_type_error(&v, "uint"),
-            },
+            key_data_length: a.remove(0).try_as_integer()?.try_into()?,
         })
     }
 
@@ -215,10 +203,7 @@ impl crate::CborSerializable for CoseKdfContext {}
 
 impl AsCborValue for CoseKdfContext {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() < 4 {
             return Err(CoseError::UnexpectedItem(
                 "array",
@@ -229,11 +214,7 @@ impl AsCborValue for CoseKdfContext {
         // Remove array elements in reverse order to avoid shifts.
         let mut supp_priv_info = Vec::with_capacity(a.len() - 4);
         for i in (4..a.len()).rev() {
-            let b = match a.remove(i) {
-                Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, "bstr"),
-            };
-            supp_priv_info.push(b);
+            supp_priv_info.push(a.remove(i).try_as_bytes()?);
         }
         supp_priv_info.reverse();
 

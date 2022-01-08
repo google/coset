@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue},
+    util::{cbor_type_error, AsCborValue, ValueTryAs},
     CoseError, CoseRecipient, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -55,30 +55,19 @@ impl crate::TaggedCborSerializable for CoseMac {
 
 impl AsCborValue for CoseMac {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 5 {
             return Err(CoseError::UnexpectedItem("array", "array with 5 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         let mut recipients = Vec::new();
-        match a.remove(4) {
-            Value::Array(a) => {
-                for val in a {
-                    recipients.push(CoseRecipient::from_cbor_value(val)?);
-                }
-            }
-            v => return cbor_type_error(&v, "array"),
+        for val in a.remove(4).try_as_array()? {
+            recipients.push(CoseRecipient::from_cbor_value(val)?);
         }
         Ok(Self {
             recipients,
-            tag: match a.remove(3) {
-                Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, "bstr"),
-            },
+            tag: a.remove(3).try_as_bytes()?,
             payload: match a.remove(2) {
                 Value::Bytes(b) => Some(b),
                 Value::Null => None,
@@ -213,20 +202,14 @@ impl crate::TaggedCborSerializable for CoseMac0 {
 
 impl AsCborValue for CoseMac0 {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let mut a = match value {
-            Value::Array(a) => a,
-            v => return cbor_type_error(&v, "array"),
-        };
+        let mut a = value.try_as_array()?;
         if a.len() != 4 {
             return Err(CoseError::UnexpectedItem("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
         Ok(Self {
-            tag: match a.remove(3) {
-                Value::Bytes(b) => b,
-                v => return cbor_type_error(&v, "bstr"),
-            },
+            tag: a.remove(3).try_as_bytes()?,
             payload: match a.remove(2) {
                 Value::Bytes(b) => Some(b),
                 Value::Null => None,
