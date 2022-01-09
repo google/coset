@@ -62,7 +62,7 @@ impl AsCborValue for CoseRecipient {
             a.remove(3)
                 .try_as_array()?
                 .into_iter()
-                .map(|val| CoseRecipient::from_cbor_value(val))
+                .map(CoseRecipient::from_cbor_value)
                 .collect::<Result<Vec<_>, _>>()?
         } else {
             Vec::new()
@@ -238,7 +238,7 @@ impl AsCborValue for CoseEncrypt {
             .remove(3)
             .try_as_array()?
             .into_iter()
-            .map(|val| CoseRecipient::from_cbor_value(val))
+            .map(CoseRecipient::from_cbor_value)
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self {
             recipients,

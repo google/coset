@@ -114,7 +114,7 @@ impl AsCborValue for CoseSign {
             .remove(3)
             .try_as_array()?
             .into_iter()
-            .map(|sig| CoseSignature::from_cbor_value(sig))
+            .map(CoseSignature::from_cbor_value)
             .collect::<Result<Vec<_>, _>>()
             .map_err(|_e| CoseError::UnexpectedType("non-signature", "map for COSE_Signature"))?;
 

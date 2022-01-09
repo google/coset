@@ -52,7 +52,7 @@ impl AsCborValue for CoseKeySet {
             value
                 .try_as_array()?
                 .into_iter()
-                .map(|v| CoseKey::from_cbor_value(v))
+                .map(CoseKey::from_cbor_value)
                 .collect::<Result<Vec<_>, _>>()?,
         ))
     }

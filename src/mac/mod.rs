@@ -65,7 +65,7 @@ impl AsCborValue for CoseMac {
             .remove(4)
             .try_as_array()?
             .into_iter()
-            .map(|val| CoseRecipient::from_cbor_value(val))
+            .map(CoseRecipient::from_cbor_value)
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Self {
