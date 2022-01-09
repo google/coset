@@ -63,10 +63,7 @@ impl AsCborValue for CoseMac {
         // Remove array elements in reverse order to avoid shifts.
         let recipients = a
             .remove(4)
-            .try_as_array()?
-            .into_iter()
-            .map(CoseRecipient::from_cbor_value)
-            .collect::<Result<Vec<_>, _>>()?;
+            .try_as_array_then_convert(CoseRecipient::from_cbor_value)?;
 
         Ok(Self {
             recipients,

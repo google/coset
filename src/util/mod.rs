@@ -53,6 +53,10 @@ where
 
     fn try_as_array(self) -> Result<Vec<Self>>;
 
+    fn try_as_array_then_convert<F, T>(self, f: F) -> Result<Vec<T>>
+    where
+        F: Fn(Value) -> Result<T>;
+
     fn try_as_map(self) -> Result<Vec<(Self, Self)>>;
 
     fn try_as_tag(self) -> Result<(u64, Box<Value>)>;
@@ -89,6 +93,16 @@ impl ValueTryAs for Value {
         } else {
             cbor_type_error(&self, "array")
         }
+    }
+
+    fn try_as_array_then_convert<F, T>(self, f: F) -> Result<Vec<T>>
+    where
+        F: Fn(Value) -> Result<T>,
+    {
+        self.try_as_array()?
+            .into_iter()
+            .map(f)
+            .collect::<Result<Vec<_>, _>>()
     }
 
     fn try_as_map(self) -> Result<Vec<(Self, Self)>> {

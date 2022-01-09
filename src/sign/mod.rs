@@ -110,13 +110,10 @@ impl AsCborValue for CoseSign {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let signatures = a
-            .remove(3)
-            .try_as_array()?
-            .into_iter()
-            .map(CoseSignature::from_cbor_value)
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_e| CoseError::UnexpectedType("non-signature", "map for COSE_Signature"))?;
+        let signatures = a.remove(3).try_as_array_then_convert(|v| {
+            CoseSignature::from_cbor_value(v)
+                .map_err(|_e| CoseError::UnexpectedType("non-signature", "map for COSE_Signature"))
+        })?;
 
         Ok(Self {
             signatures,

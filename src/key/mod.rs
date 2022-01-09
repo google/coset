@@ -49,11 +49,7 @@ impl crate::CborSerializable for CoseKeySet {}
 impl AsCborValue for CoseKeySet {
     fn from_cbor_value(value: Value) -> Result<Self> {
         Ok(Self(
-            value
-                .try_as_array()?
-                .into_iter()
-                .map(CoseKey::from_cbor_value)
-                .collect::<Result<Vec<_>, _>>()?,
+            value.try_as_array_then_convert(CoseKey::from_cbor_value)?,
         ))
     }
 

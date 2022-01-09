@@ -60,10 +60,7 @@ impl AsCborValue for CoseRecipient {
         // Remove array elements in reverse order to avoid shifts.
         let recipients = if a.len() == 4 {
             a.remove(3)
-                .try_as_array()?
-                .into_iter()
-                .map(CoseRecipient::from_cbor_value)
-                .collect::<Result<Vec<_>, _>>()?
+                .try_as_array_then_convert(CoseRecipient::from_cbor_value)?
         } else {
             Vec::new()
         };
@@ -236,10 +233,7 @@ impl AsCborValue for CoseEncrypt {
         // Remove array elements in reverse order to avoid shifts.
         let recipients = a
             .remove(3)
-            .try_as_array()?
-            .into_iter()
-            .map(CoseRecipient::from_cbor_value)
-            .collect::<Result<Vec<_>, _>>()?;
+            .try_as_array_then_convert(CoseRecipient::from_cbor_value)?;
         Ok(Self {
             recipients,
             ciphertext: match a.remove(2) {
