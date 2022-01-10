@@ -60,6 +60,11 @@ where
     /// Extractor for [`Value::Array`]
     fn try_as_array(self) -> Result<Vec<Self>>;
 
+    /// Extractor for [`Value::Array`] which applies `f` to each item to build a new [`Vec`]
+    fn try_as_array_then_convert<F, T>(self, f: F) -> Result<Vec<T>>
+    where
+        F: Fn(Value) -> Result<T>;
+
     /// Extractor for [`Value::Map`]
     fn try_as_map(self) -> Result<Vec<(Self, Self)>>;
 
@@ -100,6 +105,16 @@ impl ValueTryAs for Value {
         }
     }
 
+    fn try_as_array_then_convert<F, T>(self, f: F) -> Result<Vec<T>>
+    where
+        F: Fn(Value) -> Result<T>,
+    {
+        self.try_as_array()?
+            .into_iter()
+            .map(f)
+            .collect::<Result<Vec<_>, _>>()
+    }
+
     fn try_as_map(self) -> Result<Vec<(Self, Self)>> {
         if let Value::Map(a) = self {
             Ok(a)
@@ -123,6 +138,20 @@ pub trait AsCborValue: Sized {
     fn from_cbor_value(value: Value) -> Result<Self>;
     /// Convert the object into a [`Value`], consuming it along the way.
     fn to_cbor_value(self) -> Result<Value>;
+}
+
+/// Convert each item of an iterator to CBOR, and wrap the lot in
+/// a [`Value::Array`]
+pub fn to_cbor_array<C>(c: C) -> Result<Value>
+where
+    C: IntoIterator,
+    C::Item: AsCborValue,
+{
+    Ok(Value::Array(
+        c.into_iter()
+            .map(|e| e.to_cbor_value())
+            .collect::<Result<Vec<_>, _>>()?,
+    ))
 }
 
 /// Check for an expected error.

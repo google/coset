@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
     CoseError, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -110,18 +110,10 @@ impl AsCborValue for CoseSign {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut signatures = vec![];
-        for sig in a.remove(3).try_as_array()?.into_iter() {
-            match CoseSignature::from_cbor_value(sig) {
-                Ok(s) => signatures.push(s),
-                Err(_e) => {
-                    return Err(CoseError::UnexpectedItem(
-                        "non-signature",
-                        "map for COSE_Signature",
-                    ));
-                }
-            }
-        }
+        let signatures = a.remove(3).try_as_array_then_convert(|v| {
+            CoseSignature::from_cbor_value(v)
+                .map_err(|_e| CoseError::UnexpectedItem("non-signature", "map for COSE_Signature"))
+        })?;
 
         Ok(Self {
             signatures,
@@ -136,20 +128,15 @@ impl AsCborValue for CoseSign {
     }
 
     fn to_cbor_value(self) -> Result<Value> {
-        let mut v = vec![
+        Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
             match self.payload {
                 Some(b) => Value::Bytes(b),
                 None => Value::Null,
             },
-        ];
-        let mut arr = Vec::new();
-        for sig in self.signatures {
-            arr.push(sig.to_cbor_value()?);
-        }
-        v.push(Value::Array(arr));
-        Ok(Value::Array(v))
+            to_cbor_array(self.signatures)?,
+        ]))
     }
 }
 

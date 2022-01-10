@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
     CoseError, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -58,12 +58,12 @@ impl AsCborValue for CoseRecipient {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut recipients = Vec::new();
-        if a.len() == 4 {
-            for val in a.remove(3).try_as_array()? {
-                recipients.push(CoseRecipient::from_cbor_value(val)?);
-            }
-        }
+        let recipients = if a.len() == 4 {
+            a.remove(3)
+                .try_as_array_then_convert(CoseRecipient::from_cbor_value)?
+        } else {
+            Vec::new()
+        };
 
         Ok(Self {
             recipients,
@@ -87,11 +87,7 @@ impl AsCborValue for CoseRecipient {
             },
         ];
         if !self.recipients.is_empty() {
-            let mut arr = Vec::new();
-            for r in self.recipients {
-                arr.push(r.to_cbor_value()?);
-            }
-            v.push(Value::Array(arr));
+            v.push(to_cbor_array(self.recipients)?);
         }
         Ok(Value::Array(v))
     }
@@ -235,10 +231,9 @@ impl AsCborValue for CoseEncrypt {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut recipients = Vec::new();
-        for val in a.remove(3).try_as_array()? {
-            recipients.push(CoseRecipient::from_cbor_value(val)?);
-        }
+        let recipients = a
+            .remove(3)
+            .try_as_array_then_convert(CoseRecipient::from_cbor_value)?;
         Ok(Self {
             recipients,
             ciphertext: match a.remove(2) {
@@ -252,10 +247,6 @@ impl AsCborValue for CoseEncrypt {
     }
 
     fn to_cbor_value(self) -> Result<Value> {
-        let mut arr = Vec::new();
-        for r in self.recipients {
-            arr.push(r.to_cbor_value()?);
-        }
         Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
@@ -263,7 +254,7 @@ impl AsCborValue for CoseEncrypt {
                 None => Value::Null,
                 Some(b) => Value::Bytes(b),
             },
-            Value::Array(arr),
+            to_cbor_array(self.recipients)?,
         ]))
     }
 }
