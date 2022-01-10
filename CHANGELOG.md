@@ -12,8 +12,11 @@
 - Use new `ProtectedHeader` type for protected headers (breaking change).  This variant of `Header` preserves any
   originally-parsed data, so that calculations (signatures, decryption, etc.) over the data can use the bit-for-bit wire
   data instead of a reconstituted (and potentially different) version.
-- Use new `OutOfRangeIntegerValue` error when an integer value is too large for the representation
-  used in this crate (breaking change).
+- Add more specific error cases to `CoseError` (breaking change):
+    - Use new `OutOfRangeIntegerValue` error when an integer value is too large for the representation used in this
+      crate.
+    - Use new `DuplicateMapKey` error when a CBOR map contains duplicate keys (and is thus invalid).
+    - Extend `DecodeFailed` error to include the underlying `ciborium::de::Error` value.
 
 ## 0.2.0 - 2021-12-09
 
