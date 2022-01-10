@@ -195,6 +195,14 @@ fn test_header_decode_fail() {
         (
             concat!(
                 "a1", // 1-map
+                "01", "01", // 1 (alg) => 01
+                "01", // extraneous data
+            ),
+            "extraneous data in CBOR input",
+        ),
+        (
+            concat!(
+                "a1", // 1-map
                 "01", "08", // 1 (alg) => invalid value
             ),
             "expected value in IANA or private use range",
