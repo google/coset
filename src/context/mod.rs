@@ -73,10 +73,7 @@ impl AsCborValue for PartyInfo {
             nonce: match a.remove(1) {
                 Value::Null => None,
                 Value::Bytes(b) => Some(Nonce::Bytes(b)),
-                Value::Integer(u) => Some(Nonce::Integer(
-                    u.try_into()
-                        .map_err(|_| CoseError::UnexpectedType("u64", "u63"))?,
-                )),
+                Value::Integer(u) => Some(Nonce::Integer(u.try_into()?)),
                 v => return cbor_type_error(&v, "bstr / int / nil"),
             },
             identity: match a.remove(0) {
@@ -162,9 +159,7 @@ impl AsCborValue for SuppPubInfo {
             },
             protected: ProtectedHeader::from_cbor_bstr(a.remove(1))?,
             key_data_length: match a.remove(0) {
-                Value::Integer(u) => u
-                    .try_into()
-                    .map_err(|_e| CoseError::UnexpectedType("u64", "u63"))?,
+                Value::Integer(u) => u.try_into()?,
                 v => return cbor_type_error(&v, "uint"),
             },
         })
