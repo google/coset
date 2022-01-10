@@ -29,6 +29,7 @@ use core::{cmp::Ordering, convert::TryInto};
 #[cfg(test)]
 mod tests;
 
+/// Marker structure indicating that the EOF was encountered when reading CBOR data.
 #[derive(Debug)]
 pub struct EndOfFile;
 
@@ -88,17 +89,16 @@ impl core::fmt::Debug for CoseError {
     }
 }
 
-struct MeasuringReader<'a> {
-    buf: &'a [u8],
-}
+/// Newtype wrapper around a byte slice to allow left-over data to be detected.
+struct MeasuringReader<'a>(&'a [u8]);
 
 impl<'a> MeasuringReader<'a> {
     fn new(buf: &'a [u8]) -> MeasuringReader<'a> {
-        MeasuringReader { buf }
+        MeasuringReader(buf)
     }
 
     fn is_empty(&self) -> bool {
-        self.buf.is_empty()
+        self.0.is_empty()
     }
 }
 
@@ -106,17 +106,19 @@ impl<'a> ciborium_io::Read for &mut MeasuringReader<'a> {
     type Error = EndOfFile;
 
     fn read_exact(&mut self, data: &mut [u8]) -> Result<(), Self::Error> {
-        if data.len() > self.buf.len() {
+        if data.len() > self.0.len() {
             return Err(EndOfFile);
         }
 
-        let (prefix, suffix) = self.buf.split_at(data.len());
+        let (prefix, suffix) = self.0.split_at(data.len());
         data.copy_from_slice(prefix);
-        self.buf = suffix;
+        self.0 = suffix;
         Ok(())
     }
 }
 
+/// Read a CBOR [`Value`] from a byte slice, failing if any extra data remains after the `Value` has
+/// been read.
 fn read_to_value(slice: &[u8]) -> Result<Value, CoseError> {
     let mut mr = MeasuringReader::new(slice);
     let value = cbor::de::from_reader(&mut mr)?;
