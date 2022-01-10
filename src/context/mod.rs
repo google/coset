@@ -60,7 +60,7 @@ impl AsCborValue for PartyInfo {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 3 {
-            return Err(CoseError::UnexpectedType("array", "array with 3 items"));
+            return Err(CoseError::UnexpectedItem("array", "array with 3 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
@@ -139,7 +139,7 @@ impl AsCborValue for SuppPubInfo {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 2 && a.len() != 3 {
-            return Err(CoseError::UnexpectedType(
+            return Err(CoseError::UnexpectedItem(
                 "array",
                 "array with 2 or 3 items",
             ));
@@ -220,7 +220,7 @@ impl AsCborValue for CoseKdfContext {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() < 4 {
-            return Err(CoseError::UnexpectedType(
+            return Err(CoseError::UnexpectedItem(
                 "array",
                 "array with at least 4 items",
             ));

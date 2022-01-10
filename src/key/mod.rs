@@ -138,7 +138,7 @@ impl AsCborValue for CoseKey {
                 x if x == kid_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
+                            return Err(CoseError::UnexpectedItem("empty bstr", "non-empty bstr"));
                         }
                         key.key_id = v;
                     }
@@ -151,14 +151,14 @@ impl AsCborValue for CoseKey {
                     Value::Array(key_ops) => {
                         for key_op in key_ops.into_iter() {
                             if !key.key_ops.insert(KeyOperation::from_cbor_value(key_op)?) {
-                                return Err(CoseError::UnexpectedType(
+                                return Err(CoseError::UnexpectedItem(
                                     "repeated array entry",
                                     "unique array label",
                                 ));
                             }
                         }
                         if key.key_ops.is_empty() {
-                            return Err(CoseError::UnexpectedType(
+                            return Err(CoseError::UnexpectedItem(
                                 "empty array",
                                 "non-empty array",
                             ));
@@ -170,7 +170,7 @@ impl AsCborValue for CoseKey {
                 x if x == base_iv_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
+                            return Err(CoseError::UnexpectedItem("empty bstr", "non-empty bstr"));
                         }
                         key.base_iv = v;
                     }
@@ -182,7 +182,7 @@ impl AsCborValue for CoseKey {
         }
         // Check that key type has been set.
         if key.kty == KeyType::Assigned(iana::KeyType::Reserved) {
-            return Err(CoseError::UnexpectedType(
+            return Err(CoseError::UnexpectedItem(
                 "no kty label",
                 "mandatory kty label",
             ));

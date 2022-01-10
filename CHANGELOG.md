@@ -18,6 +18,7 @@
     - Use new `DuplicateMapKey` error when a CBOR map contains duplicate keys (and is thus invalid).
     - Extend `DecodeFailed` error to include the underlying `ciborium::de::Error` value.
     - Use new `ExtraneousData` error when data remains after reading a CBOR value.
+    - Rename `UnexpectedType` error to `UnexpectedItem` to reflect broader usage than type
 - Add a crate-specific `Result` type whose `E` field defaults to `CoseError`.
 
 ## 0.2.0 - 2021-12-09

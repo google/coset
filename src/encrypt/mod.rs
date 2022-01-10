@@ -54,7 +54,7 @@ impl AsCborValue for CoseRecipient {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 3 && a.len() != 4 {
-            return Err(CoseError::UnexpectedType(
+            return Err(CoseError::UnexpectedItem(
                 "array",
                 "array with 3 or 4 items",
             ));
@@ -242,7 +242,7 @@ impl AsCborValue for CoseEncrypt {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 4 {
-            return Err(CoseError::UnexpectedType("array", "array with 4 items"));
+            return Err(CoseError::UnexpectedItem("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
@@ -387,7 +387,7 @@ impl AsCborValue for CoseEncrypt0 {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 3 {
-            return Err(CoseError::UnexpectedType("array", "array with 3 items"));
+            return Err(CoseError::UnexpectedItem("array", "array with 3 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
