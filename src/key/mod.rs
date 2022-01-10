@@ -20,7 +20,7 @@ use crate::{
     cbor::value::Value,
     iana,
     iana::EnumI64,
-    util::{AsCborValue, ValueTryAs},
+    util::{to_cbor_array, AsCborValue, ValueTryAs},
     Algorithm, CoseError, Label, Result,
 };
 use alloc::{collections::BTreeSet, vec, vec::Vec};
@@ -48,20 +48,13 @@ impl crate::CborSerializable for CoseKeySet {}
 
 impl AsCborValue for CoseKeySet {
     fn from_cbor_value(value: Value) -> Result<Self> {
-        let a = value.try_as_array()?;
-        let mut keys = Vec::new();
-        for v in a {
-            keys.push(CoseKey::from_cbor_value(v)?);
-        }
-        Ok(Self(keys))
+        Ok(Self(
+            value.try_as_array_then_convert(CoseKey::from_cbor_value)?,
+        ))
     }
 
     fn to_cbor_value(self) -> Result<Value> {
-        let mut arr = Vec::new();
-        for k in self.0 {
-            arr.push(k.to_cbor_value()?);
-        }
-        Ok(Value::Array(arr))
+        to_cbor_array(self.0)
     }
 }
 
@@ -166,11 +159,7 @@ impl AsCborValue for CoseKey {
             map.push((ALG.to_cbor_value()?, alg.to_cbor_value()?));
         }
         if !self.key_ops.is_empty() {
-            let mut arr = Vec::new();
-            for op in self.key_ops {
-                arr.push(op.to_cbor_value()?);
-            }
-            map.push((KEY_OPS.to_cbor_value()?, Value::Array(arr)));
+            map.push((KEY_OPS.to_cbor_value()?, to_cbor_array(self.key_ops)?));
         }
         if !self.base_iv.is_empty() {
             map.push((BASE_IV.to_cbor_value()?, Value::Bytes(self.base_iv)));

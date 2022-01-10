@@ -20,7 +20,7 @@ use crate::{
     cbor,
     cbor::value::Value,
     iana,
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
     CoseError, CoseRecipient, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};
@@ -61,10 +61,10 @@ impl AsCborValue for CoseMac {
         }
 
         // Remove array elements in reverse order to avoid shifts.
-        let mut recipients = Vec::new();
-        for val in a.remove(4).try_as_array()? {
-            recipients.push(CoseRecipient::from_cbor_value(val)?);
-        }
+        let recipients = a
+            .remove(4)
+            .try_as_array_then_convert(CoseRecipient::from_cbor_value)?;
+
         Ok(Self {
             recipients,
             tag: a.remove(3).try_as_bytes()?,
@@ -79,7 +79,7 @@ impl AsCborValue for CoseMac {
     }
 
     fn to_cbor_value(self) -> Result<Value> {
-        let mut v = vec![
+        Ok(Value::Array(vec![
             self.protected.cbor_bstr()?,
             self.unprotected.to_cbor_value()?,
             match self.payload {
@@ -87,13 +87,8 @@ impl AsCborValue for CoseMac {
                 Some(b) => Value::Bytes(b),
             },
             Value::Bytes(self.tag),
-        ];
-        let mut arr = Vec::new();
-        for r in self.recipients {
-            arr.push(r.to_cbor_value()?);
-        }
-        v.push(Value::Array(arr));
-        Ok(Value::Array(v))
+            to_cbor_array(self.recipients)?,
+        ]))
     }
 }
 

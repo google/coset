@@ -20,7 +20,7 @@ use crate::{
     cbor::value::Value,
     iana,
     iana::EnumI64,
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
     Algorithm, CborSerializable, CoseError, CoseSignature, Label, RegisteredLabel, Result,
 };
 use alloc::{collections::BTreeSet, string::String, vec, vec::Vec};
@@ -211,11 +211,7 @@ impl AsCborValue for Header {
             map.push((ALG.to_cbor_value()?, alg.to_cbor_value()?));
         }
         if !self.crit.is_empty() {
-            let mut arr = Vec::new();
-            for c in self.crit {
-                arr.push(c.to_cbor_value()?);
-            }
-            map.push((CRIT.to_cbor_value()?, Value::Array(arr)));
+            map.push((CRIT.to_cbor_value()?, to_cbor_array(self.crit)?));
         }
         if let Some(content_type) = self.content_type {
             map.push((CONTENT_TYPE.to_cbor_value()?, content_type.to_cbor_value()?));
@@ -237,11 +233,10 @@ impl AsCborValue for Header {
                     self.counter_signatures.remove(0).to_cbor_value()?,
                 ));
             } else {
-                let mut arr = Vec::new();
-                for cs in self.counter_signatures {
-                    arr.push(cs.to_cbor_value()?);
-                }
-                map.push((COUNTER_SIG.to_cbor_value()?, Value::Array(arr)));
+                map.push((
+                    COUNTER_SIG.to_cbor_value()?,
+                    to_cbor_array(self.counter_signatures)?,
+                ));
             }
         }
         let mut seen = BTreeSet::new();
