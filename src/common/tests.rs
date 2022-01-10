@@ -16,15 +16,18 @@
 
 use super::*;
 use crate::util::expect_err;
-use alloc::{borrow::ToOwned, vec};
+use alloc::{borrow::ToOwned, format, vec};
 use core::cmp::Ordering;
 
 #[test]
 fn test_error_convert() {
-    match CoseError::from(crate::cbor::ser::Error::<String>::Value(
+    let e = CoseError::from(crate::cbor::ser::Error::<String>::Value(
         "error message lost".to_owned(),
-    )) {
-        CoseError::EncodeFailed => {}
+    ));
+    match e {
+        CoseError::EncodeFailed => {
+            assert!(format!("{:?}", e).contains("encode CBOR failure"));
+        }
         _ => panic!("unexpected error enum after conversion"),
     }
 }
