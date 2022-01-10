@@ -35,7 +35,7 @@ pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T>
         Value::Map(_) => "map",
         _ => "other",
     };
-    Err(CoseError::UnexpectedType(got, want))
+    Err(CoseError::UnexpectedItem(got, want))
 }
 
 /// Trait for types that can be converted to/from a [`Value`].

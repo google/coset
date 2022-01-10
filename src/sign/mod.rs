@@ -52,7 +52,7 @@ impl AsCborValue for CoseSignature {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 3 {
-            return Err(CoseError::UnexpectedType("array", "array with 3 items"));
+            return Err(CoseError::UnexpectedItem("array", "array with 3 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
@@ -115,7 +115,7 @@ impl AsCborValue for CoseSign {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 4 {
-            return Err(CoseError::UnexpectedType("array", "array with 4 items"));
+            return Err(CoseError::UnexpectedItem("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
@@ -126,7 +126,7 @@ impl AsCborValue for CoseSign {
                     match CoseSignature::from_cbor_value(sig) {
                         Ok(s) => signatures.push(s),
                         Err(_e) => {
-                            return Err(CoseError::UnexpectedType(
+                            return Err(CoseError::UnexpectedItem(
                                 "non-signature",
                                 "map for COSE_Signature",
                             ));
@@ -274,7 +274,7 @@ impl AsCborValue for CoseSign1 {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 4 {
-            return Err(CoseError::UnexpectedType("array", "array with 4 items"));
+            return Err(CoseError::UnexpectedItem("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.

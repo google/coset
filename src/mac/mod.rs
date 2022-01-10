@@ -60,7 +60,7 @@ impl AsCborValue for CoseMac {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 5 {
-            return Err(CoseError::UnexpectedType("array", "array with 5 items"));
+            return Err(CoseError::UnexpectedItem("array", "array with 5 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.
@@ -218,7 +218,7 @@ impl AsCborValue for CoseMac0 {
             v => return cbor_type_error(&v, "array"),
         };
         if a.len() != 4 {
-            return Err(CoseError::UnexpectedType("array", "array with 4 items"));
+            return Err(CoseError::UnexpectedItem("array", "array with 4 items"));
         }
 
         // Remove array elements in reverse order to avoid shifts.

@@ -131,7 +131,7 @@ impl AsCborValue for Header {
                 x if x == crit_value() => match value {
                     Value::Array(a) => {
                         if a.is_empty() {
-                            return Err(CoseError::UnexpectedType(
+                            return Err(CoseError::UnexpectedItem(
                                 "empty array",
                                 "non-empty array",
                             ));
@@ -149,10 +149,10 @@ impl AsCborValue for Header {
                     headers.content_type = Some(ContentType::from_cbor_value(value)?);
                     if let Some(ContentType::Text(text)) = &headers.content_type {
                         if text.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty tstr", "non-empty tstr"));
+                            return Err(CoseError::UnexpectedItem("empty tstr", "non-empty tstr"));
                         }
                         if text.trim() != text {
-                            return Err(CoseError::UnexpectedType(
+                            return Err(CoseError::UnexpectedItem(
                                 "leading/trailing whitespace",
                                 "no leading/trailing whitespace",
                             ));
@@ -160,7 +160,7 @@ impl AsCborValue for Header {
                         // Basic check that the content type is of form type/subtype.
                         // We don't check the precise definition though (RFC 6838 s4.2)
                         if text.matches('/').count() != 1 {
-                            return Err(CoseError::UnexpectedType(
+                            return Err(CoseError::UnexpectedItem(
                                 "arbitrary text",
                                 "text of form type/subtype",
                             ));
@@ -171,7 +171,7 @@ impl AsCborValue for Header {
                 x if x == kid_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
+                            return Err(CoseError::UnexpectedItem("empty bstr", "non-empty bstr"));
                         }
                         headers.key_id = v;
                     }
@@ -181,7 +181,7 @@ impl AsCborValue for Header {
                 x if x == iv_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
+                            return Err(CoseError::UnexpectedItem("empty bstr", "non-empty bstr"));
                         }
                         headers.iv = v;
                     }
@@ -191,7 +191,7 @@ impl AsCborValue for Header {
                 x if x == partial_iv_value() => match value {
                     Value::Bytes(v) => {
                         if v.is_empty() {
-                            return Err(CoseError::UnexpectedType("empty bstr", "non-empty bstr"));
+                            return Err(CoseError::UnexpectedItem("empty bstr", "non-empty bstr"));
                         }
                         headers.partial_iv = v;
                     }
@@ -200,7 +200,7 @@ impl AsCborValue for Header {
                 x if x == counter_sig_value() => match value {
                     Value::Array(sig_or_sigs) => {
                         if sig_or_sigs.is_empty() {
-                            return Err(CoseError::UnexpectedType(
+                            return Err(CoseError::UnexpectedItem(
                                 "empty sig array",
                                 "non-empty sig array",
                             ));
@@ -234,7 +234,7 @@ impl AsCborValue for Header {
             // RFC 8152 section 3.1: "The 'Initialization Vector' and 'Partial Initialization
             // Vector' parameters MUST NOT both be present in the same security layer."
             if !headers.iv.is_empty() && !headers.partial_iv.is_empty() {
-                return Err(CoseError::UnexpectedType(
+                return Err(CoseError::UnexpectedItem(
                     "IV and partial-IV specified",
                     "only one of IV and partial IV",
                 ));

@@ -46,8 +46,8 @@ pub enum CoseError {
     /// Integer value on the wire is outside the range of integers representable in this crate.
     /// See <https://crates.io/crates/coset/#integer-ranges>.
     OutOfRangeIntegerValue,
-    /// Unexpected CBOR type encountered (got, want).
-    UnexpectedType(&'static str, &'static str),
+    /// Unexpected CBOR item encountered (got, want).
+    UnexpectedItem(&'static str, &'static str),
     /// Unrecognized value in IANA-controlled range (with no private range).
     UnregisteredIanaValue,
     /// Unrecognized value in neither IANA-controlled range nor private range.
@@ -83,7 +83,7 @@ impl core::fmt::Debug for CoseError {
             CoseError::EncodeFailed => write!(f, "encode CBOR failure"),
             CoseError::ExtraneousData => write!(f, "extraneous data in CBOR input"),
             CoseError::OutOfRangeIntegerValue => write!(f, "out of range integer value"),
-            CoseError::UnexpectedType(got, want) => write!(f, "got {}, expected {}", got, want),
+            CoseError::UnexpectedItem(got, want) => write!(f, "got {}, expected {}", got, want),
             CoseError::UnregisteredIanaValue => write!(f, "expected recognized IANA value"),
             CoseError::UnregisteredIanaNonPrivateValue => {
                 write!(f, "expected value in IANA or private use range")
