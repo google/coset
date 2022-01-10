@@ -125,7 +125,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - run: cargo doc --no-deps --document-private-items
+      - run: RUSTDOCFLAGS="-Dwarnings" cargo doc --no-deps --document-private-items
 
   udeps:
     runs-on: ubuntu-latest
