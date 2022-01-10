@@ -63,7 +63,7 @@ macro_rules! iana_registry {
 iana_registry! {
     /// IANA-registered COSE header parameters.
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#header-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#header-parameters>
     /// as of 2021-03-19.
     HeaderParameter {
         /// Reserved
@@ -143,7 +143,7 @@ impl WithPrivateRange for HeaderParameter {
 iana_registry! {
     /// IANA-registered COSE header algorithm parameters.
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#header-algorithm-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#header-algorithm-parameters>
     /// as of 2021-03-19.
     HeaderAlgorithmParameter {
         /// Party V other provided information
@@ -192,7 +192,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE algorithms.
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#algorithms>
     /// as of 2021-03-19.
     Algorithm {
         /// RSASSA-PKCS1-v1_5 using SHA-1
@@ -340,7 +340,7 @@ impl WithPrivateRange for Algorithm {
 iana_registry! {
     /// IANA-registered COSE common key parameters.
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-common-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-common-parameters>
     /// as of 2021-03-19.
     KeyParameter {
         /// Reserved value.
@@ -371,7 +371,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::OKP`].
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
     /// as of 2021-03-19.
     OkpKeyParameter {
         /// EC identifier - Taken from the "COSE Elliptic Curves" registry
@@ -392,7 +392,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::EC2`].
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
     /// as of 2021-03-19.
     Ec2KeyParameter {
         /// EC identifier - Taken from the "COSE Elliptic Curves" registry
@@ -417,7 +417,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::RSA`].
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
     /// as of 2021-03-19.
     RsaKeyParameter {
         /// The RSA modulus n
@@ -474,7 +474,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::Symmetric`].
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
     /// as of 2021-03-19.
     SymmetricKeyParameter {
         /// Key Value
@@ -487,7 +487,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::HSS_LMS`].
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
     /// as of 2021-03-19.
     HssLmsKeyParameter {
         /// Public key for HSS/LMS hash-based digital signature
@@ -500,7 +500,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::WalnutDSA`].
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
     /// as of 2021-03-19.
     WalnutDsaKeyParameter {
         /// Group and Matrix (NxN) size
@@ -533,7 +533,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE key types.
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type>
     /// as of 2021-03-19.
     KeyType {
         /// This value is reserved
@@ -556,7 +556,7 @@ iana_registry! {
 iana_registry! {
     /// IANA-registered COSE elliptic curves.
     ///
-    /// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves>
     /// as of 2021-03-19.
     EllipticCurve {
         Reserved: 0,
@@ -619,7 +619,7 @@ iana_registry! {
 iana_registry! {
     /// CBOR tag values for COSE structures.
     ///
-    /// From IANA registry https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml
+    /// From IANA registry <https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml>
     /// as of 2021-03-19.
     CborTag {
         /// COSE Single Recipient Encrypted Data Object
@@ -642,7 +642,7 @@ iana_registry! {
 iana_registry! {
     /// CoAP Content Formats
     ///
-    /// From IANA registry https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats
+    /// From IANA registry <https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats>
     /// as of 2021-03-19.
     CoapContentFormat {
         /// text/plain; charset=utf-8
