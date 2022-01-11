@@ -152,7 +152,7 @@ fn test_cose_signature_decode_fail() {
                 "a0",       // 0-map
                 "43010203", // 3-bstr
             ),
-            "expected bstr encoded map",
+            "expected bstr",
         ),
         (
             concat!(
@@ -431,7 +431,7 @@ fn test_cose_sign_decode_fail() {
                 "43010203", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "expected bstr encoded map",
+            "expected bstr",
         ),
         (
             concat!(
@@ -461,7 +461,7 @@ fn test_cose_sign_decode_fail() {
                 "43010203", // 3-bstr
                 "43010203", // 3-bstr
             ),
-            "expected array of COSE_Signature",
+            "expected array",
         ),
         (
             concat!(
@@ -530,7 +530,7 @@ fn test_cose_sign_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "expected bstr encoded map",
+            "expected bstr",
         ),
         (
             concat!(
@@ -556,6 +556,12 @@ fn test_cose_sign_tagged_decode_fail() {
         ),
         (
             concat!(
+                "1862",     // int instead of tag
+            ),
+            "expected tag",
+        ),
+        (
+            concat!(
                 "d861",     // tag(97) : wrong tag
                 "84",       // 4-tuple
                 "40",       // 0-bstr
@@ -563,7 +569,7 @@ fn test_cose_sign_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "80",       // 0-tuple
             ),
-            "expected tag",
+            "expected other tag",
         ),
         (
             concat!(
@@ -872,7 +878,7 @@ fn test_cose_sign1_decode_fail() {
                 "43010203", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "expected bstr encoded map",
+            "expected bstr",
         ),
         (
             concat!(
@@ -999,7 +1005,7 @@ fn test_cose_sign1_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "expected bstr encoded map",
+            "expected bstr",
         ),
         (
             concat!(
@@ -1032,7 +1038,7 @@ fn test_cose_sign1_tagged_decode_fail() {
                 "43010203", // 3-bstr
                 "40",       // 0-bstr
             ),
-            "expected tag",
+            "expected other tag",
         ),
         (
             concat!(

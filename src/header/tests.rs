@@ -324,7 +324,7 @@ fn test_header_decode_fail() {
                 "a1", // 1-map
                 "07", "01", // 7 (counter-sig) => invalid value type
             ),
-            "expected array value",
+            "expected array",
         ),
         (
             concat!(
