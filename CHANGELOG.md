@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.3.0 - TBD
+## 0.3.0 - 2022-01-19
 
 - Change to use `ciborium` as CBOR library. Breaking change with many knock-on effects:
     - Re-export `ciborium` as `coset::cbor` (rather than `sk-cbor`).
