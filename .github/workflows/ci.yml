@@ -1,4 +1,6 @@
 name: CI
+permissions:
+  contents: read
 on:
   pull_request:
     paths-ignore:
@@ -18,8 +20,8 @@ jobs:
           - beta
           - nightly-2022-01-01
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: ${{ matrix.rust }}
@@ -36,10 +38,10 @@ jobs:
           - beta
           - nightly-2022-01-01
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
           submodules: true
-      - uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: ${{ matrix.rust }}
@@ -57,8 +59,8 @@ jobs:
           - beta
           - nightly-2022-01-01
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: ${{ matrix.rust }}
@@ -75,10 +77,10 @@ jobs:
       matrix:
         rust: [1.56.0, 1.57.0]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
           submodules: true
-      - uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: ${{ matrix.rust }}
@@ -90,12 +92,12 @@ jobs:
   formatting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions/setup-go@424fc82d43fa5a37540bae62709ddcc23d9520d4 # v2
       - run: go get github.com/campoy/embedmd
-      - uses: actions/setup-ruby@v1
+      - uses: actions/setup-ruby@b007fae6f1ffbe3a51c00a6df6f5ff01184d5340 # v1
       - run: gem install mdl
-      - uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: nightly-2022-01-01
@@ -107,8 +109,8 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: nightly-2022-01-01
@@ -120,8 +122,8 @@ jobs:
   doc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: stable
@@ -130,14 +132,14 @@ jobs:
   udeps:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: nightly-2022-01-01
           override: true
           components: rustfmt
-      - uses: actions-rs/install@v0.1.2
+      - uses: actions-rs/install@69ec87709ffb5b19a7b5ddbf610cb221498bb1eb # v0.1.2
         with:
           crate: cargo-udeps
           use-tool-cache: true
@@ -147,8 +149,8 @@ jobs:
   deny:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: nightly-2022-01-01
@@ -160,17 +162,17 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
           submodules: true
           fetch-depth: 0
-      - uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
           toolchain: nightly-2022-01-01
           override: true
           components: rustfmt
-      - uses: actions-rs/install@v0.1.2
+      - uses: actions-rs/install@69ec87709ffb5b19a7b5ddbf610cb221498bb1eb # v0.1.2
         with:
           crate: cargo-tarpaulin
           use-tool-cache: true
