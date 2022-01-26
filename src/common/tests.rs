@@ -27,6 +27,7 @@ fn test_error_convert() {
     match e {
         CoseError::EncodeFailed => {
             assert!(format!("{:?}", e).contains("encode CBOR failure"));
+            assert!(format!("{}", e).contains("CBOR encoding failure"));
         }
         _ => panic!("unexpected error enum after conversion"),
     }

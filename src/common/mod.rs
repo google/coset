@@ -54,6 +54,54 @@ pub enum CoseError {
     UnregisteredIanaNonPrivateValue,
 }
 
+impl core::fmt::Display for CoseError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        match self {
+            Self::DecodeFailed(ref cbor_err) => {
+                write!(f, "CBOR decoding failure: {}", cbor_err)
+            }
+
+            Self::DuplicateMapKey => {
+                write!(f, "duplicate map key detected")
+            }
+
+            Self::EncodeFailed => {
+                write!(f, "CBOR encoding failure")
+            }
+
+            Self::ExtraneousData => {
+                write!(f, "CBOR input had extra data")
+            }
+
+            Self::OutOfRangeIntegerValue => {
+                write!(f, "integer value on the wire is outside the range of integers representable in this crate")
+            }
+
+            Self::UnexpectedItem(ref got, ref want) => {
+                write!(
+                    f,
+                    "unexpected CBOR item encountered (got {}, want {})",
+                    got, want
+                )
+            }
+
+            Self::UnregisteredIanaValue => {
+                write!(
+                    f,
+                    "unrecognized value in IANA-controlled range (with no private range)"
+                )
+            }
+
+            Self::UnregisteredIanaNonPrivateValue => {
+                write!(
+                    f,
+                    "unrecognized value in neither IANA-controlled range nor private range"
+                )
+            }
+        }
+    }
+}
+
 /// Crate-specific Result type
 pub type Result<T, E = CoseError> = core::result::Result<T, E>;
 
