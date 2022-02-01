@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.3.1 - TBD
+
+- Implement `Display` for `CoseError`.
+
 ## 0.3.0 - 2022-01-19
 
 - Change to use `ciborium` as CBOR library. Breaking change with many knock-on effects:

@@ -54,54 +54,6 @@ pub enum CoseError {
     UnregisteredIanaNonPrivateValue,
 }
 
-impl core::fmt::Display for CoseError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
-        match self {
-            Self::DecodeFailed(ref cbor_err) => {
-                write!(f, "CBOR decoding failure: {}", cbor_err)
-            }
-
-            Self::DuplicateMapKey => {
-                write!(f, "duplicate map key detected")
-            }
-
-            Self::EncodeFailed => {
-                write!(f, "CBOR encoding failure")
-            }
-
-            Self::ExtraneousData => {
-                write!(f, "CBOR input had extra data")
-            }
-
-            Self::OutOfRangeIntegerValue => {
-                write!(f, "integer value on the wire is outside the range of integers representable in this crate")
-            }
-
-            Self::UnexpectedItem(ref got, ref want) => {
-                write!(
-                    f,
-                    "unexpected CBOR item encountered (got {}, want {})",
-                    got, want
-                )
-            }
-
-            Self::UnregisteredIanaValue => {
-                write!(
-                    f,
-                    "unrecognized value in IANA-controlled range (with no private range)"
-                )
-            }
-
-            Self::UnregisteredIanaNonPrivateValue => {
-                write!(
-                    f,
-                    "unrecognized value in neither IANA-controlled range nor private range"
-                )
-            }
-        }
-    }
-}
-
 /// Crate-specific Result type
 pub type Result<T, E = CoseError> = core::result::Result<T, E>;
 
@@ -125,6 +77,18 @@ impl core::convert::From<core::num::TryFromIntError> for CoseError {
 
 impl core::fmt::Debug for CoseError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.fmt_msg(f)
+    }
+}
+
+impl core::fmt::Display for CoseError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.fmt_msg(f)
+    }
+}
+
+impl CoseError {
+    fn fmt_msg(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             CoseError::DecodeFailed(e) => write!(f, "decode CBOR failure: {}", e),
             CoseError::DuplicateMapKey => write!(f, "duplicate map key"),
