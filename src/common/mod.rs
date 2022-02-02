@@ -77,6 +77,18 @@ impl core::convert::From<core::num::TryFromIntError> for CoseError {
 
 impl core::fmt::Debug for CoseError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.fmt_msg(f)
+    }
+}
+
+impl core::fmt::Display for CoseError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        self.fmt_msg(f)
+    }
+}
+
+impl CoseError {
+    fn fmt_msg(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             CoseError::DecodeFailed(e) => write!(f, "decode CBOR failure: {}", e),
             CoseError::DuplicateMapKey => write!(f, "duplicate map key"),

@@ -156,21 +156,35 @@ where
 
 /// Check for an expected error.
 #[cfg(test)]
-pub fn expect_err<T: core::fmt::Debug, E: core::fmt::Debug>(result: Result<T, E>, err_msg: &str) {
+pub fn expect_err<T: core::fmt::Debug, E: core::fmt::Debug + core::fmt::Display>(
+    result: Result<T, E>,
+    err_msg: &str,
+) {
     use alloc::format;
-    assert!(
-        result.is_err(),
-        "expected error containing '{}', got success {:?}",
-        err_msg,
-        result
-    );
-    let err = result.err();
-    assert!(
-        format!("{:?}", err).contains(err_msg),
-        "unexpected error {:?}, doesn't contain '{}'",
-        err,
-        err_msg
-    );
+    match result {
+        Ok(_) => {
+            assert!(
+                result.is_err(),
+                "expected error containing '{}', got success {:?}",
+                err_msg,
+                result
+            );
+        }
+        Err(err) => {
+            assert!(
+                format!("{:?}", err).contains(err_msg),
+                "unexpected error {:?}, doesn't contain '{}' (Debug impl)",
+                err,
+                err_msg
+            );
+            assert!(
+                format!("{}", err).contains(err_msg),
+                "unexpected error {:?}, doesn't contain '{}' (Display impl)",
+                err,
+                err_msg
+            );
+        }
+    }
 }
 
 // Macros to reduce boilerplate when creating `CoseSomethingBuilder` structures.
