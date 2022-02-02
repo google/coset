@@ -166,7 +166,7 @@ pub fn expect_err<T: core::fmt::Debug, E: core::fmt::Debug + core::fmt::Display>
             panic!(
                 "expected error containing '{}', got success {:?}",
                 err_msg, result
-            );
+            ); /* safe: used only in test code to signal test failure */
         }
         Err(err) => {
             assert!(
