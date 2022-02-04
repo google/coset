@@ -1,6 +1,6 @@
 [package]
 name = "coset"
-version = "0.3.0"
+version = "0.3.1-alpha.1"
 authors = ["David Drysdale <drysdale@google.com>", "Paul Crowley <paulcrowley@google.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -11,7 +11,7 @@ categories = ["cryptography"]
 
 [dependencies]
 ciborium = { version = "^0.2.0", default-features = false }
-ciborium-io = "^0.2.0"
+ciborium-io = { version = "^0.2.0", features = ["alloc"] }
 
 [dev-dependencies]
 hex = "^0.4.2"
