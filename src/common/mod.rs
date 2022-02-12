@@ -21,7 +21,7 @@ use crate::{
     cbor::value::Value,
     iana,
     iana::{EnumI64, WithPrivateRange},
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, ValueTryAs},
 };
 use alloc::{boxed::Box, string::String, vec::Vec};
 use core::{cmp::Ordering, convert::TryInto};
@@ -142,6 +142,14 @@ fn read_to_value(slice: &[u8]) -> Result<Value> {
     } else {
         Err(CoseError::ExtraneousData)
     }
+}
+
+/// Trait for types that can be converted to/from a [`Value`].
+pub trait AsCborValue: Sized {
+    /// Convert a [`Value`] into an instance of the type.
+    fn from_cbor_value(value: Value) -> Result<Self>;
+    /// Convert the object into a [`Value`], consuming it along the way.
+    fn to_cbor_value(self) -> Result<Value>;
 }
 
 /// Extension trait that adds serialization/deserialization methods.

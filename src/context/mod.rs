@@ -18,8 +18,9 @@
 
 use crate::{
     cbor::value::Value,
+    common::AsCborValue,
     iana,
-    util::{cbor_type_error, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, ValueTryAs},
     Algorithm, CoseError, ProtectedHeader, Result,
 };
 use alloc::{vec, vec::Vec};

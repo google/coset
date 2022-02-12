@@ -18,6 +18,7 @@
 
 use crate::{
     cbor::value::{Integer, Value},
+    common::AsCborValue,
     CoseError, Result,
 };
 use alloc::{boxed::Box, vec::Vec};
@@ -130,14 +131,6 @@ impl ValueTryAs for Value {
             cbor_type_error(&self, "tag")
         }
     }
-}
-
-/// Trait for types that can be converted to/from a [`Value`].
-pub trait AsCborValue: Sized {
-    /// Convert a [`Value`] into an instance of the type.
-    fn from_cbor_value(value: Value) -> Result<Self>;
-    /// Convert the object into a [`Value`], consuming it along the way.
-    fn to_cbor_value(self) -> Result<Value>;
 }
 
 /// Convert each item of an iterator to CBOR, and wrap the lot in
