@@ -19,8 +19,9 @@
 use crate::{
     cbor,
     cbor::value::Value,
+    common::AsCborValue,
     iana,
-    util::{cbor_type_error, to_cbor_array, AsCborValue, ValueTryAs},
+    util::{cbor_type_error, to_cbor_array, ValueTryAs},
     CoseError, CoseRecipient, Header, ProtectedHeader, Result,
 };
 use alloc::{borrow::ToOwned, vec, vec::Vec};

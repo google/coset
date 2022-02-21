@@ -18,9 +18,10 @@
 
 use crate::{
     cbor::value::Value,
+    common::AsCborValue,
     iana,
     iana::EnumI64,
-    util::{to_cbor_array, AsCborValue, ValueTryAs},
+    util::{to_cbor_array, ValueTryAs},
     Algorithm, CoseError, Label, Result,
 };
 use alloc::{collections::BTreeSet, vec, vec::Vec};
