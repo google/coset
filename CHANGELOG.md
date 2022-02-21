@@ -4,6 +4,7 @@
 
 - Implement `Display` for `CoseError`.
 - Fix `Cargo.toml` to indicate reliance on `alloc` feature of `ciborium-io`.
+- Make `AsCborValue` trait public.
 
 ## 0.3.0 - 2022-01-19
 
