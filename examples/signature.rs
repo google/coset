@@ -15,7 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 //! Example program demonstrating signature creation.
-use coset::{iana, CborSerializable};
+use coset::{iana, CborSerializable, CoseError};
 
 #[derive(Copy, Clone)]
 struct FakeSigner {}
@@ -35,7 +35,7 @@ impl FakeSigner {
     }
 }
 
-fn main() {
+fn main() -> Result<(), CoseError> {
     // Build a fake signer/verifier (to avoid pulling in lots of dependencies).
     let signer = FakeSigner {};
     let verifier = signer;
@@ -56,7 +56,7 @@ fn main() {
         .build();
 
     // Serialize to bytes.
-    let sign1_data = sign1.to_vec().unwrap();
+    let sign1_data = sign1.to_vec()?;
     println!(
         "'{}' + '{}' => {}",
         String::from_utf8_lossy(pt),
@@ -65,7 +65,7 @@ fn main() {
     );
 
     // At the receiving end, deserialize the bytes back to a `CoseSign1` object.
-    let mut sign1 = coset::CoseSign1::from_slice(&sign1_data).unwrap();
+    let mut sign1 = coset::CoseSign1::from_slice(&sign1_data)?;
 
     // Check the signature, which needs to have the same `aad` provided.
     let result = sign1.verify_signature(aad, |sig, data| verifier.verify(sig, data));
@@ -85,7 +85,9 @@ fn main() {
 
     // Changing a protected header invalidates the signature.
     sign1.protected.header.content_type = Some(coset::ContentType::Text("text/plain".to_owned()));
+    sign1.protected.original_data = None;
     assert!(sign1
         .verify_signature(aad, |sig, data| verifier.verify(sig, data))
         .is_err());
+    Ok(())
 }
