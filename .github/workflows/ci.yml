@@ -49,6 +49,26 @@ jobs:
           override: true
       - run: cargo test --workspace -- --nocapture
 
+  examples:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - nightly-2022-01-01
+    steps:
+      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+        with:
+          submodules: true
+      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          components: rustfmt
+          override: true
+      - run: for eg in `ls examples/*.rs | xargs basename --suffix=.rs`; do cargo run --example ${eg}; done
+
   no_std:
     name: Build for a no_std target
     runs-on: ubuntu-latest
