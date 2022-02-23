@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.3.1 - TBD
+## 0.3.1 - 2022-02-23
 
 - Implement `Display` for `CoseError`.
 - Fix `Cargo.toml` to indicate reliance on `alloc` feature of `ciborium-io`.
