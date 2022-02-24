@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;encrypt&#x2F;mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../coset/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input"name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;encrypt&#x2F;mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../coset/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -504,37 +505,7 @@
 <span id="504">504</span>
 <span id="505">505</span>
 <span id="506">506</span>
-<span id="507">507</span>
-<span id="508">508</span>
-<span id="509">509</span>
-<span id="510">510</span>
-<span id="511">511</span>
-<span id="512">512</span>
-<span id="513">513</span>
-<span id="514">514</span>
-<span id="515">515</span>
-<span id="516">516</span>
-<span id="517">517</span>
-<span id="518">518</span>
-<span id="519">519</span>
-<span id="520">520</span>
-<span id="521">521</span>
-<span id="522">522</span>
-<span id="523">523</span>
-<span id="524">524</span>
-<span id="525">525</span>
-<span id="526">526</span>
-<span id="527">527</span>
-<span id="528">528</span>
-<span id="529">529</span>
-<span id="530">530</span>
-<span id="531">531</span>
-<span id="532">532</span>
-<span id="533">533</span>
-<span id="534">534</span>
-<span id="535">535</span>
-</pre><pre class="rust">
-<span class="comment">// Copyright 2021 Google LLC</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2021 Google LLC</span>
 <span class="comment">//</span>
 <span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="comment">// you may not use this file except in compliance with the License.</span>
@@ -554,11 +525,11 @@
 
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">cbor</span>,
-    <span class="ident">cbor::values</span>::{<span class="ident">SimpleValue</span>, <span class="ident">Value</span>},
-    <span class="ident">common::CborSerializable</span>,
+    <span class="ident">cbor::value::Value</span>,
+    <span class="ident">common::AsCborValue</span>,
     <span class="ident">iana</span>,
-    <span class="ident">util</span>::{<span class="ident">cbor_type_error</span>, <span class="ident">AsCborValue</span>},
-    <span class="ident">CoseError</span>, <span class="ident">Header</span>,
+    <span class="ident">util</span>::{<span class="ident">cbor_type_error</span>, <span class="ident">to_cbor_array</span>, <span class="ident">ValueTryAs</span>},
+    <span class="ident">CoseError</span>, <span class="ident">Header</span>, <span class="ident">ProtectedHeader</span>, <span class="prelude-ty">Result</span>,
 };
 <span class="kw">use</span> <span class="ident">alloc</span>::{<span class="ident">borrow::ToOwned</span>, <span class="ident">vec</span>, <span class="ident">vec::Vec</span>};
 
@@ -574,69 +545,57 @@
 <span class="doccomment">///      ? recipients : [+COSE_recipient]</span>
 <span class="doccomment">///  ]</span>
 <span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CoseRecipient</span> {
-    <span class="kw">pub</span> <span class="ident">protected</span>: <span class="ident">Header</span>,
+    <span class="kw">pub</span> <span class="ident">protected</span>: <span class="ident">ProtectedHeader</span>,
     <span class="kw">pub</span> <span class="ident">unprotected</span>: <span class="ident">Header</span>,
     <span class="kw">pub</span> <span class="ident">ciphertext</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">recipients</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">CoseRecipient</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="kw">crate</span><span class="ident">::CborSerializable</span> <span class="kw">for</span> <span class="ident">CoseRecipient</span> {}
+<span class="kw">impl</span> <span class="ident"><span class="kw">crate</span>::CborSerializable</span> <span class="kw">for</span> <span class="ident">CoseRecipient</span> {}
 
 <span class="kw">impl</span> <span class="ident">AsCborValue</span> <span class="kw">for</span> <span class="ident">CoseRecipient</span> {
-    <span class="kw">fn</span> <span class="ident">from_cbor_value</span>(<span class="ident">value</span>: <span class="ident">Value</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">CoseError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">value</span> {
-            <span class="ident">Value::Array</span>(<span class="ident">a</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">a</span>,
-            <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;array&quot;</span>),
-        };
+    <span class="kw">fn</span> <span class="ident">from_cbor_value</span>(<span class="ident">value</span>: <span class="ident">Value</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">try_as_array</span>()<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="ident">a</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">3</span> <span class="op">&amp;&amp;</span> <span class="ident">a</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">4</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CoseError::UnexpectedType</span>(
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CoseError::UnexpectedItem</span>(
                 <span class="string">&quot;array&quot;</span>,
                 <span class="string">&quot;array with 3 or 4 items&quot;</span>,
             ));
         }
 
         <span class="comment">// Remove array elements in reverse order to avoid shifts.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">recipients</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">if</span> <span class="ident">a</span>.<span class="ident">len</span>() <span class="op">=</span><span class="op">=</span> <span class="number">4</span> {
-            <span class="kw">match</span> <span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">3</span>) {
-                <span class="ident">Value::Array</span>(<span class="ident">a</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">for</span> <span class="ident">val</span> <span class="kw">in</span> <span class="ident">a</span> {
-                        <span class="ident">recipients</span>.<span class="ident">push</span>(<span class="ident">CoseRecipient::from_cbor_value</span>(<span class="ident">val</span>)<span class="question-mark">?</span>);
-                    }
-                }
-                <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;array&quot;</span>),
-            }
-        }
+        <span class="kw">let</span> <span class="ident">recipients</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">a</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">4</span> {
+            <span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">3</span>)
+                .<span class="ident">try_as_array_then_convert</span>(<span class="ident">CoseRecipient::from_cbor_value</span>)<span class="question-mark">?</span>
+        } <span class="kw">else</span> {
+            <span class="ident">Vec::new</span>()
+        };
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">recipients</span>,
             <span class="ident">ciphertext</span>: <span class="kw">match</span> <span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">2</span>) {
-                <span class="ident">Value::ByteString</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">b</span>),
-                <span class="ident">Value::Simple</span>(<span class="ident">SimpleValue::NullValue</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-                <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;bstr / null&quot;</span>),
+                <span class="ident">Value::Bytes</span>(<span class="ident">b</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">b</span>),
+                <span class="ident">Value::Null</span> =&gt; <span class="prelude-val">None</span>,
+                <span class="ident">v</span> =&gt; <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;bstr / null&quot;</span>),
             },
             <span class="ident">unprotected</span>: <span class="ident">Header::from_cbor_value</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">1</span>))<span class="question-mark">?</span>,
-            <span class="ident">protected</span>: <span class="ident">Header::from_cbor_bstr</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">0</span>))<span class="question-mark">?</span>,
+            <span class="ident">protected</span>: <span class="ident">ProtectedHeader::from_cbor_bstr</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">0</span>))<span class="question-mark">?</span>,
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">to_cbor_value</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Value</span>, <span class="ident">CoseError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_cbor_value</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">v</span> <span class="op">=</span> <span class="macro">vec!</span>[
             <span class="self">self</span>.<span class="ident">protected</span>.<span class="ident">cbor_bstr</span>()<span class="question-mark">?</span>,
             <span class="self">self</span>.<span class="ident">unprotected</span>.<span class="ident">to_cbor_value</span>()<span class="question-mark">?</span>,
             <span class="kw">match</span> <span class="self">self</span>.<span class="ident">ciphertext</span> {
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Value::Simple</span>(<span class="ident">SimpleValue::NullValue</span>),
-                <span class="prelude-val">Some</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Value::ByteString</span>(<span class="ident">b</span>),
+                <span class="prelude-val">None</span> =&gt; <span class="ident">Value::Null</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">b</span>) =&gt; <span class="ident">Value::Bytes</span>(<span class="ident">b</span>),
             },
         ];
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">recipients</span>.<span class="ident">is_empty</span>() {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">arr</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-            <span class="kw">for</span> <span class="ident">r</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">recipients</span> {
-                <span class="ident">arr</span>.<span class="ident">push</span>(<span class="ident">r</span>.<span class="ident">to_cbor_value</span>()<span class="question-mark">?</span>);
-            }
-            <span class="ident">v</span>.<span class="ident">push</span>(<span class="ident">Value::Array</span>(<span class="ident">arr</span>));
+            <span class="ident">v</span>.<span class="ident">push</span>(<span class="ident">to_cbor_array</span>(<span class="self">self</span>.<span class="ident">recipients</span>)<span class="question-mark">?</span>);
         }
         <span class="prelude-val">Ok</span>(<span class="ident">Value::Array</span>(<span class="ident">v</span>))
     }
@@ -655,16 +614,16 @@
         <span class="ident">context</span>: <span class="ident">EncryptionContext</span>,
         <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">cipher</span>: <span class="ident">F</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">ct</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ciphertext</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>(<span class="comment">/* safe: documented */</span>);
         <span class="kw">match</span> <span class="ident">context</span> {
             <span class="ident">EncryptionContext::EncRecipient</span>
             <span class="op">|</span> <span class="ident">EncryptionContext::MacRecipient</span>
-            <span class="op">|</span> <span class="ident">EncryptionContext::RecRecipient</span> <span class="op">=</span><span class="op">&gt;</span> {}
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;unsupported encryption context {:?}&quot;</span>, <span class="ident">context</span>), <span class="comment">// safe: documented</span>
+            <span class="op">|</span> <span class="ident">EncryptionContext::RecRecipient</span> =&gt; {}
+            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;unsupported encryption context {:?}&quot;</span>, <span class="ident">context</span>), <span class="comment">// safe: documented</span>
         }
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="ident">enc_structure_data</span>(<span class="ident">context</span>, <span class="self">self</span>.<span class="ident">protected</span>.<span class="ident">clone</span>(), <span class="ident">external_aad</span>);
         <span class="ident">cipher</span>(<span class="ident">ct</span>, <span class="kw-2">&amp;</span><span class="ident">aad</span>)
@@ -677,12 +636,13 @@
 
 <span class="kw">impl</span> <span class="ident">CoseRecipientBuilder</span> {
     <span class="macro">builder!</span> {<span class="ident">CoseRecipient</span>}
-    <span class="macro">builder_set!</span> {<span class="ident">protected</span>: <span class="ident">Header</span>}
+    <span class="macro">builder_set_protected!</span> {<span class="ident">protected</span>}
     <span class="macro">builder_set!</span> {<span class="ident">unprotected</span>: <span class="ident">Header</span>}
     <span class="macro">builder_set_optional!</span> {<span class="ident">ciphertext</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>}
 
     <span class="doccomment">/// Add a [`CoseRecipient`].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_recipient</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">recipient</span>: <span class="ident">CoseRecipient</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="attribute">#[<span class="ident">must_use</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_recipient</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">recipient</span>: <span class="ident">CoseRecipient</span>) -&gt; <span class="self">Self</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">recipients</span>.<span class="ident">push</span>(<span class="ident">recipient</span>);
         <span class="self">self</span>
     }
@@ -694,15 +654,16 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function will panic if the `context` parameter does not refer to a recipient context.</span>
+    <span class="attribute">#[<span class="ident">must_use</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_ciphertext</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(
         <span class="self">self</span>,
         <span class="ident">context</span>: <span class="ident">EncryptionContext</span>,
         <span class="ident">plaintext</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">cipher</span>: <span class="ident">F</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
+    ) -&gt; <span class="self">Self</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">aad</span>(<span class="ident">context</span>, <span class="ident">external_aad</span>);
         <span class="self">self</span>.<span class="ident">ciphertext</span>(<span class="ident">cipher</span>(<span class="ident">plaintext</span>, <span class="kw-2">&amp;</span><span class="ident">aad</span>))
@@ -721,9 +682,9 @@
         <span class="ident">plaintext</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">cipher</span>: <span class="ident">F</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">aad</span>(<span class="ident">context</span>, <span class="ident">external_aad</span>);
         <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">ciphertext</span>(<span class="ident">cipher</span>(<span class="ident">plaintext</span>, <span class="kw-2">&amp;</span><span class="ident">aad</span>)<span class="question-mark">?</span>))
@@ -735,12 +696,13 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function will panic if the `context` parameter does not refer to a recipient context.</span>
-    <span class="kw">fn</span> <span class="ident">aad</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">context</span>: <span class="ident">EncryptionContext</span>, <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+    <span class="attribute">#[<span class="ident">must_use</span>]</span>
+    <span class="kw">fn</span> <span class="ident">aad</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">context</span>: <span class="ident">EncryptionContext</span>, <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="ident">context</span> {
             <span class="ident">EncryptionContext::EncRecipient</span>
             <span class="op">|</span> <span class="ident">EncryptionContext::MacRecipient</span>
-            <span class="op">|</span> <span class="ident">EncryptionContext::RecRecipient</span> <span class="op">=</span><span class="op">&gt;</span> {}
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic!</span>(<span class="string">&quot;unsupported encryption context {:?}&quot;</span>, <span class="ident">context</span>), <span class="comment">// safe: documented</span>
+            <span class="op">|</span> <span class="ident">EncryptionContext::RecRecipient</span> =&gt; {}
+            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;unsupported encryption context {:?}&quot;</span>, <span class="ident">context</span>), <span class="comment">// safe: documented</span>
         }
         <span class="ident">enc_structure_data</span>(<span class="ident">context</span>, <span class="self">self</span>.<span class="number">0</span>.<span class="ident">protected</span>.<span class="ident">clone</span>(), <span class="ident">external_aad</span>)
     }
@@ -755,65 +717,52 @@
 <span class="doccomment">///      recipients : [+COSE_recipient]</span>
 <span class="doccomment">///  ]</span>
 <span class="doccomment">///  ```</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CoseEncrypt</span> {
-    <span class="kw">pub</span> <span class="ident">protected</span>: <span class="ident">Header</span>,
+    <span class="kw">pub</span> <span class="ident">protected</span>: <span class="ident">ProtectedHeader</span>,
     <span class="kw">pub</span> <span class="ident">unprotected</span>: <span class="ident">Header</span>,
     <span class="kw">pub</span> <span class="ident">ciphertext</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">recipients</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">CoseRecipient</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="kw">crate</span><span class="ident">::CborSerializable</span> <span class="kw">for</span> <span class="ident">CoseEncrypt</span> {}
+<span class="kw">impl</span> <span class="ident"><span class="kw">crate</span>::CborSerializable</span> <span class="kw">for</span> <span class="ident">CoseEncrypt</span> {}
 
-<span class="kw">impl</span> <span class="kw">crate</span><span class="ident">::TaggedCborSerializable</span> <span class="kw">for</span> <span class="ident">CoseEncrypt</span> {
+<span class="kw">impl</span> <span class="ident"><span class="kw">crate</span>::TaggedCborSerializable</span> <span class="kw">for</span> <span class="ident">CoseEncrypt</span> {
     <span class="kw">const</span> <span class="ident">TAG</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="ident">iana::CborTag::CoseEncrypt</span> <span class="kw">as</span> <span class="ident">u64</span>;
 }
 
 <span class="kw">impl</span> <span class="ident">AsCborValue</span> <span class="kw">for</span> <span class="ident">CoseEncrypt</span> {
-    <span class="kw">fn</span> <span class="ident">from_cbor_value</span>(<span class="ident">value</span>: <span class="ident">Value</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">CoseError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">value</span> {
-            <span class="ident">Value::Array</span>(<span class="ident">a</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">a</span>,
-            <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;array&quot;</span>),
-        };
+    <span class="kw">fn</span> <span class="ident">from_cbor_value</span>(<span class="ident">value</span>: <span class="ident">Value</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">try_as_array</span>()<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="ident">a</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">4</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CoseError::UnexpectedType</span>(<span class="string">&quot;array&quot;</span>, <span class="string">&quot;array with 4 items&quot;</span>));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CoseError::UnexpectedItem</span>(<span class="string">&quot;array&quot;</span>, <span class="string">&quot;array with 4 items&quot;</span>));
         }
 
         <span class="comment">// Remove array elements in reverse order to avoid shifts.</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">recipients</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">match</span> <span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">3</span>) {
-            <span class="ident">Value::Array</span>(<span class="ident">a</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">for</span> <span class="ident">val</span> <span class="kw">in</span> <span class="ident">a</span> {
-                    <span class="ident">recipients</span>.<span class="ident">push</span>(<span class="ident">CoseRecipient::from_cbor_value</span>(<span class="ident">val</span>)<span class="question-mark">?</span>);
-                }
-            }
-            <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;array&quot;</span>),
-        }
+        <span class="kw">let</span> <span class="ident">recipients</span> <span class="op">=</span> <span class="ident">a</span>
+            .<span class="ident">remove</span>(<span class="number">3</span>)
+            .<span class="ident">try_as_array_then_convert</span>(<span class="ident">CoseRecipient::from_cbor_value</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">recipients</span>,
             <span class="ident">ciphertext</span>: <span class="kw">match</span> <span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">2</span>) {
-                <span class="ident">Value::ByteString</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">b</span>),
-                <span class="ident">Value::Simple</span>(<span class="ident">SimpleValue::NullValue</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-                <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;bstr&quot;</span>),
+                <span class="ident">Value::Bytes</span>(<span class="ident">b</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">b</span>),
+                <span class="ident">Value::Null</span> =&gt; <span class="prelude-val">None</span>,
+                <span class="ident">v</span> =&gt; <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;bstr&quot;</span>),
             },
             <span class="ident">unprotected</span>: <span class="ident">Header::from_cbor_value</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">1</span>))<span class="question-mark">?</span>,
-            <span class="ident">protected</span>: <span class="ident">Header::from_cbor_bstr</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">0</span>))<span class="question-mark">?</span>,
+            <span class="ident">protected</span>: <span class="ident">ProtectedHeader::from_cbor_bstr</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">0</span>))<span class="question-mark">?</span>,
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">to_cbor_value</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Value</span>, <span class="ident">CoseError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">arr</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-        <span class="kw">for</span> <span class="ident">r</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">recipients</span> {
-            <span class="ident">arr</span>.<span class="ident">push</span>(<span class="ident">r</span>.<span class="ident">to_cbor_value</span>()<span class="question-mark">?</span>);
-        }
+    <span class="kw">fn</span> <span class="ident">to_cbor_value</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">Value::Array</span>(<span class="macro">vec!</span>[
             <span class="self">self</span>.<span class="ident">protected</span>.<span class="ident">cbor_bstr</span>()<span class="question-mark">?</span>,
             <span class="self">self</span>.<span class="ident">unprotected</span>.<span class="ident">to_cbor_value</span>()<span class="question-mark">?</span>,
             <span class="kw">match</span> <span class="self">self</span>.<span class="ident">ciphertext</span> {
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Value::Simple</span>(<span class="ident">SimpleValue::NullValue</span>),
-                <span class="prelude-val">Some</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Value::ByteString</span>(<span class="ident">b</span>),
+                <span class="prelude-val">None</span> =&gt; <span class="ident">Value::Null</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">b</span>) =&gt; <span class="ident">Value::Bytes</span>(<span class="ident">b</span>),
             },
-            <span class="ident">Value::Array</span>(<span class="ident">arr</span>),
+            <span class="ident">to_cbor_array</span>(<span class="self">self</span>.<span class="ident">recipients</span>)<span class="question-mark">?</span>,
         ]))
     }
 }
@@ -825,9 +774,9 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function will panic if no `ciphertext` is available.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decrypt</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">cipher</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decrypt</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">cipher</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">ct</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ciphertext</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>(<span class="comment">/* safe: documented */</span>);
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="ident">enc_structure_data</span>(
@@ -845,16 +794,17 @@
 
 <span class="kw">impl</span> <span class="ident">CoseEncryptBuilder</span> {
     <span class="macro">builder!</span> {<span class="ident">CoseEncrypt</span>}
-    <span class="macro">builder_set!</span> {<span class="ident">protected</span>: <span class="ident">Header</span>}
+    <span class="macro">builder_set_protected!</span> {<span class="ident">protected</span>}
     <span class="macro">builder_set!</span> {<span class="ident">unprotected</span>: <span class="ident">Header</span>}
     <span class="macro">builder_set_optional!</span> {<span class="ident">ciphertext</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>}
 
     <span class="doccomment">/// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the</span>
     <span class="doccomment">/// plaintext and combined AAD (in that order).  Any protected header values should be set</span>
     <span class="doccomment">/// before using this method.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_ciphertext</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">plaintext</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">cipher</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
+    <span class="attribute">#[<span class="ident">must_use</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_ciphertext</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">plaintext</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">cipher</span>: <span class="ident">F</span>) -&gt; <span class="self">Self</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="ident">enc_structure_data</span>(
             <span class="ident">EncryptionContext::CoseEncrypt</span>,
@@ -872,9 +822,9 @@
         <span class="ident">plaintext</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">cipher</span>: <span class="ident">F</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="ident">enc_structure_data</span>(
             <span class="ident">EncryptionContext::CoseEncrypt</span>,
@@ -885,7 +835,8 @@
     }
 
     <span class="doccomment">/// Add a [`CoseRecipient`].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_recipient</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">recipient</span>: <span class="ident">CoseRecipient</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="attribute">#[<span class="ident">must_use</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_recipient</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">recipient</span>: <span class="ident">CoseRecipient</span>) -&gt; <span class="self">Self</span> {
         <span class="self">self</span>.<span class="number">0</span>.<span class="ident">recipients</span>.<span class="ident">push</span>(<span class="ident">recipient</span>);
         <span class="self">self</span>
     }
@@ -899,49 +850,46 @@
 <span class="doccomment">///      ciphertext : bstr / nil,</span>
 <span class="doccomment">///  ]</span>
 <span class="doccomment">///  ```</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CoseEncrypt0</span> {
-    <span class="kw">pub</span> <span class="ident">protected</span>: <span class="ident">Header</span>,
+    <span class="kw">pub</span> <span class="ident">protected</span>: <span class="ident">ProtectedHeader</span>,
     <span class="kw">pub</span> <span class="ident">unprotected</span>: <span class="ident">Header</span>,
     <span class="kw">pub</span> <span class="ident">ciphertext</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="kw">crate</span><span class="ident">::CborSerializable</span> <span class="kw">for</span> <span class="ident">CoseEncrypt0</span> {}
+<span class="kw">impl</span> <span class="ident"><span class="kw">crate</span>::CborSerializable</span> <span class="kw">for</span> <span class="ident">CoseEncrypt0</span> {}
 
-<span class="kw">impl</span> <span class="kw">crate</span><span class="ident">::TaggedCborSerializable</span> <span class="kw">for</span> <span class="ident">CoseEncrypt0</span> {
+<span class="kw">impl</span> <span class="ident"><span class="kw">crate</span>::TaggedCborSerializable</span> <span class="kw">for</span> <span class="ident">CoseEncrypt0</span> {
     <span class="kw">const</span> <span class="ident">TAG</span>: <span class="ident">u64</span> <span class="op">=</span> <span class="ident">iana::CborTag::CoseEncrypt0</span> <span class="kw">as</span> <span class="ident">u64</span>;
 }
 
 <span class="kw">impl</span> <span class="ident">AsCborValue</span> <span class="kw">for</span> <span class="ident">CoseEncrypt0</span> {
-    <span class="kw">fn</span> <span class="ident">from_cbor_value</span>(<span class="ident">value</span>: <span class="ident">Value</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">CoseError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">value</span> {
-            <span class="ident">Value::Array</span>(<span class="ident">a</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">a</span>,
-            <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;array&quot;</span>),
-        };
+    <span class="kw">fn</span> <span class="ident">from_cbor_value</span>(<span class="ident">value</span>: <span class="ident">Value</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">a</span> <span class="op">=</span> <span class="ident">value</span>.<span class="ident">try_as_array</span>()<span class="question-mark">?</span>;
         <span class="kw">if</span> <span class="ident">a</span>.<span class="ident">len</span>() <span class="op">!</span><span class="op">=</span> <span class="number">3</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CoseError::UnexpectedType</span>(<span class="string">&quot;array&quot;</span>, <span class="string">&quot;array with 3 items&quot;</span>));
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">CoseError::UnexpectedItem</span>(<span class="string">&quot;array&quot;</span>, <span class="string">&quot;array with 3 items&quot;</span>));
         }
 
         <span class="comment">// Remove array elements in reverse order to avoid shifts.</span>
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">ciphertext</span>: <span class="kw">match</span> <span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">2</span>) {
-                <span class="ident">Value::ByteString</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">b</span>),
-                <span class="ident">Value::Simple</span>(<span class="ident">SimpleValue::NullValue</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-                <span class="ident">v</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;bstr&quot;</span>),
+                <span class="ident">Value::Bytes</span>(<span class="ident">b</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">b</span>),
+                <span class="ident">Value::Null</span> =&gt; <span class="prelude-val">None</span>,
+                <span class="ident">v</span> =&gt; <span class="kw">return</span> <span class="ident">cbor_type_error</span>(<span class="kw-2">&amp;</span><span class="ident">v</span>, <span class="string">&quot;bstr&quot;</span>),
             },
 
             <span class="ident">unprotected</span>: <span class="ident">Header::from_cbor_value</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">1</span>))<span class="question-mark">?</span>,
-            <span class="ident">protected</span>: <span class="ident">Header::from_cbor_bstr</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">0</span>))<span class="question-mark">?</span>,
+            <span class="ident">protected</span>: <span class="ident">ProtectedHeader::from_cbor_bstr</span>(<span class="ident">a</span>.<span class="ident">remove</span>(<span class="number">0</span>))<span class="question-mark">?</span>,
         })
     }
 
-    <span class="kw">fn</span> <span class="ident">to_cbor_value</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Value</span>, <span class="ident">CoseError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_cbor_value</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Value</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">Value::Array</span>(<span class="macro">vec!</span>[
             <span class="self">self</span>.<span class="ident">protected</span>.<span class="ident">cbor_bstr</span>()<span class="question-mark">?</span>,
             <span class="self">self</span>.<span class="ident">unprotected</span>.<span class="ident">to_cbor_value</span>()<span class="question-mark">?</span>,
             <span class="kw">match</span> <span class="self">self</span>.<span class="ident">ciphertext</span> {
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Value::Simple</span>(<span class="ident">SimpleValue::NullValue</span>),
-                <span class="prelude-val">Some</span>(<span class="ident">b</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Value::ByteString</span>(<span class="ident">b</span>),
+                <span class="prelude-val">None</span> =&gt; <span class="ident">Value::Null</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">b</span>) =&gt; <span class="ident">Value::Bytes</span>(<span class="ident">b</span>),
             },
         ]))
     }
@@ -954,9 +902,9 @@
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function will panic if no `ciphertext` is available.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decrypt</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">cipher</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decrypt</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">E</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">cipher</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">ct</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ciphertext</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>(<span class="comment">/* safe: documented */</span>);
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="ident">enc_structure_data</span>(
@@ -968,22 +916,23 @@
     }
 }
 
-<span class="doccomment">/// Builder for `CoseEncrypt0` objects.</span>
+<span class="doccomment">/// Builder for [`CoseEncrypt0`] objects.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CoseEncrypt0Builder</span>(<span class="ident">CoseEncrypt0</span>);
 
 <span class="kw">impl</span> <span class="ident">CoseEncrypt0Builder</span> {
     <span class="macro">builder!</span> {<span class="ident">CoseEncrypt0</span>}
-    <span class="macro">builder_set!</span> {<span class="ident">protected</span>: <span class="ident">Header</span>}
+    <span class="macro">builder_set_protected!</span> {<span class="ident">protected</span>}
     <span class="macro">builder_set!</span> {<span class="ident">unprotected</span>: <span class="ident">Header</span>}
     <span class="macro">builder_set_optional!</span> {<span class="ident">ciphertext</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>}
 
     <span class="doccomment">/// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the</span>
     <span class="doccomment">/// plaintext and combined AAD (in that order).  Any protected header values should be set</span>
     <span class="doccomment">/// before using this method.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_ciphertext</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">plaintext</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">cipher</span>: <span class="ident">F</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
+    <span class="attribute">#[<span class="ident">must_use</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_ciphertext</span><span class="op">&lt;</span><span class="ident">F</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">plaintext</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">cipher</span>: <span class="ident">F</span>) -&gt; <span class="self">Self</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="ident">enc_structure_data</span>(
             <span class="ident">EncryptionContext::CoseEncrypt0</span>,
@@ -1001,9 +950,9 @@
         <span class="ident">plaintext</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
         <span class="ident">cipher</span>: <span class="ident">F</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">E</span><span class="op">&gt;</span>
+    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">E</span><span class="op">&gt;</span>
     <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
+        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>, <span class="ident">E</span><span class="op">&gt;</span>,
     {
         <span class="kw">let</span> <span class="ident">aad</span> <span class="op">=</span> <span class="ident">enc_structure_data</span>(
             <span class="ident">EncryptionContext::CoseEncrypt0</span>,
@@ -1026,13 +975,13 @@
 
 <span class="kw">impl</span> <span class="ident">EncryptionContext</span> {
     <span class="doccomment">/// Return the context string as per RFC 8152 section 5.3.</span>
-    <span class="kw">fn</span> <span class="ident">text</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
+    <span class="kw">fn</span> <span class="ident">text</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">EncryptionContext::CoseEncrypt</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;Encrypt&quot;</span>,
-            <span class="ident">EncryptionContext::CoseEncrypt0</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;Encrypt0&quot;</span>,
-            <span class="ident">EncryptionContext::EncRecipient</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;Enc_Recipient&quot;</span>,
-            <span class="ident">EncryptionContext::MacRecipient</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;Mac_Recipient&quot;</span>,
-            <span class="ident">EncryptionContext::RecRecipient</span> <span class="op">=</span><span class="op">&gt;</span> <span class="string">&quot;Rec_Recipient&quot;</span>,
+            <span class="ident">EncryptionContext::CoseEncrypt</span> =&gt; <span class="string">&quot;Encrypt&quot;</span>,
+            <span class="ident">EncryptionContext::CoseEncrypt0</span> =&gt; <span class="string">&quot;Encrypt0&quot;</span>,
+            <span class="ident">EncryptionContext::EncRecipient</span> =&gt; <span class="string">&quot;Enc_Recipient&quot;</span>,
+            <span class="ident">EncryptionContext::MacRecipient</span> =&gt; <span class="string">&quot;Mac_Recipient&quot;</span>,
+            <span class="ident">EncryptionContext::RecRecipient</span> =&gt; <span class="string">&quot;Rec_Recipient&quot;</span>,
         }
     }
 }
@@ -1049,27 +998,19 @@
 <span class="doccomment">/// ```</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enc_structure_data</span>(
     <span class="ident">context</span>: <span class="ident">EncryptionContext</span>,
-    <span class="ident">protected</span>: <span class="ident">Header</span>,
+    <span class="ident">protected</span>: <span class="ident">ProtectedHeader</span>,
     <span class="ident">external_aad</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>],
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">arr</span> <span class="op">=</span> <span class="macro">vec!</span>[
-        <span class="ident">Value::TextString</span>(<span class="ident">context</span>.<span class="ident">text</span>().<span class="ident">to_owned</span>()),
-        <span class="kw">if</span> <span class="ident">protected</span>.<span class="ident">is_empty</span>() {
-            <span class="ident">Value::ByteString</span>(<span class="macro">vec!</span>[])
-        } <span class="kw">else</span> {
-            <span class="ident">Value::ByteString</span>(
-                <span class="ident">protected</span>.<span class="ident">to_vec</span>().<span class="ident">expect</span>(<span class="string">&quot;failed to serialize header&quot;</span>), <span class="comment">/* safe: always
-                                                                          * serializable */</span>
-            )
-        },
-        <span class="ident">Value::ByteString</span>(<span class="ident">external_aad</span>.<span class="ident">to_vec</span>()),
+        <span class="ident">Value::Text</span>(<span class="ident">context</span>.<span class="ident">text</span>().<span class="ident">to_owned</span>()),
+        <span class="ident">protected</span>.<span class="ident">cbor_bstr</span>().<span class="ident">expect</span>(<span class="string">&quot;failed to serialize header&quot;</span>), <span class="comment">// safe: always serializable</span>
+        <span class="ident">Value::Bytes</span>(<span class="ident">external_aad</span>.<span class="ident">to_vec</span>()),
     ];
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
-    <span class="ident">cbor::writer::write</span>(<span class="ident">Value::Array</span>(<span class="ident">arr</span>), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">data</span>).<span class="ident">unwrap</span>(); <span class="comment">// safe: always serializable</span>
+    <span class="ident">cbor::ser::into_writer</span>(<span class="kw-2">&amp;</span><span class="ident">Value::Array</span>(<span class="ident">arr</span>), <span class="kw-2">&amp;mut</span> <span class="ident">data</span>).<span class="ident">unwrap</span>(); <span class="comment">// safe: always serializable</span>
     <span class="ident">data</span>
 }
-</pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="coset" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
 </body></html>

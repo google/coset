@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;iana&#x2F;mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../coset/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input"name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;iana&#x2F;mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script>
+    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../coset/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -743,8 +744,7 @@
 <span id="743">743</span>
 <span id="744">744</span>
 <span id="745">745</span>
-</pre><pre class="rust">
-<span class="comment">// Copyright 2021 Google LLC</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright 2021 Google LLC</span>
 <span class="comment">//</span>
 <span class="comment">// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
 <span class="comment">// you may not use this file except in compliance with the License.</span>
@@ -772,18 +772,18 @@
 
 <span class="doccomment">/// Trait indicating an enum that can be constructed from `i64` values.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EnumI64</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Eq</span> {
-    <span class="kw">fn</span> <span class="ident">from_i64</span>(<span class="ident">i</span>: <span class="ident">i64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">to_i64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i64</span>;
+    <span class="kw">fn</span> <span class="ident">from_i64</span>(<span class="ident">i</span>: <span class="ident">i64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">to_i64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">i64</span>;
 }
 
 <span class="doccomment">/// Trait indicating an enum with a range of private values.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">WithPrivateRange</span> {
-    <span class="kw">fn</span> <span class="ident">is_private</span>(<span class="ident">i</span>: <span class="ident">i64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
+    <span class="kw">fn</span> <span class="ident">is_private</span>(<span class="ident">i</span>: <span class="ident">i64</span>) -&gt; <span class="ident">bool</span>;
 }
 
 <span class="doccomment">/// Generate an enum with associated values, plus a `from_i64` method.</span>
 <span class="macro">macro_rules!</span> <span class="ident">iana_registry</span> {
-    ( $(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">attr</span>:<span class="ident">meta</span>]</span>)<span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">enum_name</span>:<span class="ident">ident</span> {$($(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">fattr</span>:<span class="ident">meta</span>]</span>)<span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">val</span>:<span class="ident">expr</span>,)<span class="op">*</span> } ) <span class="op">=</span><span class="op">&gt;</span> {
+    ( $(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">attr</span>:<span class="ident">meta</span>]</span>)<span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">enum_name</span>:<span class="ident">ident</span> {$($(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">fattr</span>:<span class="ident">meta</span>]</span>)<span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">val</span>:<span class="ident">expr</span>,)<span class="op">*</span> } ) =&gt; {
         <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>)]</span>
         $(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">attr</span>]</span>)<span class="op">*</span>
         <span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
@@ -792,14 +792,14 @@
             $($(<span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">fattr</span>]</span>)<span class="op">*</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">val</span>,)<span class="op">*</span>
         }
         <span class="kw">impl</span> <span class="ident">EnumI64</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">enum_name</span> {
-            <span class="kw">fn</span> <span class="ident">from_i64</span>(<span class="ident">i</span>: <span class="ident">i64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+            <span class="kw">fn</span> <span class="ident">from_i64</span>(<span class="ident">i</span>: <span class="ident">i64</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
                 <span class="kw">match</span> <span class="ident">i</span> {
-                    $(<span class="ident">x</span> <span class="kw">if</span> <span class="ident">x</span> <span class="op">=</span><span class="op">=</span> <span class="self">Self</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> <span class="kw">as</span> <span class="ident">i64</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="self">Self</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>),)<span class="op">*</span>
-                    <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+                    $(<span class="ident">x</span> <span class="kw">if</span> <span class="ident">x</span> <span class="op">==</span> <span class="self">Self</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> <span class="kw">as</span> <span class="ident">i64</span> =&gt; <span class="prelude-val">Some</span>(<span class="self">Self</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>),)<span class="op">*</span>
+                    <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>,
                 }
             }
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">to_i64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">i64</span> {
+            <span class="kw">fn</span> <span class="ident">to_i64</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">i64</span> {
                 <span class="kw-2">*</span><span class="self">self</span> <span class="kw">as</span> <span class="ident">i64</span>
             }
         }
@@ -809,7 +809,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE header parameters.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#header-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#header-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">HeaderParameter</span> {
         <span class="doccomment">/// Reserved</span>
@@ -881,7 +881,7 @@
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HEADER_PARAMETER_PRIVATE_USE_MAX</span>: <span class="ident">i64</span> <span class="op">=</span> <span class="op">-</span><span class="number">65536</span>;
 
 <span class="kw">impl</span> <span class="ident">WithPrivateRange</span> <span class="kw">for</span> <span class="ident">HeaderParameter</span> {
-    <span class="kw">fn</span> <span class="ident">is_private</span>(<span class="ident">i</span>: <span class="ident">i64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">is_private</span>(<span class="ident">i</span>: <span class="ident">i64</span>) -&gt; <span class="ident">bool</span> {
         <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">HEADER_PARAMETER_PRIVATE_USE_MAX</span>
     }
 }
@@ -889,7 +889,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE header algorithm parameters.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#header-algorithm-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#header-algorithm-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">HeaderAlgorithmParameter</span> {
         <span class="doccomment">/// Party V other provided information</span>
@@ -938,7 +938,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE algorithms.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#algorithms</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#algorithms&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">Algorithm</span> {
         <span class="doccomment">/// RSASSA-PKCS1-v1_5 using SHA-1</span>
@@ -1078,7 +1078,7 @@
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ALGORITHM_PRIVATE_USE_MAX</span>: <span class="ident">i64</span> <span class="op">=</span> <span class="op">-</span><span class="number">65536</span>;
 
 <span class="kw">impl</span> <span class="ident">WithPrivateRange</span> <span class="kw">for</span> <span class="ident">Algorithm</span> {
-    <span class="kw">fn</span> <span class="ident">is_private</span>(<span class="ident">i</span>: <span class="ident">i64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">is_private</span>(<span class="ident">i</span>: <span class="ident">i64</span>) -&gt; <span class="ident">bool</span> {
         <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">ALGORITHM_PRIVATE_USE_MAX</span>
     }
 }
@@ -1086,7 +1086,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE common key parameters.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-common-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#key-common-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">KeyParameter</span> {
         <span class="doccomment">/// Reserved value.</span>
@@ -1117,7 +1117,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE key parameters for keys of type [`KeyType::OKP`].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">OkpKeyParameter</span> {
         <span class="doccomment">/// EC identifier - Taken from the &quot;COSE Elliptic Curves&quot; registry</span>
@@ -1138,7 +1138,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE key parameters for keys of type [`KeyType::EC2`].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">Ec2KeyParameter</span> {
         <span class="doccomment">/// EC identifier - Taken from the &quot;COSE Elliptic Curves&quot; registry</span>
@@ -1163,7 +1163,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE key parameters for keys of type [`KeyType::RSA`].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">RsaKeyParameter</span> {
         <span class="doccomment">/// The RSA modulus n</span>
@@ -1220,7 +1220,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE key parameters for keys of type [`KeyType::Symmetric`].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">SymmetricKeyParameter</span> {
         <span class="doccomment">/// Key Value</span>
@@ -1233,7 +1233,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE key parameters for keys of type [`KeyType::HSS_LMS`].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">HssLmsKeyParameter</span> {
         <span class="doccomment">/// Public key for HSS/LMS hash-based digital signature</span>
@@ -1246,7 +1246,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE key parameters for keys of type [`KeyType::WalnutDSA`].</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">WalnutDsaKeyParameter</span> {
         <span class="doccomment">/// Group and Matrix (NxN) size</span>
@@ -1279,7 +1279,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE key types.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#key-type</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#key-type&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">KeyType</span> {
         <span class="doccomment">/// This value is reserved</span>
@@ -1302,7 +1302,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// IANA-registered COSE elliptic curves.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">EllipticCurve</span> {
         <span class="ident">Reserved</span>: <span class="number">0</span>,
@@ -1329,7 +1329,7 @@
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ELLIPTIC_CURVE_PRIVATE_USE_MAX</span>: <span class="ident">i64</span> <span class="op">=</span> <span class="op">-</span><span class="number">65536</span>;
 
 <span class="kw">impl</span> <span class="ident">WithPrivateRange</span> <span class="kw">for</span> <span class="ident">EllipticCurve</span> {
-    <span class="kw">fn</span> <span class="ident">is_private</span>(<span class="ident">i</span>: <span class="ident">i64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">is_private</span>(<span class="ident">i</span>: <span class="ident">i64</span>) -&gt; <span class="ident">bool</span> {
         <span class="ident">i</span> <span class="op">&lt;</span> <span class="ident">ELLIPTIC_CURVE_PRIVATE_USE_MAX</span>
     }
 }
@@ -1365,7 +1365,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// CBOR tag values for COSE structures.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">CborTag</span> {
         <span class="doccomment">/// COSE Single Recipient Encrypted Data Object</span>
@@ -1388,7 +1388,7 @@
 <span class="macro">iana_registry!</span> {
     <span class="doccomment">/// CoAP Content Formats</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// From IANA registry https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats</span>
+    <span class="doccomment">/// From IANA registry &lt;https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats&gt;</span>
     <span class="doccomment">/// as of 2021-03-19.</span>
     <span class="ident">CoapContentFormat</span> {
         <span class="doccomment">/// text/plain; charset=utf-8</span>
@@ -1489,7 +1489,6 @@
         <span class="ident">VndOmaLwm2mCbor</span>: <span class="number">11544</span>,
     }
 }
-</pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="coset" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
-    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
 </body></html>
