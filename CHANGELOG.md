@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.3.2 - TBD
+
+- Add basic [CWT](https://datatracker.ietf.org/doc/html/rfc8392) support in `cwt` module, via the `ClaimsSet` type.
+
 ## 0.3.1 - 2022-02-23
 
 - Implement `Display` for `CoseError`.

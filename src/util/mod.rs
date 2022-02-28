@@ -21,7 +21,7 @@ use crate::{
     common::AsCborValue,
     CoseError, Result,
 };
-use alloc::{boxed::Box, vec::Vec};
+use alloc::{boxed::Box, string::String, vec::Vec};
 
 #[cfg(test)]
 mod tests;
@@ -71,6 +71,9 @@ where
 
     /// Extractor for [`Value::Tag`]
     fn try_as_tag(self) -> Result<(u64, Box<Value>)>;
+
+    /// Extractor for [`Value::Text`]
+    fn try_as_string(self) -> Result<String>;
 }
 
 impl ValueTryAs for Value {
@@ -129,6 +132,14 @@ impl ValueTryAs for Value {
             Ok((a, v))
         } else {
             cbor_type_error(&self, "tag")
+        }
+    }
+
+    fn try_as_string(self) -> Result<String> {
+        if let Value::Text(s) = self {
+            Ok(s)
+        } else {
+            cbor_type_error(&self, "tstr")
         }
     }
 }
