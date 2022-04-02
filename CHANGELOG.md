@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.3.2 - TBD
+## 0.3.2 - 2022-04-02
 
 - Add basic [CWT](https://datatracker.ietf.org/doc/html/rfc8392) support in `cwt` module, via the `ClaimsSet` type.
 
