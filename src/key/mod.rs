@@ -183,6 +183,7 @@ pub struct CoseKeyBuilder(CoseKey);
 
 impl CoseKeyBuilder {
     builder! {CoseKey}
+    builder_set! {kty: KeyType}
     builder_set! {key_id: Vec<u8>}
     builder_set! {base_iv: Vec<u8>}
 
@@ -248,6 +249,21 @@ impl CoseKeyBuilder {
             )],
             ..Default::default()
         })
+    }
+
+    /// Constructor for a octet keypair key.
+    pub fn new_okp_key() -> Self {
+        Self(CoseKey {
+            kty: KeyType::Assigned(iana::KeyType::OKP),
+            ..Default::default()
+        })
+    }
+
+    /// Set the key type.
+    #[must_use]
+    pub fn key_type(mut self, key_type: iana::KeyType) -> Self {
+        self.0.kty = KeyType::Assigned(key_type);
+        self
     }
 
     /// Set the algorithm.
