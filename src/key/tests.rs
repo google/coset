@@ -16,7 +16,7 @@
 
 use super::*;
 use crate::{cbor::value::Value, iana, util::expect_err, CborSerializable};
-use alloc::{borrow::ToOwned, vec};
+use alloc::{borrow::ToOwned, string::ToString, vec};
 
 #[test]
 fn test_cose_key_encode() {
@@ -699,6 +699,31 @@ fn test_key_builder() {
                     Label::Int(iana::SymmetricKeyParameter::K as i64),
                     Value::Bytes(vec![1, 2, 3]),
                 )],
+                ..Default::default()
+            },
+        ),
+        (
+            CoseKeyBuilder::new_okp_key().build(),
+            CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                ..Default::default()
+            },
+        ),
+        (
+            CoseKeyBuilder::new()
+                .key_type(iana::KeyType::WalnutDSA)
+                .build(),
+            CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::WalnutDSA),
+                ..Default::default()
+            },
+        ),
+        (
+            CoseKeyBuilder::new()
+                .kty(KeyType::Text("test".to_string()))
+                .build(),
+            CoseKey {
+                kty: KeyType::Text("test".to_string()),
                 ..Default::default()
             },
         ),
