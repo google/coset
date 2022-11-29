@@ -358,6 +358,11 @@ impl crate::TaggedCborSerializable for CoseEncrypt0 {
 
 impl AsCborValue for CoseEncrypt0 {
     fn from_cbor_value(value: Value) -> Result<Self> {
+        const COSE_ENCRYPT0: u64 = iana::CborTag::CoseEncrypt0 as u64;
+        let value = match value {
+            Value::Tag(COSE_ENCRYPT0, v) => *v,
+            v => v,
+        };
         let mut a = value.try_as_array()?;
         if a.len() != 3 {
             return Err(CoseError::UnexpectedItem("array", "array with 3 items"));
