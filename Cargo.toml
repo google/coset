@@ -9,6 +9,11 @@ repository = "https://github.com/google/coset"
 keywords = ["cryptography", "cose"]
 categories = ["cryptography"]
 
+[features]
+default = []
+# `std` feature enables an `Error` impl for `CoseError`
+std = []
+
 [dependencies]
 ciborium = { version = "^0.2.0", default-features = false }
 ciborium-io = { version = "^0.2.0", features = ["alloc"] }

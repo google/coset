@@ -87,6 +87,9 @@ impl core::fmt::Display for CoseError {
     }
 }
 
+#[cfg(feature = "std")]
+impl std::error::Error for CoseError {}
+
 impl CoseError {
     fn fmt_msg(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {

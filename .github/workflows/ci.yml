@@ -28,6 +28,7 @@ jobs:
           components: rustfmt
           override: true
       - run: cargo build --release --workspace
+      - run: cargo build --release --workspace --features=std
 
   test:
     runs-on: ubuntu-latest
@@ -48,6 +49,7 @@ jobs:
           components: rustfmt
           override: true
       - run: cargo test --workspace -- --nocapture
+      - run: cargo test --workspace --features=std -- --nocapture
 
   examples:
     runs-on: ubuntu-latest
@@ -68,6 +70,7 @@ jobs:
           components: rustfmt
           override: true
       - run: cargo test --examples
+      - run: cargo test --features=std --examples
 
   no_std:
     name: Build for a no_std target
@@ -107,6 +110,7 @@ jobs:
           components: rustfmt
           override: true
       - run: rustc --version
+      - run: cargo build --release --workspace
       - run: cargo build --release --workspace --all-features
 
   formatting:

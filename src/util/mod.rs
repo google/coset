@@ -164,6 +164,7 @@ pub fn expect_err<T: core::fmt::Debug, E: core::fmt::Debug + core::fmt::Display>
     result: Result<T, E>,
     err_msg: &str,
 ) {
+    #[cfg(not(feature = "std"))]
     use alloc::format;
     match result {
         Ok(_) => {
