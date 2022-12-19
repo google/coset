@@ -90,7 +90,7 @@ done
 
 EMBEDMD="$(go env GOPATH)/bin/embedmd"
 if [[ ! -x "$EMBEDMD" ]]; then
-  go get github.com/campoy/embedmd
+  go install github.com/campoy/embedmd@97c13d6
 fi
 for f in "${MD_FILES[@]}"; do
   "$EMBEDMD" -d "$f"
