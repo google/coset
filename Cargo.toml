@@ -1,6 +1,6 @@
 [package]
 name = "coset"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["David Drysdale <drysdale@google.com>", "Paul Crowley <paulcrowley@google.com>"]
 edition = "2018"
 license = "Apache-2.0"
