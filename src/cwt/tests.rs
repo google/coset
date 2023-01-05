@@ -41,16 +41,32 @@ fn test_cwt_encode() {
                 .not_before(Timestamp::WholeSeconds(0x200))
                 .issued_at(Timestamp::WholeSeconds(0x10))
                 .cwt_id(vec![1, 2, 3, 4])
+                .private_claim(-70_000, Value::Integer(0.into()))
                 .build(),
             concat!(
-                "a7", // 7-map
-                "01", "63", "616161", // 1 (iss) => 3-tstr
-                "02", "62", "6262", // 2 (sub) => 2-tstr
-                "03", "61", "63", // 3 (aud) => 1-tstr
-                "04", "19", "0100", // 4 (exp) => uint
-                "05", "19", "0200", // 5 (nbf) => uint
-                "06", "10", // 6 (iat) => uint
-                "07", "44", "01020304" // 7 => bstr
+                "a8", // 8-map
+                "01",
+                "63",
+                "616161", // 1 (iss) => 3-tstr
+                "02",
+                "62",
+                "6262", // 2 (sub) => 2-tstr
+                "03",
+                "61",
+                "63", // 3 (aud) => 1-tstr
+                "04",
+                "19",
+                "0100", // 4 (exp) => uint
+                "05",
+                "19",
+                "0200", // 5 (nbf) => uint
+                "06",
+                "10", // 6 (iat) => uint
+                "07",
+                "44",
+                "01020304", // 7 => bstr
+                "3a0001116f",
+                "00" // -70000 => uint
             ),
         ),
         (
@@ -192,6 +208,15 @@ fn test_cwt_claims_builder_core_param_panic() {
     // Attempting to set a core claim (in range [1,7]) via `.claim()` panics.
     let _claims = ClaimsSetBuilder::new()
         .claim(iana::CwtClaimName::Iss, Value::Null)
+        .build();
+}
+
+#[test]
+#[should_panic]
+fn test_cwt_claims_builder_non_private_panic() {
+    // Attempting to set a claim outside of private range via `.private_claim()` panics.
+    let _claims = ClaimsSetBuilder::new()
+        .private_claim(100, Value::Null)
         .build();
 }
 

@@ -20,7 +20,7 @@ use crate::{
     cbor::value::Value,
     common::AsCborValue,
     iana,
-    iana::EnumI64,
+    iana::{EnumI64, WithPrivateRange},
     util::{cbor_type_error, ValueTryAs},
     CoseError,
 };
@@ -181,6 +181,19 @@ impl ClaimsSetBuilder {
     #[must_use]
     pub fn text_claim(mut self, name: String, value: Value) -> Self {
         self.0.rest.push((ClaimName::Text(name), value));
+        self
+    }
+
+    /// Set a claim  where the claim key is a numeric value from the private use range.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if it is used to set a claim with a key value outside of the
+    /// private use range.
+    #[must_use]
+    pub fn private_claim(mut self, id: i64, value: Value) -> Self {
+        assert!(iana::CwtClaimName::is_private(id));
+        self.0.rest.push((ClaimName::PrivateUse(id), value));
         self
     }
 }
