@@ -95,8 +95,8 @@ impl AsCborValue for CoseRecipient {
 }
 
 impl CoseRecipient {
-    /// Decrypt the `ciphertext` value, using `cipher` to decrypt the cipher text and
-    /// combined AAD.
+    /// Decrypt the `ciphertext` value with an AEAD, using `cipher` to decrypt the cipher text and
+    /// combined AAD as per RFC 8152 section 5.3.
     ///
     /// # Panics
     ///
@@ -140,9 +140,9 @@ impl CoseRecipientBuilder {
         self
     }
 
-    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
-    /// plaintext and combined AAD (in that order).  Any protected header values should be set
-    /// before using this method.
+    /// Calculate the ciphertext value with an AEAD, using `cipher` to generate the encrypted bytes
+    /// from the plaintext and combined AAD (in that order) as per RFC 8152 section 5.3.  Any
+    /// protected header values should be set before using this method.
     ///
     /// # Panics
     ///
@@ -162,9 +162,9 @@ impl CoseRecipientBuilder {
         self.ciphertext(cipher(plaintext, &aad))
     }
 
-    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
-    /// plaintext and combined AAD (in that order).  Any protected header values should be set
-    /// before using this method.
+    /// Calculate the ciphertext value with an AEAD, using `cipher` to generate the encrypted bytes
+    /// from the plaintext and combined AAD (in that order) as per RFC 8152 section 5.3.  Any
+    /// protected header values should be set before using this method.
     ///
     /// # Panics
     ///
@@ -183,8 +183,8 @@ impl CoseRecipientBuilder {
         Ok(self.ciphertext(cipher(plaintext, &aad)?))
     }
 
-    /// Construct the combined AAD data needed for encryption. Any protected header values should be
-    /// set before using this method.
+    /// Construct the combined AAD data needed for encryption with an AEAD. Any protected header
+    /// values should be set before using this method.
     ///
     /// # Panics
     ///
@@ -261,7 +261,7 @@ impl AsCborValue for CoseEncrypt {
 }
 
 impl CoseEncrypt {
-    /// Decrypt the `ciphertext` value, using `cipher` to decrypt the cipher text and
+    /// Decrypt the `ciphertext` value with an AEAD, using `cipher` to decrypt the cipher text and
     /// combined AAD.
     ///
     /// # Panics
@@ -291,9 +291,9 @@ impl CoseEncryptBuilder {
     builder_set! {unprotected: Header}
     builder_set_optional! {ciphertext: Vec<u8>}
 
-    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
-    /// plaintext and combined AAD (in that order).  Any protected header values should be set
-    /// before using this method.
+    /// Calculate the ciphertext value with an AEAD, using `cipher` to generate the encrypted bytes
+    /// from the plaintext and combined AAD (in that order) as per RFC 8152 section 5.3.  Any
+    /// protected header values should be set before using this method.
     #[must_use]
     pub fn create_ciphertext<F>(self, plaintext: &[u8], external_aad: &[u8], cipher: F) -> Self
     where
@@ -307,9 +307,9 @@ impl CoseEncryptBuilder {
         self.ciphertext(cipher(plaintext, &aad))
     }
 
-    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
-    /// plaintext and combined AAD (in that order).  Any protected header values should be set
-    /// before using this method.
+    /// Calculate the ciphertext value with an AEAD, using `cipher` to generate the encrypted bytes
+    /// from the plaintext and combined AAD (in that order) as per RFC 8152 section 5.3.  Any
+    /// protected header values should be set before using this method.
     pub fn try_create_ciphertext<F, E>(
         self,
         plaintext: &[u8],
@@ -389,7 +389,7 @@ impl AsCborValue for CoseEncrypt0 {
 }
 
 impl CoseEncrypt0 {
-    /// Decrypt the `ciphertext` value, using `cipher` to decrypt the cipher text and
+    /// Decrypt the `ciphertext` value with an AEAD, using `cipher` to decrypt the cipher text and
     /// combined AAD.
     ///
     /// # Panics
@@ -419,9 +419,9 @@ impl CoseEncrypt0Builder {
     builder_set! {unprotected: Header}
     builder_set_optional! {ciphertext: Vec<u8>}
 
-    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
-    /// plaintext and combined AAD (in that order).  Any protected header values should be set
-    /// before using this method.
+    /// Calculate the ciphertext value with an AEAD, using `cipher` to generate the encrypted bytes
+    /// from the plaintext and combined AAD (in that order) as per RFC 8152 section 5.3.  Any
+    /// protected header values should be set before using this method.
     #[must_use]
     pub fn create_ciphertext<F>(self, plaintext: &[u8], external_aad: &[u8], cipher: F) -> Self
     where
@@ -435,9 +435,9 @@ impl CoseEncrypt0Builder {
         self.ciphertext(cipher(plaintext, &aad))
     }
 
-    /// Calculate the ciphertext value, using `cipher` to generate the encrypted bytes from the
-    /// plaintext and combined AAD (in that order).  Any protected header values should be set
-    /// before using this method.
+    /// Calculate the ciphertext value with an AEAD, using `cipher` to generate the encrypted bytes
+    /// from the plaintext and combined AAD (in that order) as per RFC 8152 section 5.3.  Any
+    /// protected header values should be set before using this method.
     pub fn try_create_ciphertext<F, E>(
         self,
         plaintext: &[u8],
