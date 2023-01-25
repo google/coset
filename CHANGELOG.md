@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.3.4 - TBD
+## 0.3.4 - 2023-01-25
 
 - Add non-default `std` feature that turns on `impl Error for CoseError`.
 - Add `cwt::ClaimsSetBuilder::private_claim` method.
