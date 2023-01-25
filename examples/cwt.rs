@@ -15,7 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 //! Example program demonstrating signed CWT processing.
-use coset::{cwt, iana, CborSerializable, CoseError};
+use coset::{cbor::value::Value, cwt, iana, CborSerializable, CoseError};
 
 #[derive(Copy, Clone)]
 struct FakeSigner {}
@@ -49,6 +49,13 @@ fn main() -> Result<(), CoseError> {
         .not_before(cwt::Timestamp::WholeSeconds(1443944944))
         .issued_at(cwt::Timestamp::WholeSeconds(1443944944))
         .cwt_id(vec![0x0b, 0x71])
+        // Add additional standard claim.
+        .claim(
+            iana::CwtClaimName::Scope,
+            Value::Text("email phone".to_string()),
+        )
+        // Add additional private-use claim.
+        .private_claim(-70_000, Value::Integer(42.into()))
         .build();
     let aad = b"";
 
