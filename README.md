@@ -1,7 +1,7 @@
 # COSET
 
 [![Docs](https://img.shields.io/badge/docs-rust-brightgreen?style=for-the-badge)](https://google.github.io/coset)
-[![CI Status](https://img.shields.io/github/workflow/status/google/coset/CI?color=blue&style=for-the-badge)](https://github.com/google/coset/actions?query=workflow%3ACI)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/google/coset/ci.yml?branch=main&color=blue&style=for-the-badge)](https://github.com/google/coset/actions?query=workflow%3ACI)
 [![codecov](https://img.shields.io/codecov/c/github/google/coset?style=for-the-badge)](https://codecov.io/gh/google/coset)
 
 This crate holds a set of Rust types for working with CBOR Object Signing and Encryption (COSE) objects, as defined in
