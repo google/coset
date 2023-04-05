@@ -18,7 +18,7 @@ jobs:
         rust:
           - stable
           - beta
-          - nightly-2022-01-01
+          - nightly-2023-01-01
     steps:
       - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
@@ -37,7 +37,7 @@ jobs:
         rust:
           - stable
           - beta
-          - nightly-2022-01-01
+          - nightly-2023-01-01
     steps:
       - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
@@ -58,7 +58,7 @@ jobs:
         rust:
           - stable
           - beta
-          - nightly-2022-01-01
+          - nightly-2023-01-01
     steps:
       - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
         with:
@@ -80,7 +80,7 @@ jobs:
         rust:
           - stable
           - beta
-          - nightly-2022-01-01
+          - nightly-2023-01-01
     steps:
       - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
@@ -124,7 +124,7 @@ jobs:
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
-          toolchain: nightly-2022-01-01
+          toolchain: nightly-2023-01-01
           override: true
           components: rustfmt
       - run: cargo fmt --all -- --check
@@ -137,7 +137,7 @@ jobs:
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
-          toolchain: nightly-2022-01-01
+          toolchain: nightly-2023-01-01
           override: true
           components: rustfmt, clippy
       - run: cargo clippy --all-features --all-targets
@@ -160,7 +160,7 @@ jobs:
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
-          toolchain: nightly-2022-01-01
+          toolchain: nightly-2023-01-01
           override: true
           components: rustfmt
       - uses: actions-rs/install@69ec87709ffb5b19a7b5ddbf610cb221498bb1eb # v0.1.2
@@ -177,7 +177,7 @@ jobs:
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
-          toolchain: nightly-2022-01-01
+          toolchain: nightly-2023-01-01
           override: true
           components: rustfmt
       - run: cargo install --locked --version 0.8.5 cargo-deny
@@ -193,13 +193,13 @@ jobs:
       - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
         with:
           profile: minimal
-          toolchain: nightly-2022-01-01
+          toolchain: nightly-2023-01-01
           override: true
           components: rustfmt
       - uses: actions-rs/install@69ec87709ffb5b19a7b5ddbf610cb221498bb1eb # v0.1.2
         with:
           crate: cargo-tarpaulin
-          version: 0.20.1
+          version: 0.25.2
           use-tool-cache: true
       - run: cargo tarpaulin --verbose --ignore-tests --all-features --timeout=600 --out Xml
       - name: Upload to codecov.io
