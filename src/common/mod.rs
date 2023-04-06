@@ -57,8 +57,16 @@ pub enum CoseError {
 /// Crate-specific Result type
 pub type Result<T, E = CoseError> = core::result::Result<T, E>;
 
-impl core::convert::From<cbor::de::Error<EndOfFile>> for CoseError {
-    fn from(e: cbor::de::Error<EndOfFile>) -> Self {
+impl<T> core::convert::From<cbor::de::Error<T>> for CoseError {
+    fn from(e: cbor::de::Error<T>) -> Self {
+        // Make sure we use our [`EndOfFile`] marker.
+        use cbor::de::Error::{Io, RecursionLimitExceeded, Semantic, Syntax};
+        let e = match e {
+            Io(_) => Io(EndOfFile),
+            Syntax(x) => Syntax(x),
+            Semantic(a, b) => Semantic(a, b),
+            RecursionLimitExceeded => RecursionLimitExceeded,
+        };
         CoseError::DecodeFailed(e)
     }
 }
@@ -107,21 +115,10 @@ impl CoseError {
     }
 }
 
-/// Convert a Ciborium error to one that uses our EndOfFile marker.
-fn convert_cbor_err<T>(e: cbor::de::Error<T>) -> cbor::de::Error<EndOfFile> {
-    use cbor::de::Error::{Io, RecursionLimitExceeded, Semantic, Syntax};
-    match e {
-        Io(_) => Io(EndOfFile),
-        Syntax(x) => Syntax(x),
-        Semantic(a, b) => Semantic(a, b),
-        RecursionLimitExceeded => RecursionLimitExceeded,
-    }
-}
-
 /// Read a CBOR [`Value`] from a byte slice, failing if any extra data remains after the `Value` has
 /// been read.
 fn read_to_value(mut slice: &[u8]) -> Result<Value> {
-    let value = cbor::de::from_reader(&mut slice).map_err(convert_cbor_err)?;
+    let value = cbor::de::from_reader(&mut slice)?;
     if slice.is_empty() {
         Ok(value)
     } else {
