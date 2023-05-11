@@ -18,17 +18,15 @@ jobs:
         rust:
           - stable
           - beta
-          - nightly-2023-01-01
+          - nightly-2023-04-01
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           components: rustfmt
-          override: true
-      - run: cargo build --release --workspace
-      - run: cargo build --release --workspace --features=std
+      - run: cargo +${{ matrix.rust }} build --release --workspace
+      - run: cargo +${{ matrix.rust }} build --release --workspace --features=std
 
   test:
     runs-on: ubuntu-latest
@@ -37,19 +35,17 @@ jobs:
         rust:
           - stable
           - beta
-          - nightly-2023-01-01
+          - nightly-2023-04-01
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           submodules: true
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           components: rustfmt
-          override: true
-      - run: cargo test --workspace -- --nocapture
-      - run: cargo test --workspace --features=std -- --nocapture
+      - run: cargo +${{ matrix.rust }} test --workspace -- --nocapture
+      - run: cargo +${{ matrix.rust }} test --workspace --features=std -- --nocapture
 
   examples:
     runs-on: ubuntu-latest
@@ -58,19 +54,17 @@ jobs:
         rust:
           - stable
           - beta
-          - nightly-2023-01-01
+          - nightly-2023-04-01
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           submodules: true
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           components: rustfmt
-          override: true
-      - run: cargo test --examples
-      - run: cargo test --features=std --examples
+      - run: cargo +${{ matrix.rust }} test --examples
+      - run: cargo +${{ matrix.rust }} test --features=std --examples
 
   no_std:
     name: Build for a no_std target
@@ -80,17 +74,15 @@ jobs:
         rust:
           - stable
           - beta
-          - nightly-2023-01-01
+          - nightly-2023-04-01
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           components: rustfmt
-          target: thumbv6m-none-eabi
-          override: true
-      - run: cargo build --release --workspace --target thumbv6m-none-eabi
+          targets: thumbv6m-none-eabi
+      - run: cargo +${{ matrix.rust }} build --release --workspace --target thumbv6m-none-eabi
 
   msrv:
     name: Rust ${{matrix.rust}} MSRV
@@ -100,108 +92,93 @@ jobs:
       matrix:
         rust: [1.56.0, 1.57.0]
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           submodules: true
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           components: rustfmt
-          override: true
       - run: rustc --version
-      - run: cargo build --release --workspace
-      - run: cargo build --release --workspace --all-features
+      - run: cargo +${{ matrix.rust }} build --release --workspace
+      - run: cargo +${{ matrix.rust }} build --release --workspace --all-features
 
   formatting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-      - uses: actions/setup-go@424fc82d43fa5a37540bae62709ddcc23d9520d4 # v2
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
       - run: go install github.com/campoy/embedmd@97c13d6
-      - uses: actions/setup-ruby@b007fae6f1ffbe3a51c00a6df6f5ff01184d5340 # v1
-      - run: gem install mdl
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: ruby/setup-ruby@d2b39ad0b52eca07d23f3aa14fdf2a3fcc1f411c # v1.148.0
         with:
-          profile: minimal
-          toolchain: nightly-2023-01-01
-          override: true
+          ruby-version: '2.7'
+      - run: gem install mdl
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
+        with:
+          toolchain: nightly-2023-04-01
           components: rustfmt
-      - run: cargo fmt --all -- --check
+      - run: cargo +nightly-2023-04-01 fmt --all -- --check
       - run: scripts/check-format.sh
 
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
-          toolchain: nightly-2023-01-01
-          override: true
+          toolchain: stable
           components: rustfmt, clippy
-      - run: cargo clippy --all-features --all-targets
+      - run: cargo +stable clippy --all-features --all-targets
       - run: git diff --exit-code
 
   doc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
           toolchain: stable
       - run: RUSTDOCFLAGS="-Dwarnings" cargo doc --no-deps --document-private-items
 
   udeps:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
-          toolchain: nightly-2023-01-01
-          override: true
+          toolchain: nightly-2023-04-01
           components: rustfmt
-      - uses: actions-rs/install@69ec87709ffb5b19a7b5ddbf610cb221498bb1eb # v0.1.2
-        with:
-          crate: cargo-udeps
-          use-tool-cache: true
-          version: 0.1.25
-      - run: cargo udeps
+      - run: cargo +nightly-2023-04-01 install --locked --version 0.1.39 cargo-udeps
+      - run: cargo +nightly-2023-04-01 udeps
 
   deny:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
-          toolchain: nightly-2023-01-01
-          override: true
+          toolchain: nightly-2023-04-01
           components: rustfmt
-      - run: cargo install --locked --version 0.8.5 cargo-deny
+      - run: cargo +nightly-2023-04-01 install --locked --version 0.13.9 cargo-deny
       - run: cargo deny check
 
   coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@629c2de402a417ea7690ca6ce3f33229e27606a5 # v2
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
         with:
           submodules: true
           fetch-depth: 0
-      - uses: actions-rs/toolchain@63eb9591781c46a70274cb3ebdf190fce92702e8 # v1
+      - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          profile: minimal
-          toolchain: nightly-2023-01-01
-          override: true
+          toolchain: nightly-2023-04-01
           components: rustfmt
       - uses: actions-rs/install@69ec87709ffb5b19a7b5ddbf610cb221498bb1eb # v0.1.2
         with:
           crate: cargo-tarpaulin
           version: 0.25.2
           use-tool-cache: true
-      - run: cargo tarpaulin --verbose --ignore-tests --all-features --timeout=600 --out Xml
+      - run: cargo +nightly-2023-04-01 tarpaulin --verbose --ignore-tests --all-features --timeout=600 --out Xml
       - name: Upload to codecov.io
         run: |
           bash <(curl -s https://codecov.io/bash)
