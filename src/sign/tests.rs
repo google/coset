@@ -1214,7 +1214,8 @@ fn test_sign_detached_roundtrip() {
 
     // Providing a different `payload` means the signature won't validate.
     assert!(sign
-        .verify_detached_signature(0, b"not payload", aad, |sig, data| verifier.verify(sig, data))
+        .verify_detached_signature(0, b"not payload", aad, |sig, data| verifier
+            .verify(sig, data))
         .is_err());
 
     // Providing a different `aad` means the signature won't validate.

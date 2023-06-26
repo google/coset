@@ -163,7 +163,13 @@ impl CoseSign {
     /// # Panics
     ///
     /// This method will panic if `which` is >= `self.signatures.len()`.
-    pub fn verify_detached_signature<F, E>(&self, which: usize, payload: &[u8], aad: &[u8], verifier: F) -> Result<(), E>
+    pub fn verify_detached_signature<F, E>(
+        &self,
+        which: usize,
+        payload: &[u8],
+        aad: &[u8],
+        verifier: F,
+    ) -> Result<(), E>
     where
         F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
     {
@@ -226,10 +232,15 @@ impl CoseSignBuilder {
     }
 
     /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes that will be
-    /// used to complete `sig`.  Any protected header values should be set before using this
-    /// method.
+    /// used to complete `sig`.  Any protected header values should be set before using this method.
     #[must_use]
-    pub fn add_detached_signature<F>(self, mut sig: CoseSignature, payload: &[u8], aad: &[u8], signer: F) -> Self
+    pub fn add_detached_signature<F>(
+        self,
+        mut sig: CoseSignature,
+        payload: &[u8],
+        aad: &[u8],
+        signer: F,
+    ) -> Self
     where
         F: FnOnce(&[u8]) -> Vec<u8>,
     {
@@ -342,7 +353,12 @@ impl CoseSign1 {
 
     /// Verify the indicated signature value for a detached payload, using `verifier` on the signature value and serialized
     /// data (in that order).
-    pub fn verify_detached_signature<F, E>(&self, payload: &[u8], aad: &[u8], verifier: F) -> Result<(), E>
+    pub fn verify_detached_signature<F, E>(
+        &self,
+        payload: &[u8],
+        aad: &[u8],
+        verifier: F,
+    ) -> Result<(), E>
     where
         F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
     {
@@ -418,7 +434,12 @@ impl CoseSign1Builder {
 
     /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes.  Any
     /// protected header values should be set before using this method.
-    pub fn try_create_detached_signature<F, E>(self, payload: &[u8], aad: &[u8], signer: F) -> Result<Self, E>
+    pub fn try_create_detached_signature<F, E>(
+        self,
+        payload: &[u8],
+        aad: &[u8],
+        signer: F,
+    ) -> Result<Self, E>
     where
         F: FnOnce(&[u8]) -> Result<Vec<u8>, E>,
     {
