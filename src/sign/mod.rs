@@ -163,6 +163,8 @@ impl CoseSign {
     /// # Panics
     ///
     /// This method will panic if `which` is >= `self.signatures.len()`.
+    ///
+    /// This method will panic if `self.payload.is_some()`.
     pub fn verify_detached_signature<F, E>(
         &self,
         which: usize,
@@ -190,7 +192,12 @@ impl CoseSign {
     }
 
     /// Construct the to-be-signed data for this object, using a detached payload.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `self.payload.is_some()`.
     fn tbs_detached_data(&self, payload: &[u8], aad: &[u8], sig: &CoseSignature) -> Vec<u8> {
+        assert!(self.payload.is_none());
         sig_structure_data(
             SignatureContext::CoseSignature,
             self.protected.clone(),
@@ -233,6 +240,10 @@ impl CoseSignBuilder {
 
     /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes that will be
     /// used to complete `sig`.  Any protected header values should be set before using this method.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `self.payload.is_some()`.
     #[must_use]
     pub fn add_detached_signature<F>(
         self,
@@ -269,6 +280,10 @@ impl CoseSignBuilder {
     /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes that will be
     /// used to complete `sig`.  Any protected header values should be set before using this
     /// method.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `self.payload.is_some()`.
     pub fn try_add_detached_signature<F, E>(
         self,
         mut sig: CoseSignature,
@@ -353,6 +368,10 @@ impl CoseSign1 {
 
     /// Verify the indicated signature value for a detached payload, using `verifier` on the signature value and serialized
     /// data (in that order).
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `self.payload.is_some()`.
     pub fn verify_detached_signature<F, E>(
         &self,
         payload: &[u8],
@@ -378,7 +397,12 @@ impl CoseSign1 {
     }
 
     /// Construct the to-be-signed data for this object, using a detached payload.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `self.payload.is_some()`.
     fn tbs_detached_data(&self, payload: &[u8], aad: &[u8]) -> Vec<u8> {
+        assert!(self.payload.is_none());
         sig_structure_data(
             SignatureContext::CoseSign1,
             self.protected.clone(),
@@ -413,6 +437,10 @@ impl CoseSign1Builder {
 
     /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes.  Any
     /// protected header values should be set before using this method.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `self.payload.is_some()`.
     #[must_use]
     pub fn create_detached_signature<F>(self, payload: &[u8], aad: &[u8], signer: F) -> Self
     where
@@ -434,6 +462,10 @@ impl CoseSign1Builder {
 
     /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes.  Any
     /// protected header values should be set before using this method.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `self.payload.is_some()`.
     pub fn try_create_detached_signature<F, E>(
         self,
         payload: &[u8],

@@ -1436,6 +1436,141 @@ fn test_sign_detached_sig_index_invalid() {
 }
 
 #[test]
+#[should_panic]
+fn test_sign1_create_detached_signature_embeddedpayload() {
+    let signer = FakeSigner {};
+
+    let payload = b"this is the content";
+    let aad = b"this is additional data";
+
+    // Attempt to create a detached signature for a message with an embedded payload
+    let _ = CoseSign1Builder::new()
+        .protected(
+            HeaderBuilder::new()
+                .algorithm(iana::Algorithm::ES256)
+                .build(),
+        )
+        .payload(payload.to_vec())
+        .create_detached_signature(payload, aad, |pt| signer.sign(pt))
+        .build();
+}
+
+#[test]
+#[should_panic]
+fn test_sign1_try_create_detached_signature_embeddedpayload() {
+    let signer = FakeSigner {};
+
+    let payload = b"this is the content";
+    let aad = b"this is additional data";
+
+    // Attempt to create a detached signature for a message with an embedded payload
+    let _ = CoseSign1Builder::new()
+        .protected(
+            HeaderBuilder::new()
+                .algorithm(iana::Algorithm::ES256)
+                .build(),
+        )
+        .payload(payload.to_vec())
+        .try_create_detached_signature(payload, aad, |pt| Ok::<Vec<u8>, String>(signer.sign(pt)))
+        .unwrap()
+        .build();
+}
+
+#[test]
+#[should_panic]
+fn test_sign1_verify_detached_signature_embeddedpayload() {
+    let signer = FakeSigner {};
+
+    let payload = b"this is the content";
+    let aad = b"this is additional data";
+
+    let mut sign1 = CoseSign1Builder::new()
+        .protected(
+            HeaderBuilder::new()
+                .algorithm(iana::Algorithm::ES256)
+                .build(),
+        )
+        .create_detached_signature(payload, aad, |pt| signer.sign(pt))
+        .build();
+
+    // Attempt to verify a detached signature for a message with an embedded payload
+    sign1.payload = Some(payload.to_vec());
+    sign1
+        .verify_detached_signature(payload, aad, |sig, data| signer.verify(sig, data))
+        .unwrap()
+}
+
+#[test]
+#[should_panic]
+fn test_sign_add_detached_signature_embeddedpayload() {
+    let signer = FakeSigner {};
+
+    let payload = b"this is the content";
+    let aad = b"this is additional data";
+
+    // Attempt to add a detached signature to a message with an embedded payload
+    let _ = CoseSignBuilder::new()
+        .protected(
+            HeaderBuilder::new()
+                .algorithm(iana::Algorithm::ES256)
+                .build(),
+        )
+        .payload(payload.to_vec())
+        .add_detached_signature(CoseSignatureBuilder::new().build(), payload, aad, |pt| {
+            signer.sign(pt)
+        })
+        .build();
+}
+
+#[test]
+#[should_panic]
+fn test_sign_try_add_detached_signature_embeddedpayload() {
+    let signer = FakeSigner {};
+
+    let payload = b"this is the content";
+    let aad = b"this is additional data";
+
+    // Attempt to create a detached signature for a message with an embedded payload
+    let _ = CoseSignBuilder::new()
+        .protected(
+            HeaderBuilder::new()
+                .algorithm(iana::Algorithm::ES256)
+                .build(),
+        )
+        .payload(payload.to_vec())
+        .try_add_detached_signature(CoseSignatureBuilder::new().build(), payload, aad, |pt| {
+            Ok::<Vec<u8>, String>(signer.sign(pt))
+        })
+        .unwrap()
+        .build();
+}
+
+#[test]
+#[should_panic]
+fn test_sign_verify_detached_signature_embeddedpayload() {
+    let signer = FakeSigner {};
+
+    let payload = b"this is the content";
+    let aad = b"this is additional data";
+
+    let mut sign = CoseSignBuilder::new()
+        .protected(
+            HeaderBuilder::new()
+                .algorithm(iana::Algorithm::ES256)
+                .build(),
+        )
+        .add_detached_signature(CoseSignatureBuilder::new().build(), payload, aad, |pt| {
+            signer.sign(pt)
+        })
+        .build();
+
+    // Attempt to verify a detached signature for a message with an embedded payload
+    sign.payload = Some(payload.to_vec());
+    sign.verify_detached_signature(0, payload, aad, |sig, data| signer.verify(sig, data))
+        .unwrap()
+}
+
+#[test]
 fn test_sign1_roundtrip() {
     let signer = FakeSigner {};
     let verifier = signer;
