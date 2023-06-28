@@ -157,8 +157,8 @@ impl CoseSign {
         verifier(&sig.signature, &tbs_data)
     }
 
-    /// Verify the indicated signature value for a detached payload, using `verifier` on the signature value and serialized
-    /// data (in that order).
+    /// Verify the indicated signature value for a detached payload, using `verifier` on the
+    /// signature value and serialized data (in that order).
     ///
     /// # Panics
     ///
@@ -238,8 +238,9 @@ impl CoseSignBuilder {
         self.add_signature(sig)
     }
 
-    /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes that will be
-    /// used to complete `sig`.  Any protected header values should be set before using this method.
+    /// Calculate the signature value for a detached payload, using `signer` to generate the
+    /// signature bytes that will be used to complete `sig`.  Any protected header values should
+    /// be set before using this method.
     ///
     /// # Panics
     ///
@@ -277,9 +278,9 @@ impl CoseSignBuilder {
         Ok(self.add_signature(sig))
     }
 
-    /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes that will be
-    /// used to complete `sig`.  Any protected header values should be set before using this
-    /// method.
+    /// Calculate the signature value for a detached payload, using `signer` to generate the
+    /// signature bytes that will be used to complete `sig`.  Any protected header values should
+    /// be set before using this method.
     ///
     /// # Panics
     ///
@@ -366,8 +367,8 @@ impl CoseSign1 {
         verifier(&self.signature, &tbs_data)
     }
 
-    /// Verify the indicated signature value for a detached payload, using `verifier` on the signature value and serialized
-    /// data (in that order).
+    /// Verify the indicated signature value for a detached payload, using `verifier` on the
+    /// signature value and serialized data (in that order).
     ///
     /// # Panics
     ///
@@ -435,8 +436,8 @@ impl CoseSign1Builder {
         self.signature(sig_data)
     }
 
-    /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes.  Any
-    /// protected header values should be set before using this method.
+    /// Calculate the signature value for a detached payload, using `signer` to generate the
+    /// signature bytes.  Any protected header values should be set before using this method.
     ///
     /// # Panics
     ///
@@ -460,8 +461,8 @@ impl CoseSign1Builder {
         Ok(self.signature(sig_data))
     }
 
-    /// Calculate the signature value for a detached payload, using `signer` to generate the signature bytes.  Any
-    /// protected header values should be set before using this method.
+    /// Calculate the signature value for a detached payload, using `signer` to generate the
+    /// signature bytes.  Any protected header values should be set before using this method.
     ///
     /// # Panics
     ///
