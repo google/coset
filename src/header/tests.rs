@@ -361,7 +361,7 @@ fn test_header_decode_fail() {
 
 #[test]
 fn test_header_decode_dup_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "a3", // 3-map

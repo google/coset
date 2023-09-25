@@ -569,7 +569,7 @@ fn test_cose_key_decode_fail() {
 
 #[test]
 fn test_cose_keyset_decode_fail() {
-    let tests = vec![(
+    let tests = [(
         concat!(
             "a1", // 1-map
             "a1", // 1-map
@@ -587,7 +587,7 @@ fn test_cose_keyset_decode_fail() {
 
 #[test]
 fn test_cose_key_decode_dup_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "a3", // 3-map

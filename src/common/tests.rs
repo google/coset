@@ -101,7 +101,7 @@ fn test_label_sort() {
 
 #[test]
 fn test_label_decode_fail() {
-    let tests = vec![
+    let tests = [
         ("43010203", "expected int/tstr"),
         ("", "decode CBOR failure: Io(EndOfFile"),
         ("1e", "decode CBOR failure: Syntax"),
@@ -182,7 +182,7 @@ fn test_registered_label_sort() {
 
 #[test]
 fn test_registered_label_decode_fail() {
-    let tests = vec![
+    let tests = [
         ("43010203", "expected int/tstr"),
         ("", "decode CBOR failure: Io(EndOfFile"),
         ("09", "expected recognized IANA value"),
@@ -292,7 +292,7 @@ fn test_registered_label_with_private_sort() {
 
 #[test]
 fn test_registered_label_with_private_decode_fail() {
-    let tests = vec![
+    let tests = [
         ("43010203", "expected int/tstr"),
         ("", "decode CBOR failure: Io(EndOfFile"),
         ("09", "expected value in IANA or private use range"),
@@ -325,7 +325,7 @@ const CBOR_INT_OUT_OF_RANGE_HEX: &str = "1b8000000000000000";
 
 #[test]
 fn test_large_label_decode() {
-    let tests = vec![(CBOR_NINT_MIN_HEX, i64::MIN), (CBOR_INT_MAX_HEX, i64::MAX)];
+    let tests = [(CBOR_NINT_MIN_HEX, i64::MIN), (CBOR_INT_MAX_HEX, i64::MAX)];
     for (label_data, want) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
         let got = Label::from_slice(&data).unwrap();
@@ -335,7 +335,7 @@ fn test_large_label_decode() {
 
 #[test]
 fn test_large_label_decode_fail() {
-    let tests = vec![
+    let tests = [
         (CBOR_NINT_OUT_OF_RANGE_HEX, "out of range integer value"),
         (CBOR_INT_OUT_OF_RANGE_HEX, "out of range integer value"),
     ];
@@ -348,7 +348,7 @@ fn test_large_label_decode_fail() {
 
 #[test]
 fn test_large_registered_label_decode_fail() {
-    let tests = vec![
+    let tests = [
         (CBOR_NINT_OUT_OF_RANGE_HEX, "out of range integer value"),
         (CBOR_INT_OUT_OF_RANGE_HEX, "out of range integer value"),
     ];
@@ -361,7 +361,7 @@ fn test_large_registered_label_decode_fail() {
 
 #[test]
 fn test_large_registered_label_with_private_decode_fail() {
-    let tests = vec![
+    let tests = [
         (CBOR_NINT_OUT_OF_RANGE_HEX, "out of range integer value"),
         (CBOR_INT_OUT_OF_RANGE_HEX, "out of range integer value"),
     ];
