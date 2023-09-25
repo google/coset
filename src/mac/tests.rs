@@ -351,10 +351,10 @@ fn test_rfc8152_cose_mac_decode() {
 
         let mut got = CoseMac::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;
-        for mut recip in &mut got.recipients {
+        for recip in &mut got.recipients {
             recip.protected.original_data = None;
         }
-        for mut sig in &mut got.unprotected.counter_signatures {
+        for sig in &mut got.unprotected.counter_signatures {
             sig.protected.original_data = None;
         }
         assert_eq!(*mac, got);

@@ -153,7 +153,7 @@ fn test_header_encode() {
         assert_eq!(*header_data, hex::encode(&got), "case {}", i);
 
         let mut got = Header::from_slice(&got).unwrap();
-        for mut sig in &mut got.counter_signatures {
+        for sig in &mut got.counter_signatures {
             sig.protected.original_data = None;
         }
         assert_eq!(*header, got);
@@ -168,7 +168,7 @@ fn test_header_encode() {
         assert_eq!(*header_data, hex::encode(&protected_data), "case {}", i);
 
         let mut got = ProtectedHeader::from_slice(&protected_data).unwrap();
-        for mut sig in &mut got.header.counter_signatures {
+        for sig in &mut got.header.counter_signatures {
             sig.protected.original_data = None;
         }
         assert!(!got.is_empty());
@@ -177,7 +177,7 @@ fn test_header_encode() {
         // Also try parsing as a protected header inside a `bstr`
         let prot_bstr_val = protected.cbor_bstr().unwrap();
         let mut got = ProtectedHeader::from_cbor_bstr(prot_bstr_val).unwrap();
-        for mut sig in &mut got.header.counter_signatures {
+        for sig in &mut got.header.counter_signatures {
             sig.protected.original_data = None;
         }
         assert!(!got.is_empty());

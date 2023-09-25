@@ -381,7 +381,7 @@ fn test_cose_sign_encode() {
 
         let mut got = CoseSign::from_slice(&got).unwrap();
         got.protected.original_data = None;
-        for mut sig in &mut got.signatures {
+        for sig in &mut got.signatures {
             sig.protected.original_data = None;
         }
         assert_eq!(*sign, got);
@@ -393,7 +393,7 @@ fn test_cose_sign_encode() {
 
         let mut got = CoseSign::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;
-        for mut sig in &mut got.signatures {
+        for sig in &mut got.signatures {
             sig.protected.original_data = None;
         }
         assert_eq!(*sign, got);
@@ -751,10 +751,10 @@ fn test_rfc8152_cose_sign_decode() {
 
         let mut got = CoseSign::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;
-        for mut sig in &mut got.signatures {
+        for sig in &mut got.signatures {
             sig.protected.original_data = None;
         }
-        for mut sig in &mut got.unprotected.counter_signatures {
+        for sig in &mut got.unprotected.counter_signatures {
             sig.protected.original_data = None;
         }
         assert_eq!(*sign, got);
