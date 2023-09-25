@@ -136,7 +136,8 @@ pub trait AsCborValue: Sized {
 
 /// Extension trait that adds serialization/deserialization methods.
 pub trait CborSerializable: AsCborValue {
-    /// Create an object instance from serialized CBOR data in a slice.
+    /// Create an object instance from serialized CBOR data in a slice.  This method will fail (with
+    /// `CoseError::ExtraneousData`) if there is additional CBOR data after the object.
     fn from_slice(slice: &[u8]) -> Result<Self> {
         Self::from_cbor_value(read_to_value(slice)?)
     }
@@ -175,6 +176,18 @@ pub trait TaggedCborSerializable: AsCborValue {
         Ok(data)
     }
 }
+
+/// Trivial implementation of [`AsCborValue`] for [`Value`].
+impl AsCborValue for Value {
+    fn from_cbor_value(value: Value) -> Result<Self> {
+        Ok(value)
+    }
+    fn to_cbor_value(self) -> Result<Value> {
+        Ok(self)
+    }
+}
+
+impl CborSerializable for Value {}
 
 /// Algorithm identifier.
 pub type Algorithm = crate::RegisteredLabelWithPrivate<iana::Algorithm>;
