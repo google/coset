@@ -80,7 +80,7 @@ fn test_cose_recipient_decode() {
 
 #[test]
 fn test_cose_recipient_decode_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "a2",   // 2-map (should be tuple)
@@ -184,7 +184,7 @@ fn test_cose_encrypt_decode() {
 
 #[test]
 fn test_cose_encrypt_decode_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "a2",   // 2-map (should be tuple)
@@ -518,7 +518,7 @@ fn test_cose_encrypt0_decode() {
 
 #[test]
 fn test_cose_encrypt0_decode_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "a2",   // 2-map (should be tuple)
