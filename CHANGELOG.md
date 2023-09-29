@@ -1,12 +1,14 @@
 # Change Log
 
-## 0.3.5 - TBD
+## 0.3.5 - 2023-09-29
 
 - Add helper methods to create and verify detached signatures:
     - Add `CoseSignBuilder` methods `add_detached_signature` and `try_add_detached_signature`.
     - Add `CoseSign` method `verify_detached_signature`.
     - Add `CoseSign1Builder` methods `create_detached_signature` and `try_create_detached_signature`.
     - Add `CoseSign1` method `verify_detached_signature`.
+- Implement CBOR conversion traits for `ciborium::value::Value`.
+- Update `ciborium` dependency.
 
 ## 0.3.4 - 2023-01-25
 
