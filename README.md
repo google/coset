@@ -1,6 +1,6 @@
 # COSET
 
-[![Docs](https://img.shields.io/badge/docs-rust-brightgreen?style=for-the-badge)](https://google.github.io/coset)
+[![Docs](https://img.shields.io/badge/docs-rust-brightgreen?style=for-the-badge)](https://docs.rs/coset)
 [![CI Status](https://img.shields.io/github/actions/workflow/status/google/coset/ci.yml?branch=main&color=blue&style=for-the-badge)](https://github.com/google/coset/actions?query=workflow%3ACI)
 [![codecov](https://img.shields.io/codecov/c/github/google/coset?style=for-the-badge)](https://codecov.io/gh/google/coset)
 
@@ -8,7 +8,7 @@ This crate holds a set of Rust types for working with CBOR Object Signing and En
 [RFC 8152](https://tools.ietf.org/html/rfc8152).  It builds on the core [CBOR](https://tools.ietf.org/html/rfc7049)
 parsing functionality from the [`ciborium` crate](https://docs.rs/ciborium).
 
-See [crate docs](https://google.github.io/coset/rust/coset/index.html), or the [signature
+See [crate docs](https://docs.rs/coset), or the [signature
 example](examples/signature.rs) for documentation on how to use the code.
 
 **This repo is under construction** and so details of the API and the code may change without warning.
