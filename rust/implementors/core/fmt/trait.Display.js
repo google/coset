@@ -1,3 +1,3 @@
-(function() {var implementors = {};
-implementors["coset"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.58.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"coset/enum.CoseError.html\" title=\"enum coset::CoseError\">CoseError</a>","synthetic":false,"types":["coset::common::CoseError"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"coset":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.72.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"coset/enum.CoseError.html\" title=\"enum coset::CoseError\">CoseError</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
