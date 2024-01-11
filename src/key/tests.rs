@@ -15,7 +15,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use super::*;
-use crate::{cbor::value::Value, iana, util::expect_err, CborSerializable};
+use crate::{cbor::value::Value, iana, util::expect_err, CborOrdering, CborSerializable};
 use alloc::{borrow::ToOwned, string::ToString, vec};
 
 #[test]
@@ -741,4 +741,134 @@ fn test_key_builder_core_param_panic() {
         CoseKeyBuilder::new_ec2_pub_key(iana::EllipticCurve::P_256, vec![1, 2, 3], vec![2, 3, 4])
             .param(1, Value::Null)
             .build();
+}
+
+#[test]
+fn test_key_canonicalize() {
+    struct TestCase {
+        key_data: &'static str, // hex
+        canonical_key: CoseKey,
+        deterministic_key: CoseKey,
+        canonical_data: Option<&'static str>, // hex, `None` indicates same as `key_data`
+        deterministic_data: Option<&'static str>, // hex, `None` indicates same as `key_data`
+    }
+    let tests = [
+        TestCase {
+            key_data: concat!(
+                "a2", // 2-map
+                "01", "01", // 1 (kty) => OKP
+                "03", "26", // 3 (alg) => -7
+            ),
+            canonical_key: CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
+                ..Default::default()
+            },
+            deterministic_key: CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
+                ..Default::default()
+            },
+            canonical_data: None,
+            deterministic_data: None,
+        },
+        TestCase {
+            key_data: concat!(
+                "a2", // 2-map
+                "03", "26", // 3 (alg) => -7
+                "01", "01", // 1 (kty) => OKP
+            ),
+            canonical_key: CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
+                ..Default::default()
+            },
+            deterministic_key: CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
+                ..Default::default()
+            },
+            canonical_data: Some(concat!(
+                "a2", // 2-map
+                "01", "01", // 1 (kty) => OKP
+                "03", "26", // 3 (alg) => -7
+            )),
+            deterministic_data: Some(concat!(
+                "a2", // 2-map
+                "01", "01", // 1 (kty) => OKP
+                "03", "26", // 3 (alg) => -7
+            )),
+        },
+        TestCase {
+            key_data: concat!(
+                "a4", // 4-map
+                "03", "26", // 3 (alg) => -7
+                "1904d2", "01", // 1234 => 1
+                "01", "01", // 1 (kty) => OKP
+                "6161", "01", // "a" => 1
+            ),
+            // "a" encodes shorter than 1234, so appears first
+            canonical_key: CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
+                params: vec![
+                    (Label::Text("a".to_string()), Value::Integer(1.into())),
+                    (Label::Int(1234), Value::Integer(1.into())),
+                ],
+                ..Default::default()
+            },
+            // 1234 encodes with leading byte 0x19, so appears before a tstr
+            deterministic_key: CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
+                params: vec![
+                    (Label::Int(1234), Value::Integer(1.into())),
+                    (Label::Text("a".to_string()), Value::Integer(1.into())),
+                ],
+                ..Default::default()
+            },
+            canonical_data: Some(concat!(
+                "a4", // 4-map
+                "01", "01", // 1 (kty) => OKP
+                "03", "26", // 3 (alg) => -7
+                "6161", "01", // "a" => 1
+                "1904d2", "01", // 1234 => 1
+            )),
+            deterministic_data: Some(concat!(
+                "a4", // 4-map
+                "01", "01", // 1 (kty) => OKP
+                "03", "26", // 3 (alg) => -7
+                "1904d2", "01", // 1234 => 1
+                "6161", "01", // "a" => 1
+            )),
+        },
+    ];
+    for testcase in tests {
+        let key_data = hex::decode(testcase.key_data).unwrap();
+        let mut key = CoseKey::from_slice(&key_data)
+            .unwrap_or_else(|e| panic!("Failed to deserialize {}: {e:?}", testcase.key_data));
+
+        // Canonicalize according to RFC 7049.
+        key.canonicalize(CborOrdering::LengthLexicographic);
+        assert_eq!(
+            key, testcase.canonical_key,
+            "Mismatch for {}",
+            testcase.key_data
+        );
+        let got = testcase.canonical_key.to_vec().unwrap();
+        let want = testcase.canonical_data.unwrap_or(testcase.key_data);
+        assert_eq!(hex::encode(got), want, "Mismatch for {}", testcase.key_data);
+
+        // Canonicalize according to RFC 8949.
+        key.canonicalize(CborOrdering::Lexicographic);
+        assert_eq!(
+            key, testcase.deterministic_key,
+            "Mismatch for {}",
+            testcase.key_data
+        );
+
+        let got = testcase.deterministic_key.to_vec().unwrap();
+        let want = testcase.deterministic_data.unwrap_or(testcase.key_data);
+        assert_eq!(hex::encode(got), want, "Mismatch for {}", testcase.key_data);
+    }
 }

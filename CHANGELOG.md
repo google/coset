@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.3.6 - TBD
+
+- Helpers for ordering of fields in a `COSE_Key`:
+    - Add `Label::cmp_canonical()` for RFC 7049 canonical ordering.
+    - Add `CborOrdering` enum to specify ordering.
+    - Add `CoseKey::canonicalize()` method to order fields.
+
 ## 0.3.5 - 2023-09-29
 
 - Add helper methods to create and verify detached signatures:
