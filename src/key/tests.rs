@@ -849,7 +849,7 @@ fn test_key_canonicalize() {
             .unwrap_or_else(|e| panic!("Failed to deserialize {}: {e:?}", testcase.key_data));
 
         // Canonicalize according to RFC 7049.
-        key.canonicalize(CborOrdering::LengthLexicographic);
+        key.canonicalize(CborOrdering::LengthFirstLexicographic);
         assert_eq!(
             key, testcase.canonical_key,
             "Mismatch for {}",

@@ -264,11 +264,11 @@ impl Label {
 /// Indicate which ordering should be applied to CBOR values.
 pub enum CborOrdering {
     /// Order values lexicographically, as per RFC 8949 section 4.2.1 (Core Deterministic Encoding
-    /// Requirements).
+    /// Requirements)
     Lexicographic,
     /// Order values by encoded length, then by lexicographic ordering of encoded form, as per RFC
-    /// 7049 section 3.9 (Canonical CBOR).
-    LengthLexicographic,
+    /// 7049 section 3.9 (Canonical CBOR) / RFC 8949 section 4.2.3 (Length-First Map Key Ordering).
+    LengthFirstLexicographic,
 }
 
 impl AsCborValue for Label {

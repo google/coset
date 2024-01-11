@@ -101,7 +101,7 @@ impl CoseKey {
         // So we only need to sort the `params`.
         match ordering {
             CborOrdering::Lexicographic => self.params.sort_by(|l, r| l.0.cmp(&r.0)),
-            CborOrdering::LengthLexicographic => {
+            CborOrdering::LengthFirstLexicographic => {
                 self.params.sort_by(|l, r| l.0.cmp_canonical(&r.0))
             }
         }
