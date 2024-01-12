@@ -56,6 +56,7 @@ fn test_label_sort() {
     let pairs = vec![
         (Label::Int(0x1234), Label::Text("a".to_owned())),
         (Label::Int(0x1234), Label::Text("ab".to_owned())),
+        (Label::Int(0x12345678), Label::Text("ab".to_owned())),
         (Label::Int(0), Label::Text("ab".to_owned())),
         (Label::Int(-1), Label::Text("ab".to_owned())),
         (Label::Int(0), Label::Int(10)),
@@ -94,6 +95,71 @@ fn test_label_sort() {
             right,
             hex::encode(&right_data)
         );
+        assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
+        assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
+    }
+}
+
+#[test]
+fn test_label_canonical_sort() {
+    // Pairs of `Label`s with the "smaller" first, as per RFC7049 "canonical" ordering.
+    let pairs = vec![
+        (Label::Text("a".to_owned()), Label::Int(0x1234)), // different than above
+        (Label::Int(0x1234), Label::Text("ab".to_owned())),
+        (Label::Text("ab".to_owned()), Label::Int(0x12345678)), // different than above
+        (Label::Int(0), Label::Text("ab".to_owned())),
+        (Label::Int(-1), Label::Text("ab".to_owned())),
+        (Label::Int(0), Label::Int(10)),
+        (Label::Int(0), Label::Int(-10)),
+        (Label::Int(10), Label::Int(-1)),
+        (Label::Int(-1), Label::Int(-2)),
+        (Label::Int(0x12), Label::Int(0x1234)),
+        (Label::Int(0x99), Label::Int(0x1234)),
+        (Label::Int(0x1234), Label::Int(0x1235)),
+        (Label::Text("a".to_owned()), Label::Text("ab".to_owned())),
+        (Label::Text("aa".to_owned()), Label::Text("ab".to_owned())),
+    ];
+    for (left, right) in pairs.into_iter() {
+        let value_cmp = left.cmp_canonical(&right);
+
+        let left_data = left.clone().to_vec().unwrap();
+        let right_data = right.clone().to_vec().unwrap();
+
+        let len_cmp = left_data.len().cmp(&right_data.len());
+        let data_cmp = left_data.cmp(&right_data);
+        let reverse_cmp = right.cmp_canonical(&left);
+        let equal_cmp = left.cmp_canonical(&left);
+
+        assert_eq!(
+            value_cmp,
+            Ordering::Less,
+            "{:?} (encoded: {}) < {:?} (encoded: {})",
+            left,
+            hex::encode(&left_data),
+            right,
+            hex::encode(&right_data)
+        );
+        if len_cmp != Ordering::Equal {
+            assert_eq!(
+                len_cmp,
+                Ordering::Less,
+                "{:?}={} < {:?}={} by len",
+                left,
+                hex::encode(&left_data),
+                right,
+                hex::encode(&right_data)
+            );
+        } else {
+            assert_eq!(
+                data_cmp,
+                Ordering::Less,
+                "{:?}={} < {:?}={} by data",
+                left,
+                hex::encode(&left_data),
+                right,
+                hex::encode(&right_data)
+            );
+        }
         assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
         assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
     }

@@ -18,7 +18,7 @@
 
 use crate::{
     cbor::value::Value,
-    common::AsCborValue,
+    common::{AsCborValue, CborOrdering},
     iana,
     iana::EnumI64,
     util::{to_cbor_array, ValueTryAs},
@@ -86,6 +86,26 @@ pub struct CoseKey {
     /// Any additional parameter (label,value) pairs.  If duplicate labels are present,
     /// CBOR-encoding will fail.
     pub params: Vec<(Label, Value)>,
+}
+
+impl CoseKey {
+    /// Re-order the contents of the key so that the contents will be emitted in one of the standard
+    /// CBOR sorted orders.
+    pub fn canonicalize(&mut self, ordering: CborOrdering) {
+        // The keys that are represented as named fields CBOR-encode as single bytes 0x01 - 0x05,
+        // which sort before any other CBOR values (other than 0x00) in either sorting scheme:
+        // - In length-first sorting, a single byte sorts before anything multi-byte and 1-5 sorts
+        //   before any other value.
+        // - In encoded-lexicographic sorting, there are no valid CBOR-encoded single values that
+        //   start with a byte in the range 0x01 - 0x05 other than the values 1-5.
+        // So we only need to sort the `params`.
+        match ordering {
+            CborOrdering::Lexicographic => self.params.sort_by(|l, r| l.0.cmp(&r.0)),
+            CborOrdering::LengthFirstLexicographic => {
+                self.params.sort_by(|l, r| l.0.cmp_canonical(&r.0))
+            }
+        }
+    }
 }
 
 impl crate::CborSerializable for CoseKey {}

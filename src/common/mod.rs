@@ -240,6 +240,37 @@ impl PartialOrd for Label {
     }
 }
 
+impl Label {
+    /// Alternative ordering for `Label`, using the canonical ordering criteria from RFC 7049
+    /// section 3.9 (where the primary sorting criterion is the length of the encoded form), rather
+    /// than the ordering given by RFC 8949 section 4.2.1 (lexicographic ordering of encoded form).
+    ///
+    /// # Panics
+    ///
+    /// Panics if either `Label` fails to serialize.
+    pub fn cmp_canonical(&self, other: &Self) -> Ordering {
+        let encoded_self = self.clone().to_vec().unwrap(); /* safe: documented */
+        let encoded_other = other.clone().to_vec().unwrap(); /* safe: documented */
+        if encoded_self.len() != encoded_other.len() {
+            // Shorter encoding sorts first.
+            encoded_self.len().cmp(&encoded_other.len())
+        } else {
+            // Both encode to the same length, sort lexicographically on encoded form.
+            encoded_self.cmp(&encoded_other)
+        }
+    }
+}
+
+/// Indicate which ordering should be applied to CBOR values.
+pub enum CborOrdering {
+    /// Order values lexicographically, as per RFC 8949 section 4.2.1 (Core Deterministic Encoding
+    /// Requirements)
+    Lexicographic,
+    /// Order values by encoded length, then by lexicographic ordering of encoded form, as per RFC
+    /// 7049 section 3.9 (Canonical CBOR) / RFC 8949 section 4.2.3 (Length-First Map Key Ordering).
+    LengthFirstLexicographic,
+}
+
 impl AsCborValue for Label {
     fn from_cbor_value(value: Value) -> Result<Self> {
         match value {
