@@ -747,10 +747,10 @@ fn test_key_builder_core_param_panic() {
 fn test_key_canonicalize() {
     struct TestCase {
         key_data: &'static str, // hex
-        canonical_key: CoseKey,
-        deterministic_key: CoseKey,
-        canonical_data: Option<&'static str>, // hex, `None` indicates same as `key_data`
-        deterministic_data: Option<&'static str>, // hex, `None` indicates same as `key_data`
+        rfc7049_key: CoseKey,
+        rfc8949_key: CoseKey,
+        rfc7049_data: Option<&'static str>, // hex, `None` indicates same as `key_data`
+        rfc8949_data: Option<&'static str>, // hex, `None` indicates same as `key_data`
     }
     let tests = [
         TestCase {
@@ -759,18 +759,18 @@ fn test_key_canonicalize() {
                 "01", "01", // 1 (kty) => OKP
                 "03", "26", // 3 (alg) => -7
             ),
-            canonical_key: CoseKey {
+            rfc7049_key: CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
                 ..Default::default()
             },
-            deterministic_key: CoseKey {
+            rfc8949_key: CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
                 ..Default::default()
             },
-            canonical_data: None,
-            deterministic_data: None,
+            rfc7049_data: None,
+            rfc8949_data: None,
         },
         TestCase {
             key_data: concat!(
@@ -778,22 +778,22 @@ fn test_key_canonicalize() {
                 "03", "26", // 3 (alg) => -7
                 "01", "01", // 1 (kty) => OKP
             ),
-            canonical_key: CoseKey {
+            rfc7049_key: CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
                 ..Default::default()
             },
-            deterministic_key: CoseKey {
+            rfc8949_key: CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
                 ..Default::default()
             },
-            canonical_data: Some(concat!(
+            rfc7049_data: Some(concat!(
                 "a2", // 2-map
                 "01", "01", // 1 (kty) => OKP
                 "03", "26", // 3 (alg) => -7
             )),
-            deterministic_data: Some(concat!(
+            rfc8949_data: Some(concat!(
                 "a2", // 2-map
                 "01", "01", // 1 (kty) => OKP
                 "03", "26", // 3 (alg) => -7
@@ -808,7 +808,7 @@ fn test_key_canonicalize() {
                 "6161", "01", // "a" => 1
             ),
             // "a" encodes shorter than 1234, so appears first
-            canonical_key: CoseKey {
+            rfc7049_key: CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
                 params: vec![
@@ -818,7 +818,7 @@ fn test_key_canonicalize() {
                 ..Default::default()
             },
             // 1234 encodes with leading byte 0x19, so appears before a tstr
-            deterministic_key: CoseKey {
+            rfc8949_key: CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),
                 alg: Some(Algorithm::Assigned(iana::Algorithm::ES256)),
                 params: vec![
@@ -827,14 +827,14 @@ fn test_key_canonicalize() {
                 ],
                 ..Default::default()
             },
-            canonical_data: Some(concat!(
+            rfc7049_data: Some(concat!(
                 "a4", // 4-map
                 "01", "01", // 1 (kty) => OKP
                 "03", "26", // 3 (alg) => -7
                 "6161", "01", // "a" => 1
                 "1904d2", "01", // 1234 => 1
             )),
-            deterministic_data: Some(concat!(
+            rfc8949_data: Some(concat!(
                 "a4", // 4-map
                 "01", "01", // 1 (kty) => OKP
                 "03", "26", // 3 (alg) => -7
@@ -851,24 +851,24 @@ fn test_key_canonicalize() {
         // Canonicalize according to RFC 7049.
         key.canonicalize(CborOrdering::LengthFirstLexicographic);
         assert_eq!(
-            key, testcase.canonical_key,
+            key, testcase.rfc7049_key,
             "Mismatch for {}",
             testcase.key_data
         );
-        let got = testcase.canonical_key.to_vec().unwrap();
-        let want = testcase.canonical_data.unwrap_or(testcase.key_data);
+        let got = testcase.rfc7049_key.to_vec().unwrap();
+        let want = testcase.rfc7049_data.unwrap_or(testcase.key_data);
         assert_eq!(hex::encode(got), want, "Mismatch for {}", testcase.key_data);
 
         // Canonicalize according to RFC 8949.
         key.canonicalize(CborOrdering::Lexicographic);
         assert_eq!(
-            key, testcase.deterministic_key,
+            key, testcase.rfc8949_key,
             "Mismatch for {}",
             testcase.key_data
         );
 
-        let got = testcase.deterministic_key.to_vec().unwrap();
-        let want = testcase.deterministic_data.unwrap_or(testcase.key_data);
+        let got = testcase.rfc8949_key.to_vec().unwrap();
+        let want = testcase.rfc8949_data.unwrap_or(testcase.key_data);
         assert_eq!(hex::encode(got), want, "Mismatch for {}", testcase.key_data);
     }
 }
