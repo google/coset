@@ -128,7 +128,7 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - run: cargo +stable clippy --all-features --all-targets
+      - run: cargo +stable clippy --all-features --all-targets -- -Dwarnings
       - run: git diff --exit-code
 
   doc:
