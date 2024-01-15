@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.3.6 - TBD
+## 0.3.6 - 2024-01-15
 
 - Helpers for ordering of fields in a `COSE_Key`:
     - Add `Label::cmp_canonical()` for RFC 7049 canonical ordering.
