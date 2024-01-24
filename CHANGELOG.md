@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.3.7 - TBD
+
+- Bump MSRV to 1.58.
+- Update dependencies.
+
 ## 0.3.6 - 2024-01-15
 
 - Helpers for ordering of fields in a `COSE_Key`:

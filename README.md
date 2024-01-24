@@ -23,7 +23,7 @@ This crate supports `no_std` (when the `std` feature is not set, which is the de
 
 ## Minimum Supported Rust Version
 
-MSRV is 1.56 (the main `ciborium` dependency is `edition="2021"`)
+MSRV is 1.58.
 
 ## Integer Ranges
 
