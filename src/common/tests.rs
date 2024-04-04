@@ -35,7 +35,7 @@ fn test_error_convert() {
 
 #[test]
 fn test_label_encode() {
-    let tests = vec![
+    let tests = [
         (Label::Int(2), "02"),
         (Label::Int(-1), "20"),
         (Label::Text("abc".to_owned()), "63616263"),
@@ -182,7 +182,7 @@ fn test_label_decode_fail() {
 
 #[test]
 fn test_registered_label_encode() {
-    let tests = vec![
+    let tests = [
         (RegisteredLabel::Assigned(iana::Algorithm::A192GCM), "02"),
         (RegisteredLabel::Assigned(iana::Algorithm::EdDSA), "27"),
         (RegisteredLabel::Text("abc".to_owned()), "63616263"),
@@ -276,7 +276,7 @@ impl WithPrivateRange for TestPrivateLabel {
 
 #[test]
 fn test_registered_label_with_private_encode() {
-    let tests = vec![
+    let tests = [
         (
             RegisteredLabelWithPrivate::Assigned(TestPrivateLabel::Something),
             "01",
