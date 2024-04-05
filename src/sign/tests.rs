@@ -601,6 +601,7 @@ fn test_rfc8152_cose_sign_decode() {
     // COSE_Sign structures from RFC 8152 section C.1.
     let tests = vec![
         (
+            // C.1.1: Single Signature
             CoseSignBuilder::new()
                 .payload(b"This is the content.".to_vec())
                 .add_signature(
@@ -626,6 +627,7 @@ fn test_rfc8152_cose_sign_decode() {
             ),
         ),
         (
+            // C.1.2: Multiple Signers
             CoseSignBuilder::new()
                 .payload(b"This is the content.".to_vec())
                 .add_signature(
@@ -664,6 +666,7 @@ fn test_rfc8152_cose_sign_decode() {
             )
         ),
         (
+            // C.1.3: Counter Signature
             CoseSignBuilder::new()
                 .unprotected(HeaderBuilder::new()
                              .add_counter_signature(
@@ -705,6 +708,7 @@ fn test_rfc8152_cose_sign_decode() {
             ),
         ),
         (
+            // C.1.4: Signature with Criticality
             CoseSignBuilder::new()
                 .protected(HeaderBuilder::new()
                            .text_value("reserved".to_owned(), Value::Bool(false))
@@ -1750,4 +1754,39 @@ fn test_sign1_noncanonical() {
     assert!(recreated_sign1
         .verify_signature(aad, |sig, data| verifier.verify(sig, data))
         .is_err());
+}
+
+#[test]
+fn test_sig_structure_data() {
+    let protected = ProtectedHeader {
+        original_data: None,
+        header: Header {
+            alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
+            key_id: vec![1, 2, 3],
+            partial_iv: vec![4, 5, 6],
+            ..Default::default()
+        },
+    };
+    let got = hex::encode(sig_structure_data(
+        SignatureContext::CounterSignature,
+        protected,
+        None,
+        &[0x01, 0x02],
+        &[0x11, 0x12],
+    ));
+    assert_eq!(
+        got,
+        concat!(
+            "84",                               // 4-arr
+            "70",                               // 16-tstr
+            "436f756e7465725369676e6174757265", // "CounterSignature"
+            "4d",                               // 13-bstr for protected
+            "a3",                               // 3-map
+            "0101",                             // 1 (alg) => A128GCM
+            "0443010203",                       // 4 (kid) => 3-bstr
+            "0643040506",                       // 6 (partial-iv) => 3-bstr
+            "420102",                           // bstr for aad
+            "421112",                           // bstr for payload
+        )
+    );
 }
