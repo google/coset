@@ -38,3 +38,35 @@ fn test_cbor_type_error() {
         expect_err(e, want);
     }
 }
+
+#[test]
+#[should_panic]
+fn test_expect_err_but_ok() {
+    let result: Result<i32, crate::CoseError> = Ok(42);
+    expect_err(result, "absent text");
+}
+
+#[test]
+#[should_panic]
+fn test_expect_err_wrong_msg() {
+    let err = cbor_type_error::<()>(&Value::Bool(true), "a");
+    expect_err(err, "incorrect text");
+}
+
+#[test]
+#[should_panic]
+fn test_expect_err_wrong_display_msg() {
+    // Error type where `Debug` shows the message but `Display` doesn't
+    #[allow(dead_code)]
+    #[derive(Debug)]
+    struct Error(&'static str);
+    impl core::fmt::Display for Error {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            write!(f, "other")
+        }
+    }
+
+    let err: Result<i32, Error> = Err(Error("text"));
+    // The expected text appears in the `Debug` output but not the `Display` output.
+    expect_err(err, "text");
+}
