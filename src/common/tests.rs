@@ -441,3 +441,24 @@ fn test_large_registered_label_with_private_decode_fail() {
         expect_err(result, err_msg);
     }
 }
+
+#[test]
+fn test_as_cbor_value() {
+    let cases = [
+        Value::Null,
+        Value::Bool(true),
+        Value::Bool(false),
+        Value::from(128),
+        Value::from(-1),
+        Value::Bytes(vec![1, 2]),
+        Value::Text("string".to_owned()),
+        Value::Array(vec![Value::from(0)]),
+        Value::Map(vec![]),
+        Value::Tag(1, Box::new(Value::from(0))),
+        Value::Float(1.054571817),
+    ];
+    for val in cases {
+        assert_eq!(val, Value::from_cbor_value(val.clone()).unwrap());
+        assert_eq!(val, val.clone().to_cbor_value().unwrap());
+    }
+}
