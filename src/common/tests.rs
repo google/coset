@@ -68,6 +68,10 @@ fn test_label_sort() {
         (Label::Int(0x1234), Label::Int(0x1235)),
         (Label::Text("a".to_owned()), Label::Text("ab".to_owned())),
         (Label::Text("aa".to_owned()), Label::Text("ab".to_owned())),
+        (Label::Int(i64::MAX - 2), Label::Int(i64::MAX - 1)),
+        (Label::Int(i64::MAX - 1), Label::Int(i64::MAX)),
+        (Label::Int(i64::MIN + 2), Label::Int(i64::MIN + 1)),
+        (Label::Int(i64::MIN + 1), Label::Int(i64::MIN)),
     ];
     for (left, right) in pairs.into_iter() {
         let value_cmp = left.cmp(&right);

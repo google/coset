@@ -216,7 +216,7 @@ impl Ord for Label {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
             (Label::Int(i1), Label::Int(i2)) => match (i1.signum(), i2.signum()) {
-                (-1, -1) => (-i1).cmp(&(-i2)),
+                (-1, -1) => i2.cmp(i1),
                 (-1, 0) => Ordering::Greater,
                 (-1, 1) => Ordering::Greater,
                 (0, -1) => Ordering::Less,
