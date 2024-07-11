@@ -171,14 +171,14 @@ jobs:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
-          toolchain: nightly-2024-04-01
+          toolchain: stable
           components: rustfmt
       - uses: actions-rs/install@69ec87709ffb5b19a7b5ddbf610cb221498bb1eb # v0.1.2
         with:
           crate: cargo-tarpaulin
-          version: 0.25.2
+          version: 0.30.0
           use-tool-cache: true
-      - run: cargo +nightly-2024-04-01 tarpaulin --verbose --ignore-tests --all-features --timeout=600 --out Xml
+      - run: cargo tarpaulin --verbose --ignore-tests --all-features --timeout=600 --out Xml
       - name: Upload to codecov.io
         run: |
           bash <(curl -s https://codecov.io/bash)
