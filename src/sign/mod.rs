@@ -181,7 +181,7 @@ impl CoseSign {
     }
 
     /// Construct the to-be-signed data for this object.
-    fn tbs_data(&self, aad: &[u8], sig: &CoseSignature) -> Vec<u8> {
+    pub fn tbs_data(&self, aad: &[u8], sig: &CoseSignature) -> Vec<u8> {
         sig_structure_data(
             SignatureContext::CoseSignature,
             self.protected.clone(),
@@ -196,7 +196,7 @@ impl CoseSign {
     /// # Panics
     ///
     /// This method will panic if `self.payload.is_some()`.
-    fn tbs_detached_data(&self, payload: &[u8], aad: &[u8], sig: &CoseSignature) -> Vec<u8> {
+    pub fn tbs_detached_data(&self, payload: &[u8], aad: &[u8], sig: &CoseSignature) -> Vec<u8> {
         assert!(self.payload.is_none());
         sig_structure_data(
             SignatureContext::CoseSignature,
@@ -387,7 +387,7 @@ impl CoseSign1 {
     }
 
     /// Construct the to-be-signed data for this object.
-    fn tbs_data(&self, aad: &[u8]) -> Vec<u8> {
+    pub fn tbs_data(&self, aad: &[u8]) -> Vec<u8> {
         sig_structure_data(
             SignatureContext::CoseSign1,
             self.protected.clone(),
@@ -402,7 +402,7 @@ impl CoseSign1 {
     /// # Panics
     ///
     /// This method will panic if `self.payload.is_some()`.
-    fn tbs_detached_data(&self, payload: &[u8], aad: &[u8]) -> Vec<u8> {
+    pub fn tbs_detached_data(&self, payload: &[u8], aad: &[u8]) -> Vec<u8> {
         assert!(self.payload.is_none());
         sig_structure_data(
             SignatureContext::CoseSign1,
