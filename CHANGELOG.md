@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.3.8 - 2024-07-24
+
+- Make `CoseSign[1]::tbs_[detached_]data` methods `pub`.
+
 ## 0.3.7 - 2024-04-05
 
 - Bump MSRV to 1.58.
