@@ -518,13 +518,16 @@ pub fn sig_structure_data(
     aad: &[u8],
     payload: &[u8],
 ) -> Vec<u8> {
+
     let mut arr = vec![
         Value::Text(context.text().to_owned()),
-        body.cbor_bstr().expect("failed to serialize header"), // safe: always serializable
+        body.to_be_authenticated().expect("failed to serialize header"), // safe: always serializable
     ];
     if let Some(sign) = sign {
-        arr.push(sign.cbor_bstr().expect("failed to serialize header")); // safe: always
-                                                                         // serializable
+        arr.push(
+            sign.to_be_authenticated()
+                .expect("failed to serialize header")  // safe: always serializable
+        );
     }
     arr.push(Value::Bytes(aad.to_vec()));
     arr.push(Value::Bytes(payload.to_vec()));
