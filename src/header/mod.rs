@@ -385,6 +385,8 @@ impl ProtectedHeader {
         ))
     }
 
+    /// Convert this protected header into a [`Value`] that represents the binary data used for
+    /// authentication (i.e. for inclusion in `Sig_structure`, `Enc_structure` or `MAC_structure`).
     pub fn to_be_authenticated(self) -> Result<Value> {
         let result = self.cbor_bstr()?;
         // protected header might have been encoded as a zero length map, only containing
