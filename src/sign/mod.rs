@@ -521,12 +521,13 @@ pub fn sig_structure_data(
 
     let mut arr = vec![
         Value::Text(context.text().to_owned()),
-        body.to_be_authenticated().expect("failed to serialize header"), // safe: always serializable
+        body.to_be_authenticated()
+            .expect("failed to serialize header"), // safe: always serializable
     ];
     if let Some(sign) = sign {
         arr.push(
             sign.to_be_authenticated()
-                .expect("failed to serialize header")  // safe: always serializable
+                .expect("failed to serialize header"),  // safe: always serializable
         );
     }
     arr.push(Value::Bytes(aad.to_vec()));

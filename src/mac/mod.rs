@@ -336,7 +336,9 @@ pub fn mac_structure_data(
 ) -> Vec<u8> {
     let arr = vec![
         Value::Text(context.text().to_owned()),
-        protected.to_be_authenticated().expect("failed to serialize header"), // safe: always serializable
+        protected
+            .to_be_authenticated()
+            .expect("failed to serialize header"), // safe: always serializable
         Value::Bytes(external_aad.to_vec()),
         Value::Bytes(payload.to_vec()),
     ];
