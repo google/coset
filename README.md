@@ -13,9 +13,6 @@ example](examples/signature.rs) for documentation on how to use the code.
 
 **This repo is under construction** and so details of the API and the code may change without warning.
 
-## Features
-
-The `std` feature of the crate enables an implementation of `std::error::Error` for `CoseError`.
 
 ## `no_std` Support
 
