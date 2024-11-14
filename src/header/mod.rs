@@ -344,13 +344,19 @@ impl HeaderBuilder {
 }
 
 /// Structure representing a protected COSE header map.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default)]
 pub struct ProtectedHeader {
     /// If this structure was created by parsing serialized data, this field
     /// holds the entire contents of the original `bstr` data.
     pub original_data: Option<Vec<u8>>,
     /// Parsed header information.
     pub header: Header,
+}
+
+impl PartialEq for ProtectedHeader {
+    fn eq(&self, other: &Self) -> bool {
+        self.header.eq(&other.header)
+    }
 }
 
 impl ProtectedHeader {
