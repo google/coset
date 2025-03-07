@@ -63,8 +63,11 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           components: rustfmt
-      - run: cargo +${{ matrix.rust }} test --examples
-      - run: cargo +${{ matrix.rust }} test --features=std --examples
+      - run: |
+          for eg in `ls examples/*.rs | xargs basename --suffix=.rs`; do
+            cargo +${{ matrix.rust }} run --example ${eg};
+            cargo +${{ matrix.rust }} run --features=std --example ${eg};
+          done
 
   no_std:
     name: Build for a no_std target
