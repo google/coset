@@ -109,9 +109,10 @@ jobs:
       - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
       - run: go install github.com/campoy/embedmd@97c13d6
-      - uses: ruby/setup-ruby@d2b39ad0b52eca07d23f3aa14fdf2a3fcc1f411c # v1.148.0
+      - uses: ruby/setup-ruby@c04af2bb7258bb6a03df1d3c1865998ac9390972 # v1.194.0
         with:
           ruby-version: '2.7'
+          bundler-cache: true
       - run: gem install mdl
       - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
