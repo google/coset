@@ -184,7 +184,7 @@ fn test_header_encode() {
         assert_eq!(*header, got.header);
         assert_eq!(
             *header_data,
-            hex::encode(&got.original_data.expect("missing original data"))
+            hex::encode(got.original_data.expect("missing original data"))
         );
     }
 }
