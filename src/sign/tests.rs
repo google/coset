@@ -17,7 +17,7 @@
 use super::*;
 use crate::{
     cbor::value::Value, iana, util::expect_err, Algorithm, CborSerializable, ContentType,
-    HeaderBuilder, RegisteredLabel, TaggedCborSerializable,
+    HeaderBuilder, RegisteredLabelWithPrivate, TaggedCborSerializable,
 };
 use alloc::{
     format,
@@ -712,7 +712,7 @@ fn test_rfc8152_cose_sign_decode() {
             CoseSignBuilder::new()
                 .protected(HeaderBuilder::new()
                            .text_value("reserved".to_owned(), Value::Bool(false))
-                           .add_critical_label(RegisteredLabel::Text("reserved".to_owned()))
+                           .add_critical_label(RegisteredLabelWithPrivate::Text("reserved".to_owned()))
                            .build())
                 .payload(b"This is the content.".to_vec())
                 .add_signature(
