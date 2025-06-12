@@ -116,6 +116,7 @@ jobs:
         with:
           ruby-version: '2.7'
           bundler-cache: true
+      - run: gem install mixlib-shellout -v 3.3.8
       - run: gem install mdl
       - uses: dtolnay/rust-toolchain@a3ac054b2e7d62f514aa1bd57e3508c522fe772d # 1.68.2
         with:
