@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.4.0 - TBD
+
+- Breaking change:  alter type of `crit` field in `Header` to support private-use labels (in accordance with
+  [9052 §3.1](https://datatracker.ietf.org/doc/html/rfc9052#name-common-cose-header-paramete)).
+
 ## 0.3.8 - 2024-07-24
 
 - Make `CoseSign[1]::tbs_[detached_]data` methods `pub`.
