@@ -46,7 +46,7 @@ fn main() -> Result<(), CoseError> {
 
     // Build a `CoseSign1` object.
     let protected = coset::HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let sign1 = coset::CoseSign1Builder::new()

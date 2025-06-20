@@ -219,7 +219,7 @@ fn test_cose_signature_builder() {
                 .signature(vec![1, 2, 3])
                 .protected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::A128GCM)
+                        .algorithm(iana::Algorithm::A128GCM.into())
                         .key_id(vec![1, 2, 3])
                         .iv(vec![1, 2, 3])
                         .build(),
@@ -244,7 +244,7 @@ fn test_cose_signature_builder() {
                 .signature(vec![1, 2, 3])
                 .unprotected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::A128GCM)
+                        .algorithm(iana::Algorithm::A128GCM.into())
                         .key_id(vec![1, 2, 3])
                         .partial_iv(vec![1, 2, 3])
                         .build(),
@@ -297,7 +297,7 @@ fn test_cose_sign_encode() {
             CoseSignBuilder::new()
                 .protected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::A128GCM)
+                        .algorithm(iana::Algorithm::A128GCM.into())
                         .key_id(vec![1, 2, 3])
                         .build(),
                 )
@@ -307,7 +307,7 @@ fn test_cose_sign_encode() {
                         .signature(vec![1, 2, 3])
                         .protected(
                             HeaderBuilder::new()
-                                .algorithm(iana::Algorithm::A128GCM)
+                                .algorithm(iana::Algorithm::A128GCM.into())
                                 .key_id(vec![1, 2, 3])
                                 .iv(vec![1, 2, 3])
                                 .build(),
@@ -338,7 +338,7 @@ fn test_cose_sign_encode() {
             CoseSignBuilder::new()
                 .unprotected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::A128GCM)
+                        .algorithm(iana::Algorithm::A128GCM.into())
                         .key_id(vec![1, 2, 3])
                         .build(),
                 )
@@ -348,7 +348,7 @@ fn test_cose_sign_encode() {
                         .signature(vec![1, 2, 3])
                         .protected(
                             HeaderBuilder::new()
-                                .algorithm(iana::Algorithm::A128GCM)
+                                .algorithm(iana::Algorithm::A128GCM.into())
                                 .key_id(vec![1, 2, 3])
                                 .iv(vec![1, 2, 3])
                                 .build(),
@@ -606,7 +606,7 @@ fn test_rfc8152_cose_sign_decode() {
                 .payload(b"This is the content.".to_vec())
                 .add_signature(
                     CoseSignatureBuilder::new()
-                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256).build())
+                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256.into()).build())
                         .unprotected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
                         .signature(hex::decode(
                             "e2aeafd40d69d19dfe6e52077c5d7ff4e408282cbefb5d06cbf414af2e19d982ac45ac98b8544c908b4507de1e90b717c3d34816fe926a2b98f53afd2fa0f30a"
@@ -632,7 +632,7 @@ fn test_rfc8152_cose_sign_decode() {
                 .payload(b"This is the content.".to_vec())
                 .add_signature(
                     CoseSignatureBuilder::new()
-                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256).build())
+                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256.into()).build())
                         .unprotected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
                         .signature(hex::decode(
                             "e2aeafd40d69d19dfe6e52077c5d7ff4e408282cbefb5d06cbf414af2e19d982ac45ac98b8544c908b4507de1e90b717c3d34816fe926a2b98f53afd2fa0f30a"
@@ -641,7 +641,7 @@ fn test_rfc8152_cose_sign_decode() {
                 )
                 .add_signature(
                     CoseSignatureBuilder::new()
-                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES512).build())
+                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES512.into()).build())
                         .unprotected(HeaderBuilder::new().key_id(b"bilbo.baggins@hobbiton.example".to_vec()).build())
                         .signature(hex::decode(
                             "00a2d28a7c2bdb1587877420f65adf7d0b9a06635dd1de64bb62974c863f0b160dd2163734034e6ac003b01e8705524c5c4ca479a952f0247ee8cb0b4fb7397ba08d009e0c8bf482270cc5771aa143966e5a469a09f613488030c5b07ec6d722e3835adb5b2d8c44e95ffb13877dd2582866883535de3bb03d01753f83ab87bb4f7a0297"
@@ -671,7 +671,7 @@ fn test_rfc8152_cose_sign_decode() {
                 .unprotected(HeaderBuilder::new()
                              .add_counter_signature(
                                  CoseSignatureBuilder::new()
-                                     .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256).build())
+                                     .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256.into()).build())
                                      .unprotected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
                                      .signature(hex::decode(
                                          "5ac05e289d5d0e1b0a7f048a5d2b643813ded50bc9e49220f4f7278f85f19d4a77d655c9d3b51e805a74b099e1e085aacd97fc29d72f887e8802bb6650cceb2c"
@@ -682,7 +682,7 @@ fn test_rfc8152_cose_sign_decode() {
                 .payload(b"This is the content.".to_vec())
                 .add_signature(
                     CoseSignatureBuilder::new()
-                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256).build())
+                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256.into()).build())
                         .unprotected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
                         .signature(hex::decode(
                             "e2aeafd40d69d19dfe6e52077c5d7ff4e408282cbefb5d06cbf414af2e19d982ac45ac98b8544c908b4507de1e90b717c3d34816fe926a2b98f53afd2fa0f30a"
@@ -712,12 +712,12 @@ fn test_rfc8152_cose_sign_decode() {
             CoseSignBuilder::new()
                 .protected(HeaderBuilder::new()
                            .text_value("reserved".to_owned(), Value::Bool(false))
-                           .add_critical_label(RegisteredLabelWithPrivate::Text("reserved".to_owned()))
+                           .add_critical(RegisteredLabelWithPrivate::Text("reserved".to_owned()))
                            .build())
                 .payload(b"This is the content.".to_vec())
                 .add_signature(
                     CoseSignatureBuilder::new()
-                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256).build())
+                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256.into()).build())
                         .unprotected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
                         .signature(hex::decode(
                             "3fc54702aa56e1b2cb20284294c9106a63f91bac658d69351210a031d8fc7c5ff3e4be39445b1a3e83e1510d1aca2f2e8a7c081c7645042b18aba9d1fad1bd9c"
@@ -792,7 +792,7 @@ fn test_cose_sign1_encode() {
             CoseSign1Builder::new()
                 .protected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::A128GCM)
+                        .algorithm(iana::Algorithm::A128GCM.into())
                         .key_id(vec![1, 2, 3])
                         .build(),
                 )
@@ -814,7 +814,7 @@ fn test_cose_sign1_encode() {
             CoseSign1Builder::new()
                 .unprotected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::A128GCM)
+                        .algorithm(iana::Algorithm::A128GCM.into())
                         .key_id(vec![1, 2, 3])
                         .build(),
                 )
@@ -950,7 +950,7 @@ fn test_cose_sign1_decode_noncanonical() {
         CoseSign1Builder::new()
             .protected(
                 HeaderBuilder::new()
-                    .algorithm(iana::Algorithm::ES256)
+                    .algorithm(iana::Algorithm::ES256.into())
                     .key_id(vec![0x31, 0x31])
                     .build(),
             )
@@ -1075,7 +1075,7 @@ fn test_rfc8152_cose_sign1_decode() {
     let tests = vec![
         (
             CoseSign1Builder::new()
-                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256).build())
+                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256.into()).build())
                 .unprotected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
                 .payload(b"This is the content.".to_vec())
                 .signature(hex::decode(
@@ -1137,7 +1137,7 @@ fn test_sign_roundtrip() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let sign = CoseSignBuilder::new()
@@ -1190,7 +1190,7 @@ fn test_sign_detached_roundtrip() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let sign = CoseSignBuilder::new()
@@ -1263,7 +1263,7 @@ fn test_sign_noncanonical() {
                 "01", "26", // 1 (alg) => ES256
             ),
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::ES256)
+                .algorithm(iana::Algorithm::ES256.into())
                 .key_id(vec![0x31, 0x31])
                 .build(),
         ),
@@ -1324,7 +1324,7 @@ fn test_sign_create_result() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let _sign = CoseSignBuilder::new()
@@ -1359,7 +1359,7 @@ fn test_sign_detached_create_result() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let _sign = CoseSignBuilder::new()
@@ -1396,7 +1396,7 @@ fn test_sign_sig_index_invalid() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let sign = CoseSignBuilder::new()
@@ -1423,7 +1423,7 @@ fn test_sign_detached_sig_index_invalid() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let sign = CoseSignBuilder::new()
@@ -1451,7 +1451,7 @@ fn test_sign1_create_detached_signature_embeddedpayload() {
     let _ = CoseSign1Builder::new()
         .protected(
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::ES256)
+                .algorithm(iana::Algorithm::ES256.into())
                 .build(),
         )
         .payload(payload.to_vec())
@@ -1471,7 +1471,7 @@ fn test_sign1_try_create_detached_signature_embeddedpayload() {
     let _ = CoseSign1Builder::new()
         .protected(
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::ES256)
+                .algorithm(iana::Algorithm::ES256.into())
                 .build(),
         )
         .payload(payload.to_vec())
@@ -1491,7 +1491,7 @@ fn test_sign1_verify_detached_signature_embeddedpayload() {
     let mut sign1 = CoseSign1Builder::new()
         .protected(
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::ES256)
+                .algorithm(iana::Algorithm::ES256.into())
                 .build(),
         )
         .create_detached_signature(payload, aad, |pt| signer.sign(pt))
@@ -1516,7 +1516,7 @@ fn test_sign_add_detached_signature_embeddedpayload() {
     let _ = CoseSignBuilder::new()
         .protected(
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::ES256)
+                .algorithm(iana::Algorithm::ES256.into())
                 .build(),
         )
         .payload(payload.to_vec())
@@ -1538,7 +1538,7 @@ fn test_sign_try_add_detached_signature_embeddedpayload() {
     let _ = CoseSignBuilder::new()
         .protected(
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::ES256)
+                .algorithm(iana::Algorithm::ES256.into())
                 .build(),
         )
         .payload(payload.to_vec())
@@ -1560,7 +1560,7 @@ fn test_sign_verify_detached_signature_embeddedpayload() {
     let mut sign = CoseSignBuilder::new()
         .protected(
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::ES256)
+                .algorithm(iana::Algorithm::ES256.into())
                 .build(),
         )
         .add_detached_signature(CoseSignatureBuilder::new().build(), payload, aad, |pt| {
@@ -1583,7 +1583,7 @@ fn test_sign1_roundtrip() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let sign1 = CoseSign1Builder::new()
@@ -1627,7 +1627,7 @@ fn test_sign1_detached_roundtrip() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let sign1 = CoseSign1Builder::new()
@@ -1674,7 +1674,7 @@ fn test_sign1_create_result() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let _sign = CoseSign1Builder::new()
@@ -1699,7 +1699,7 @@ fn test_sign1_create_detached_result() {
     let aad = b"this is additional data";
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let _sign = CoseSign1Builder::new()
