@@ -61,7 +61,7 @@ fn main() -> Result<(), CoseError> {
 
     // Build a `CoseSign1` object.
     let protected = coset::HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .build();
     let unprotected = coset::HeaderBuilder::new()
         .key_id(b"AsymmetricECDSA256".to_vec())

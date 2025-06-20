@@ -36,9 +36,70 @@ pub trait WithPrivateRange {
     fn is_private(i: i64) -> bool;
 }
 
-/// Generate an enum with associated values, plus a `from_i64` method.
+/// Defines an IANA-style registry enum with fixed integer values, and generates trait
+/// implementations to support lookup, conversion, and optional private-use semantics.
+///
+/// This macro generates:
+///
+/// - A public `#[non_exhaustive]` `enum` with explicitly assigned integer values
+/// - An implementation of the `EnumI64` trait for converting to/from `i64`
+/// - A `From` implementation to convert the enum into either:
+///     - `RegisteredLabel<T>` (for registries without private-use range), or
+///     - `RegisteredLabelWithPrivate<T>` (for registries with a private-use range)
+/// - An implementation of the `WithPrivateRange` trait (if `private_use_max` is specified),
+///   which enables `is_private()` checks based on the configured range limit.
 macro_rules! iana_registry {
-    ( $(#[$attr:meta])* $enum_name:ident {$($(#[$fattr:meta])* $name:ident: $val:expr,)* } ) => {
+    (
+        private_use_max: $max:expr,
+
+        $(#[$attr:meta])*
+        $enum_name:ident {
+            $(
+                $(#[$fattr:meta])*
+                $name:ident: $val:expr,
+            )*
+        }
+    ) => {
+        iana_registry!(@impl
+            with_private_range,
+            $max,
+            $(#[$attr])*, $enum_name, {
+                $(
+                    $(#[$fattr])*
+                    $name: $val,
+                )*
+            }
+        );
+    };
+
+    // Entry point: no private range
+    (
+        $(#[$attr:meta])*
+        $enum_name:ident {
+            $(
+                $(#[$fattr:meta])*
+                $name:ident: $val:expr,
+            )*
+        }
+    ) => {
+        iana_registry!(@impl
+            no_private_range,
+            0,
+            $(#[$attr])*, $enum_name, {
+                $(
+                    $(#[$fattr])*
+                    $name: $val,
+                )*
+            }
+        );
+    };
+
+    (@impl $mode:ident, $max:expr, $(#[$attr:meta])*, $enum_name:ident, {
+        $(
+            $(#[$fattr:meta])*
+            $name:ident: $val:expr,
+        )*
+    }) => {
         #[allow(non_camel_case_types)]
         $(#[$attr])*
         #[non_exhaustive]
@@ -58,10 +119,38 @@ macro_rules! iana_registry {
                 *self as i64
             }
         }
-    }
+
+        iana_registry!(@impl_from_and_private $mode, $enum_name, $max);
+    };
+
+    // From + WithPrivateRange
+    (@impl_from_and_private with_private_range, $enum_name:ident, $max:expr) => {
+        impl From<$enum_name> for $crate::RegisteredLabelWithPrivate<$enum_name> {
+            fn from(v: $enum_name) -> Self {
+                $crate::RegisteredLabelWithPrivate::Assigned(v)
+            }
+        }
+
+        impl WithPrivateRange for $enum_name {
+            fn is_private(i: i64) -> bool {
+                i < $max
+            }
+        }
+    };
+
+    // From only (no private range)
+    (@impl_from_and_private no_private_range, $enum_name:ident, $max:expr) => {
+        impl From<$enum_name> for $crate::RegisteredLabel<$enum_name> {
+            fn from(v: $enum_name) -> Self {
+                $crate::RegisteredLabel::Assigned(v)
+            }
+        }
+    };
 }
 
 iana_registry! {
+    private_use_max: -65536,
+
     /// IANA-registered COSE header parameters.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#header-parameters>
@@ -132,15 +221,6 @@ iana_registry! {
     }
 }
 
-/// Integer values for COSE header parameters below this value are reserved for private use.
-pub const HEADER_PARAMETER_PRIVATE_USE_MAX: i64 = -65536;
-
-impl WithPrivateRange for HeaderParameter {
-    fn is_private(i: i64) -> bool {
-        i < HEADER_PARAMETER_PRIVATE_USE_MAX
-    }
-}
-
 iana_registry! {
     /// IANA-registered COSE header algorithm parameters.
     ///
@@ -191,6 +271,8 @@ iana_registry! {
 }
 
 iana_registry! {
+    private_use_max: -65536,
+
     /// IANA-registered COSE algorithms.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#algorithms>
@@ -326,15 +408,6 @@ iana_registry! {
         AES_CCM_64_128_256: 33,
         /// For doing IV generation for symmetric algorithms.
         IV_GENERATION: 34,
-    }
-}
-
-/// Integer values for COSE algorithms below this value are reserved for private use.
-pub const ALGORITHM_PRIVATE_USE_MAX: i64 = -65536;
-
-impl WithPrivateRange for Algorithm {
-    fn is_private(i: i64) -> bool {
-        i < ALGORITHM_PRIVATE_USE_MAX
     }
 }
 
@@ -555,6 +628,8 @@ iana_registry! {
 }
 
 iana_registry! {
+    private_use_max: -65536,
+
     /// IANA-registered COSE elliptic curves.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves>
@@ -577,15 +652,6 @@ iana_registry! {
         Ed448: 7,
         /// EC2: SECG secp256k1 curve
         Secp256k1: 8,
-    }
-}
-
-/// Integer values for COSE elliptic curves below this value are reserved for private use.
-pub const ELLIPTIC_CURVE_PRIVATE_USE_MAX: i64 = -65536;
-
-impl WithPrivateRange for EllipticCurve {
-    fn is_private(i: i64) -> bool {
-        i < ELLIPTIC_CURVE_PRIVATE_USE_MAX
     }
 }
 
@@ -746,6 +812,8 @@ iana_registry! {
 }
 
 iana_registry! {
+    private_use_max: -65536,
+
     /// CBOR Web Token (CWT) Claims
     /// From IANA registry <https://www.iana.org/assignments/cwt/cwt.xhtml>
     /// as of 2021-10-21.
@@ -784,14 +852,5 @@ iana_registry! {
         CNonce: 39,
         /// The expiration time of a token measured from when it was received at the RS in seconds ("exi": int)
         Exi: 40,
-    }
-}
-
-/// Integer values for CWT claims below this value are reserved for private use.
-pub const CWT_CLAIM_PRIVATE_USE_MAX: i64 = -65536;
-
-impl WithPrivateRange for CwtClaimName {
-    fn is_private(i: i64) -> bool {
-        i < CWT_CLAIM_PRIVATE_USE_MAX
     }
 }

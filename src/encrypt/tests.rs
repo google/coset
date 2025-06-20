@@ -259,7 +259,7 @@ fn test_rfc8152_cose_encrypt_decode() {
             CoseEncryptBuilder::new()
                 .protected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::A128GCM)
+                        .algorithm(iana::Algorithm::A128GCM.into())
                         .build(),
                 )
                 .unprotected(
@@ -277,7 +277,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                     CoseRecipientBuilder::new()
                         .protected(
                             HeaderBuilder::new()
-                                .algorithm(iana::Algorithm::ECDH_ES_HKDF_256)
+                                .algorithm(iana::Algorithm::ECDH_ES_HKDF_256.into())
                                 .build(),
                         )
                         .unprotected(
@@ -317,11 +317,11 @@ fn test_rfc8152_cose_encrypt_decode() {
         ),
         (
             CoseEncryptBuilder::new()
-                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::AES_CCM_16_64_128).build())
+                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::AES_CCM_16_64_128.into()).build())
                 .unprotected(HeaderBuilder::new().iv(hex::decode("89f52f65a1c580933b5261a76c").unwrap()).build())
                 .ciphertext(hex::decode("753548a19b1307084ca7b2056924ed95f2e3b17006dfe931b687b847").unwrap())
                 .add_recipient(CoseRecipientBuilder::new()
-                               .protected(HeaderBuilder::new().algorithm(iana::Algorithm::Direct_HKDF_SHA_256).build())
+                               .protected(HeaderBuilder::new().algorithm(iana::Algorithm::Direct_HKDF_SHA_256.into()).build())
                                .unprotected(
                                    HeaderBuilder::new()
                                        .key_id(b"our-secret".to_vec())
@@ -354,11 +354,11 @@ fn test_rfc8152_cose_encrypt_decode() {
 
         (
             CoseEncryptBuilder::new()
-                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::A128GCM).build())
+                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::A128GCM.into()).build())
                 .unprotected(HeaderBuilder::new()
                              .iv(hex::decode("c9cf4df2fe6c632bf7886413").unwrap())
                              .add_counter_signature(CoseSignatureBuilder::new()
-                                                    .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES512).build())
+                                                    .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES512.into()).build())
                                                     .unprotected(HeaderBuilder::new().key_id(b"bilbo.baggins@hobbiton.example".to_vec()).build())
                                                     .signature(hex::decode("00929663c8789bb28177ae28467e66377da12302d7f9594d2999afa5dfa531294f8896f2b6cdf1740014f4c7f1a358e3a6cf57f4ed6fb02fcf8f7aa989f5dfd07f0700a3a7d8f3c604ba70fa9411bd10c2591b483e1d2c31de003183e434d8fba18f17a4c7e3dfa003ac1cf3d30d44d2533c4989d3ac38c38b71481cc3430c9d65e7ddff").unwrap())
                                                     .build())
@@ -367,7 +367,7 @@ fn test_rfc8152_cose_encrypt_decode() {
                 .add_recipient(CoseRecipientBuilder::new()
                                .protected(
                                    HeaderBuilder::new()
-                                       .algorithm(iana::Algorithm::ECDH_ES_HKDF_256)
+                                       .algorithm(iana::Algorithm::ECDH_ES_HKDF_256.into())
                                        .build())
                                .unprotected(
                                    HeaderBuilder::new()
@@ -422,11 +422,11 @@ fn test_rfc8152_cose_encrypt_decode() {
         ),
         (
             CoseEncryptBuilder::new()
-                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::A128GCM).build())
+                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::A128GCM.into()).build())
                 .unprotected(HeaderBuilder::new().iv(hex::decode("02d1f7e6f26c43d4868d87ce").unwrap()).build())
                 .ciphertext(hex::decode("64f84d913ba60a76070a9a48f26e97e863e28529d8f5335e5f0165eee976b4a5f6c6f09d").unwrap())
                 .add_recipient(CoseRecipientBuilder::new()
-                               .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ECDH_SS_A128KW).build())
+                               .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ECDH_SS_A128KW.into()).build())
                                .unprotected(HeaderBuilder::new()
                                             .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
                                             .value(
@@ -580,7 +580,7 @@ fn test_rfc8152_cose_encrypt0_decode() {
             CoseEncrypt0Builder::new()
                 .protected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::AES_CCM_16_64_128)
+                        .algorithm(iana::Algorithm::AES_CCM_16_64_128.into())
                         .build(),
                 )
                 .unprotected(
@@ -610,7 +610,7 @@ fn test_rfc8152_cose_encrypt0_decode() {
             CoseEncrypt0Builder::new()
                 .protected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::AES_CCM_16_64_128)
+                        .algorithm(iana::Algorithm::AES_CCM_16_64_128.into())
                         .build(),
                 )
                 .unprotected(
@@ -690,7 +690,7 @@ fn test_cose_recipient_roundtrip() {
         EncryptionContext::RecRecipient,
     ] {
         let protected = HeaderBuilder::new()
-            .algorithm(iana::Algorithm::ES256)
+            .algorithm(iana::Algorithm::ES256.into())
             .key_id(b"11".to_vec())
             .build();
 
@@ -776,7 +776,7 @@ fn test_cose_recipient_result() {
     let cipher = FakeCipher {};
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let _recipient = CoseRecipientBuilder::new()
@@ -861,7 +861,7 @@ fn test_cose_encrypt_roundtrip() {
     let cipher = FakeCipher {};
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let mut encrypt = CoseEncryptBuilder::new()
@@ -943,7 +943,7 @@ fn test_cose_encrypt_status() {
     let cipher = FakeCipher {};
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let _encrypt = CoseEncryptBuilder::new()
@@ -976,7 +976,7 @@ fn test_cose_encrypt0_roundtrip() {
     let cipher = FakeCipher {};
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let mut encrypt = CoseEncrypt0Builder::new()
@@ -1057,7 +1057,7 @@ fn test_cose_encrypt0_status() {
     let cipher = FakeCipher {};
 
     let protected = HeaderBuilder::new()
-        .algorithm(iana::Algorithm::ES256)
+        .algorithm(iana::Algorithm::ES256.into())
         .key_id(b"11".to_vec())
         .build();
     let _encrypt = CoseEncrypt0Builder::new()
