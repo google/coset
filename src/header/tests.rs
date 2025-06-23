@@ -141,8 +141,8 @@ fn test_header_encode() {
         ),
         (
             HeaderBuilder::new()
-                .add_critical(iana::HeaderParameter::Alg)
-                .add_critical(iana::HeaderParameter::Alg)
+                .add_critical(iana::HeaderParameter::Alg.into())
+                .add_critical(iana::HeaderParameter::Alg.into())
                 .build(),
             concat!(
                 "a1", // 1-map
@@ -151,7 +151,7 @@ fn test_header_encode() {
         ),
         (
             HeaderBuilder::new()
-                .add_critical_label(RegisteredLabelWithPrivate::PrivateUse(-65537))
+                .add_critical(RegisteredLabelWithPrivate::PrivateUse(-65537))
                 .build(),
             concat!(
                 "a1", // 1-map
@@ -440,10 +440,10 @@ fn test_header_builder() {
         ),
         (
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
-                .add_critical(iana::HeaderParameter::Alg)
-                .add_critical_label(RegisteredLabelWithPrivate::Text("abc".to_owned()))
-                .content_format(iana::CoapContentFormat::CoseEncrypt0)
+                .algorithm(iana::Algorithm::A128GCM.into())
+                .add_critical(iana::HeaderParameter::Alg.into())
+                .add_critical(RegisteredLabelWithPrivate::Text("abc".to_owned()))
+                .content_format(iana::CoapContentFormat::CoseEncrypt0.into())
                 .key_id(vec![1, 2, 3])
                 .partial_iv(vec![4, 5, 6]) // removed by .iv() call
                 .iv(vec![1, 2, 3])
@@ -468,9 +468,9 @@ fn test_header_builder() {
         ),
         (
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
-                .add_critical(iana::HeaderParameter::Alg)
-                .add_critical_label(RegisteredLabelWithPrivate::Text("abc".to_owned()))
+                .algorithm(iana::Algorithm::A128GCM.into())
+                .add_critical(iana::HeaderParameter::Alg.into())
+                .add_critical(RegisteredLabelWithPrivate::Text("abc".to_owned()))
                 .content_type("type/subtype".to_owned())
                 .key_id(vec![1, 2, 3])
                 .iv(vec![1, 2, 3]) // removed by .partial_iv() call
@@ -490,8 +490,8 @@ fn test_header_builder() {
         ),
         (
             HeaderBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
-                .add_critical_label(RegisteredLabelWithPrivate::PrivateUse(-65537))
+                .algorithm(iana::Algorithm::A128GCM.into())
+                .add_critical(RegisteredLabelWithPrivate::PrivateUse(-65537))
                 .key_id(vec![1, 2, 3])
                 .build(),
             Header {

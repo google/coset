@@ -33,7 +33,7 @@ fn test_context_encode() {
         ),
         (
             CoseKdfContextBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
+                .algorithm(iana::Algorithm::A128GCM.into())
                 .build(),
             concat!(
                 "84", // 4-tuple
@@ -45,7 +45,7 @@ fn test_context_encode() {
         ),
         (
             CoseKdfContextBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
+                .algorithm(iana::Algorithm::A128GCM.into())
                 .party_u_info(PartyInfoBuilder::new().identity(vec![]).build())
                 .build(),
             concat!(
@@ -58,7 +58,7 @@ fn test_context_encode() {
         ),
         (
             CoseKdfContextBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
+                .algorithm(iana::Algorithm::A128GCM.into())
                 .party_u_info(
                     PartyInfoBuilder::new()
                         .identity(vec![3, 6])
@@ -76,7 +76,7 @@ fn test_context_encode() {
         ),
         (
             CoseKdfContextBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
+                .algorithm(iana::Algorithm::A128GCM.into())
                 .party_u_info(
                     PartyInfoBuilder::new()
                         .identity(vec![3, 6])
@@ -94,7 +94,7 @@ fn test_context_encode() {
         ),
         (
             CoseKdfContextBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
+                .algorithm(iana::Algorithm::A128GCM.into())
                 .party_v_info(
                     PartyInfoBuilder::new()
                         .identity(vec![3, 6])
@@ -112,7 +112,7 @@ fn test_context_encode() {
         ),
         (
             CoseKdfContextBuilder::new()
-                .algorithm(iana::Algorithm::A128GCM)
+                .algorithm(iana::Algorithm::A128GCM.into())
                 .party_v_info(
                     PartyInfoBuilder::new()
                         .identity(vec![3, 6])
@@ -135,7 +135,7 @@ fn test_context_encode() {
                         .key_data_length(10)
                         .protected(
                             HeaderBuilder::new()
-                                .algorithm(iana::Algorithm::A128GCM)
+                                .algorithm(iana::Algorithm::A128GCM.into())
                                 .build(),
                         )
                         .build(),

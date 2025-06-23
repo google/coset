@@ -25,6 +25,8 @@
 #[cfg(test)]
 mod tests;
 
+use crate::common::{RegisteredLabel, RegisteredLabelWithPrivate};
+
 /// Trait indicating an enum that can be constructed from `i64` values.
 pub trait EnumI64: Sized + Eq {
     fn from_i64(i: i64) -> Option<Self>;
@@ -34,6 +36,18 @@ pub trait EnumI64: Sized + Eq {
 /// Trait indicating an enum with a range of private values.
 pub trait WithPrivateRange {
     fn is_private(i: i64) -> bool;
+}
+
+impl<T: EnumI64> From<T> for RegisteredLabel<T> {
+   fn from(val: T) -> Self {
+       Self::Assigned(val)
+   }
+}
+
+impl<T: EnumI64 + WithPrivateRange> From<T> for RegisteredLabelWithPrivate<T> {
+   fn from(val: T) -> Self {
+       Self::Assigned(val)
+   }
 }
 
 /// Generate an enum with associated values, plus a `from_i64` method.

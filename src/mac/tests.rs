@@ -155,7 +155,7 @@ fn test_rfc8152_cose_mac_decode() {
             CoseMacBuilder::new()
                 .protected(
                     HeaderBuilder::new()
-                        .algorithm(iana::Algorithm::AES_MAC_256_64)
+                        .algorithm(iana::Algorithm::AES_MAC_256_64.into())
                         .build(),
                 )
                 .payload(b"This is the content.".to_vec())
@@ -164,7 +164,7 @@ fn test_rfc8152_cose_mac_decode() {
                     CoseRecipientBuilder::new()
                         .unprotected(
                             HeaderBuilder::new()
-                                .algorithm(iana::Algorithm::Direct)
+                                .algorithm(iana::Algorithm::Direct.into())
                                 .key_id(b"our-secret".to_vec())
                                 .build(),
                         )
@@ -196,12 +196,12 @@ fn test_rfc8152_cose_mac_decode() {
         ),
         (
             CoseMacBuilder::new()
-                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::HMAC_256_256).build())
+                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::HMAC_256_256.into()).build())
                 .payload(b"This is the content.".to_vec())
                 .tag(hex::decode("81a03448acd3d305376eaa11fb3fe416a955be2cbe7ec96f012c994bc3f16a41").unwrap())
                 .add_recipient(
                     CoseRecipientBuilder::new()
-                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ECDH_SS_HKDF_256).build())
+                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ECDH_SS_HKDF_256.into()).build())
                         .unprotected(
                             HeaderBuilder::new()
                                 .key_id(b"meriadoc.brandybuck@buckland.example".to_vec())
@@ -242,14 +242,14 @@ fn test_rfc8152_cose_mac_decode() {
         ),
         (
             CoseMacBuilder::new()
-                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::AES_MAC_128_64).build())
+                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::AES_MAC_128_64.into()).build())
                 .payload(b"This is the content.".to_vec())
                 .tag(hex::decode("36f5afaf0bab5d43").unwrap())
                 .add_recipient(
                     CoseRecipientBuilder::new()
                         .unprotected(
                             HeaderBuilder::new()
-                                .algorithm(iana::Algorithm::A256KW)
+                                .algorithm(iana::Algorithm::A256KW.into())
                                 .key_id(b"018c0ae5-4d9b-471b-bfd6-eef314bc7037".to_vec())
                                 .build(),
                         )
@@ -277,12 +277,12 @@ fn test_rfc8152_cose_mac_decode() {
         ),
         (
             CoseMacBuilder::new()
-                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::HMAC_256_256).build())
+                .protected(HeaderBuilder::new().algorithm(iana::Algorithm::HMAC_256_256.into()).build())
                 .payload(b"This is the content.".to_vec())
                 .tag(hex::decode("bf48235e809b5c42e995f2b7d5fa13620e7ed834e337f6aa43df161e49e9323e").unwrap())
                 .add_recipient(
                     CoseRecipientBuilder::new()
-                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ECDH_ES_A128KW).build())
+                        .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ECDH_ES_A128KW.into()).build())
                         .unprotected(
                             HeaderBuilder::new()
                                 .value(iana::HeaderAlgorithmParameter::EphemeralKey as i64,
@@ -300,7 +300,7 @@ fn test_rfc8152_cose_mac_decode() {
                     CoseRecipientBuilder::new()
                         .unprotected(
                             HeaderBuilder::new()
-                                .algorithm(iana::Algorithm::A256KW)
+                                .algorithm(iana::Algorithm::A256KW.into())
                                 .key_id(b"018c0ae5-4d9b-471b-bfd6-eef314bc7037".to_vec())
                                 .build(),
                         )
@@ -471,7 +471,7 @@ fn test_rfc8152_cose_mac0_decode() {
         CoseMac0Builder::new()
             .protected(
                 HeaderBuilder::new()
-                    .algorithm(iana::Algorithm::AES_MAC_256_64)
+                    .algorithm(iana::Algorithm::AES_MAC_256_64.into())
                     .build(),
             )
             .payload(b"This is the content.".to_vec())
