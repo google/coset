@@ -501,6 +501,19 @@ fn test_header_builder() {
                 ..Default::default()
             },
         ),
+        (
+            HeaderBuilder::new()
+                .algorithm_label(Algorithm::PrivateUse(-65537))
+                .add_critical_label(RegisteredLabelWithPrivate::PrivateUse(-65537))
+                .key_id(vec![1, 2, 3])
+                .build(),
+            Header {
+                alg: Some(Algorithm::PrivateUse(-65537)),
+                crit: vec![RegisteredLabelWithPrivate::PrivateUse(-65537)],
+                key_id: vec![1, 2, 3],
+                ..Default::default()
+            },
+        ),
     ];
     for (got, want) in tests {
         assert_eq!(got, want);
