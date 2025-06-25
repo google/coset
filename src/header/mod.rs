@@ -263,9 +263,8 @@ impl HeaderBuilder {
 
     /// Set the algorithm.
     #[must_use]
-    pub fn algorithm(mut self, alg: iana::Algorithm) -> Self {
-        self.0.alg = Some(Algorithm::Assigned(alg));
-        self
+    pub fn algorithm(self, alg: iana::Algorithm) -> Self {
+        self.algorithm_label(alg.into())
     }
 
     /// Set the algorithm.
@@ -277,11 +276,8 @@ impl HeaderBuilder {
 
     /// Add a critical header.
     #[must_use]
-    pub fn add_critical(mut self, param: iana::HeaderParameter) -> Self {
-        self.0
-            .crit
-            .push(RegisteredLabelWithPrivate::Assigned(param));
-        self
+    pub fn add_critical(self, param: iana::HeaderParameter) -> Self {
+        self.add_critical_label(param.into())
     }
 
     /// Add a critical header.

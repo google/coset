@@ -295,6 +295,12 @@ pub enum RegisteredLabel<T: EnumI64> {
     Text(String),
 }
 
+impl<T: EnumI64> From<T> for RegisteredLabel<T> {
+    fn from(val: T) -> Self {
+        Self::Assigned(val)
+    }
+}
+
 impl<T: EnumI64> CborSerializable for RegisteredLabel<T> {}
 
 /// Manual implementation of [`Ord`] to ensure that CBOR canonical ordering is respected.
@@ -350,6 +356,12 @@ pub enum RegisteredLabelWithPrivate<T: EnumI64 + WithPrivateRange> {
     PrivateUse(i64),
     Assigned(T),
     Text(String),
+}
+
+impl<T: EnumI64 + WithPrivateRange> From<T> for RegisteredLabelWithPrivate<T> {
+    fn from(val: T) -> Self {
+        Self::Assigned(val)
+    }
 }
 
 impl<T: EnumI64 + WithPrivateRange> CborSerializable for RegisteredLabelWithPrivate<T> {}
