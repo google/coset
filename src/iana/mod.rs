@@ -65,7 +65,7 @@ iana_registry! {
     /// IANA-registered COSE header parameters.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#header-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     HeaderParameter {
         /// Reserved
         Reserved: 0,
@@ -105,6 +105,14 @@ iana_registry! {
         ///
         /// Associated value of type bstr
         KidContext: 10,
+        /// Counter signature v2
+        ///
+        /// Associated value of type COSE_Countersignature / [+ COSE_Countersignature]
+        CounterSignatureV2: 11,
+        /// Abbreviated counter signature v2.
+        ///
+        /// Associated value of type COSE_Countersignature0
+        CounterSignature0V2:12,
         /// An unordered bag of X.509 certificates
         ///
         /// Associated value of type COSE_X509
@@ -145,8 +153,20 @@ iana_registry! {
     /// IANA-registered COSE header algorithm parameters.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#header-algorithm-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     HeaderAlgorithmParameter {
+        /// Static key X.509 certificate chain
+        ///
+        /// Associated value of type COSE_X509
+        X5ChainSender: -29,
+        /// URI for the sender's X.509 certificate
+        ///
+        /// Associated value of type uri
+        X5USender: -28,
+        /// Thumbprint for the sender's X.509 certificate
+        ///
+        /// Associated value of type COSE_CertHash
+        X5TSender: -27,
         /// Party V other provided information
         ///
         /// Associated value of type bstr
@@ -194,7 +214,7 @@ iana_registry! {
     /// IANA-registered COSE algorithms.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#algorithms>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     Algorithm {
         /// RSASSA-PKCS1-v1_5 using SHA-1
         RS1: -65535,
@@ -342,7 +362,7 @@ iana_registry! {
     /// IANA-registered COSE common key parameters.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-common-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     KeyParameter {
         /// Reserved value.
         Reserved: 0,
@@ -373,7 +393,7 @@ iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::OKP`].
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     OkpKeyParameter {
         /// EC identifier - Taken from the "COSE Elliptic Curves" registry
         ///
@@ -394,7 +414,7 @@ iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::EC2`].
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     Ec2KeyParameter {
         /// EC identifier - Taken from the "COSE Elliptic Curves" registry
         ///
@@ -419,7 +439,7 @@ iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::RSA`].
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     RsaKeyParameter {
         /// The RSA modulus n
         ///
@@ -476,7 +496,7 @@ iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::Symmetric`].
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     SymmetricKeyParameter {
         /// Key Value
         ///
@@ -489,7 +509,7 @@ iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::HSS_LMS`].
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     HssLmsKeyParameter {
         /// Public key for HSS/LMS hash-based digital signature
         ///
@@ -502,7 +522,7 @@ iana_registry! {
     /// IANA-registered COSE key parameters for keys of type [`KeyType::WalnutDSA`].
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     WalnutDsaKeyParameter {
         /// Group and Matrix (NxN) size
         ///
@@ -535,7 +555,7 @@ iana_registry! {
     /// IANA-registered COSE key types.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     KeyType {
         /// This value is reserved
         Reserved: 0,
@@ -558,7 +578,7 @@ iana_registry! {
     /// IANA-registered COSE elliptic curves.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     EllipticCurve {
         Reserved: 0,
         /// EC2: NIST P-256 also known as secp256r1
@@ -621,7 +641,7 @@ iana_registry! {
     /// CBOR tag values for COSE structures.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     CborTag {
         /// COSE Single Recipient Encrypted Data Object
         CoseEncrypt0: 16,
@@ -644,7 +664,7 @@ iana_registry! {
     /// CoAP Content Formats
     ///
     /// From IANA registry <https://www.iana.org/assignments/core-parameters/core-parameters.xhtml#content-formats>
-    /// as of 2021-03-19.
+    /// as of 2023-07-12.
     CoapContentFormat {
         /// text/plain; charset=utf-8
         TextPlainUtf8: 0,
@@ -654,6 +674,14 @@ iana_registry! {
         CoseMac0: 17,
         /// application/cose; cose-type="cose-sign1"
         CoseSign1: 18,
+        /// application/ace+cbor
+        AceCbor: 19,
+        /// image/gif
+        ImageGif: 21,
+        /// image/jpeg
+        ImageJpeg: 22,
+        /// image/png
+        ImagePng: 23,
         /// application/link-format
         LinkFormat: 40,
         /// application/xml
@@ -698,10 +726,21 @@ iana_registry! {
         SenmlExi: 114,
         /// application/sensml-exi
         SensmlExi: 115,
+        /// application/yang-data+cbor
+        YangData: 140,
         /// application/coap-group+json
         CoapGroupJson: 256,
+
+        /// application/concise-problem-details+cbor
+        ConciseProblemDetailsCbor: 257,
+        /// application/swid+cbor
+        SwidCbor:258,
+        /// application/pkixcmp
+        PkixCmp: 259,
         /// application/dots+cbor
         DotsCbor: 271,
+        /// application/missing-blocks+cbor-seq
+        MissingBlocksCborSeq: 272,
         /// application/pkcs7-mime; smime-type=server-generated-key
         Pkcs7MimeSmimeTypeServerGeneratedKey: 280,
         /// application/pkcs7-mime; smime-type=certs-only
@@ -718,6 +757,10 @@ iana_registry! {
         Pkcs10: 286,
         /// application/pkix-cert
         PkixCert: 287,
+        /// application/aif+cbor
+        AifCbor: 290,
+        /// application/aif+json
+        AifJson: 291,
         /// application/senml+xml
         SenmlXml: 310,
         /// application/sensml+xml
@@ -726,15 +769,23 @@ iana_registry! {
         SenmlEtchJson: 320,
         /// application/senml-etch+cbor
         SenmlEtchCbor: 322,
+        /// application/yang-data+cbor
+        YangDataCbor: 340,
+        /// application/yang-data+cbor; id=name
+        YangDataCborName: 341,
         /// application/td+json
         TdJson: 432,
+        /// application/tm+json
+        TmJson: 433,
         /// application/vnd.ocf+cbor
         VndOcfCbor: 10000,
         /// application/oscore
         Oscore: 10001,
-        // application/json deflate
+        /// application/javascript
+        Javascript: 10002,
+        /// application/json deflate
         JsonDeflate: 11050,
-        // application/cbor deflate
+        /// application/cbor deflate
         CborDeflate: 11060,
         /// application/vnd.oma.lwm2m+tlv
         VndOmaLwm2mTlv: 11542,
@@ -742,13 +793,17 @@ iana_registry! {
         VndOmaLwm2mJson: 11543,
         /// application/vnd.oma.lwm2m+cbor
         VndOmaLwm2mCbor: 11544,
+        /// text/css
+        TextCss: 20000,
+        /// image/svg+xml
+        ImageSvgXml: 30000,
     }
 }
 
 iana_registry! {
     /// CBOR Web Token (CWT) Claims
     /// From IANA registry <https://www.iana.org/assignments/cwt/cwt.xhtml>
-    /// as of 2021-10-21.
+    /// as of 2023-07-12.
     CwtClaimName {
         /// Health certificate ("hcert": map).
         Hcert: -260,
