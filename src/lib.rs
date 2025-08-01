@@ -124,3 +124,5 @@ mod mac;
 pub use mac::*;
 mod sign;
 pub use sign::*;
+mod oscore;
+pub use oscore::*;
