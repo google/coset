@@ -67,7 +67,7 @@ fn test_cose_recipient_decode() {
 
     for (i, (recipient, recipient_data)) in tests.iter().enumerate() {
         let got = recipient.clone().to_vec().unwrap();
-        assert_eq!(*recipient_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*recipient_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseRecipient::from_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -174,7 +174,7 @@ fn test_cose_encrypt_decode() {
 
     for (i, (encrypt, encrypt_data)) in tests.iter().enumerate() {
         let got = encrypt.clone().to_vec().unwrap();
-        assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*encrypt_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseEncrypt::from_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -469,7 +469,7 @@ fn test_rfc8152_cose_encrypt_decode() {
 
     for (i, (encrypt, encrypt_data)) in tests.iter().enumerate() {
         let got = encrypt.clone().to_tagged_vec().unwrap();
-        assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*encrypt_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseEncrypt::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -508,7 +508,7 @@ fn test_cose_encrypt0_decode() {
 
     for (i, (encrypt, encrypt_data)) in tests.iter().enumerate() {
         let got = encrypt.clone().to_vec().unwrap();
-        assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*encrypt_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseEncrypt0::from_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -640,7 +640,7 @@ fn test_rfc8152_cose_encrypt0_decode() {
 
     for (i, (encrypt, encrypt_data)) in tests.iter().enumerate() {
         let got = encrypt.clone().to_tagged_vec().unwrap();
-        assert_eq!(*encrypt_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*encrypt_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseEncrypt0::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;

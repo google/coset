@@ -199,7 +199,7 @@ fn test_context_encode() {
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
         let got = key.clone().to_vec().unwrap();
-        assert_eq!(*key_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*key_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseKdfContext::from_slice(&got).unwrap();
         got.supp_pub_info.protected.original_data = None;

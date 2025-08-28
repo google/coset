@@ -98,7 +98,7 @@ fn test_cose_signature_encode() {
     ];
     for (i, (sig, sig_data)) in tests.iter().enumerate() {
         let got = sig.clone().to_vec().unwrap();
-        assert_eq!(*sig_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*sig_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseSignature::from_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -377,7 +377,7 @@ fn test_cose_sign_encode() {
     ];
     for (i, (sign, sign_data)) in tests.iter().enumerate() {
         let got = sign.clone().to_vec().unwrap();
-        assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*sign_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseSign::from_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -388,8 +388,8 @@ fn test_cose_sign_encode() {
 
         // Repeat with tagged variant.
         let got = sign.clone().to_tagged_vec().unwrap();
-        let tagged_sign_data = format!("d862{}", sign_data);
-        assert_eq!(tagged_sign_data, hex::encode(&got), "tagged case {}", i);
+        let tagged_sign_data = format!("d862{sign_data}");
+        assert_eq!(tagged_sign_data, hex::encode(&got), "tagged case {i}");
 
         let mut got = CoseSign::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -555,9 +555,7 @@ fn test_cose_sign_tagged_decode_fail() {
             "expected array with 4 items",
         ),
         (
-            concat!(
-                "1862",     // int instead of tag
-            ),
+            "1862", // int instead of tag
             "expected tag",
         ),
         (
@@ -583,9 +581,7 @@ fn test_cose_sign_tagged_decode_fail() {
             "extraneous data",
         ),
         (
-            concat!(
-                "18",     // incomplete int
-            ),
+            "18", // incomplete int
             "decode CBOR failure: Io(EndOfFile",
         ),
     ];
@@ -745,13 +741,7 @@ fn test_rfc8152_cose_sign_decode() {
 
     for (i, (sign, sign_data)) in tests.iter().enumerate() {
         let got = sign.clone().to_tagged_vec().unwrap();
-        assert_eq!(
-            *sign_data,
-            hex::encode(&got),
-            "case {}: encode {:?}",
-            i,
-            sign
-        );
+        assert_eq!(*sign_data, hex::encode(&got), "case {i}: encode {sign:?}",);
 
         let mut got = CoseSign::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -834,7 +824,7 @@ fn test_cose_sign1_encode() {
     ];
     for (i, (sign, sign_data)) in tests.iter().enumerate() {
         let got = sign.clone().to_vec().unwrap();
-        assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*sign_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseSign1::from_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -842,8 +832,8 @@ fn test_cose_sign1_encode() {
 
         // Repeat with tagged variant.
         let got = sign.clone().to_tagged_vec().unwrap();
-        let want_hex = format!("d2{}", sign_data);
-        assert_eq!(want_hex, hex::encode(&got), "tagged case {}", i);
+        let want_hex = format!("d2{sign_data}");
+        assert_eq!(want_hex, hex::encode(&got), "tagged case {i}");
 
         let mut got = CoseSign1::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -1056,9 +1046,7 @@ fn test_cose_sign1_tagged_decode_fail() {
             "extraneous data",
         ),
         (
-            concat!(
-                "12",     // incomplete int
-            ),
+            "12", // incomplete int
             "expected tag",
         ),
     ];
@@ -1095,7 +1083,7 @@ fn test_rfc8152_cose_sign1_decode() {
 
     for (i, (sign, sign_data)) in tests.iter().enumerate() {
         let got = sign.clone().to_tagged_vec().unwrap();
-        assert_eq!(*sign_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*sign_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseSign1::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;

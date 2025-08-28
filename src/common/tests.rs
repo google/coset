@@ -26,8 +26,8 @@ fn test_error_convert() {
     ));
     match e {
         CoseError::EncodeFailed => {
-            assert!(format!("{:?}", e).contains("encode CBOR failure"));
-            assert!(format!("{}", e).contains("encode CBOR failure"));
+            assert!(format!("{e:?}").contains("encode CBOR failure"));
+            assert!(format!("{e}").contains("encode CBOR failure"));
         }
         _ => panic!("unexpected error enum after conversion"),
     }
@@ -43,7 +43,7 @@ fn test_label_encode() {
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
         let got = label.clone().to_vec().unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*label_data, hex::encode(&got), "case {i}");
 
         let got = Label::from_slice(&got).unwrap();
         assert_eq!(*label, got);
@@ -82,25 +82,21 @@ fn test_label_sort() {
         let reverse_cmp = right.cmp(&left);
         let equal_cmp = left.cmp(&left);
 
-        assert_eq!(value_cmp, Ordering::Less, "{:?} < {:?}", left, right);
+        assert_eq!(value_cmp, Ordering::Less, "{left:?} < {right:?}");
         assert_eq!(
             value_partial_cmp,
             Some(Ordering::Less),
-            "{:?} < {:?}",
-            left,
-            right
+            "{left:?} < {right:?}",
         );
         assert_eq!(
             data_cmp,
             Ordering::Less,
-            "{:?}={} < {:?}={}",
-            left,
+            "{left:?}={} < {right:?}={}",
             hex::encode(&left_data),
-            right,
             hex::encode(&right_data)
         );
-        assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
-        assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
+        assert_eq!(reverse_cmp, Ordering::Greater, "{right:?} > {left:?}");
+        assert_eq!(equal_cmp, Ordering::Equal, "{left:?} = {left:?}");
     }
 }
 
@@ -164,8 +160,8 @@ fn test_label_canonical_sort() {
                 hex::encode(&right_data)
             );
         }
-        assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
-        assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
+        assert_eq!(reverse_cmp, Ordering::Greater, "{right:?} > {left:?}");
+        assert_eq!(equal_cmp, Ordering::Equal, "{left:?} = {left:?}");
     }
 }
 
@@ -194,7 +190,7 @@ fn test_registered_label_encode() {
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
         let got = label.clone().to_vec().unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*label_data, hex::encode(&got), "case {i}");
 
         let got = RegisteredLabel::from_slice(&got).unwrap();
         assert_eq!(*label, got);
@@ -228,25 +224,21 @@ fn test_registered_label_sort() {
         let reverse_cmp = right.cmp(&left);
         let equal_cmp = left.cmp(&left);
 
-        assert_eq!(value_cmp, Ordering::Less, "{:?} < {:?}", left, right);
+        assert_eq!(value_cmp, Ordering::Less, "{left:?} < {right:?}");
         assert_eq!(
             value_partial_cmp,
             Some(Ordering::Less),
-            "{:?} < {:?}",
-            left,
-            right
+            "{left:?} < {right:?}",
         );
         assert_eq!(
             data_cmp,
             Ordering::Less,
-            "{:?}={} < {:?}={}",
-            left,
+            "{left:?}={} < {right:?}={}",
             hex::encode(&left_data),
-            right,
             hex::encode(&right_data)
         );
-        assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
-        assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
+        assert_eq!(reverse_cmp, Ordering::Greater, "{right:?} > {left:?}");
+        assert_eq!(equal_cmp, Ordering::Equal, "{left:?} = {left:?}");
     }
 }
 
@@ -298,7 +290,7 @@ fn test_registered_label_with_private_encode() {
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
         let got = label.clone().to_vec().unwrap();
-        assert_eq!(*label_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*label_data, hex::encode(&got), "case {i}");
 
         let got = RegisteredLabelWithPrivate::from_slice(&got).unwrap();
         assert_eq!(*label, got);
@@ -338,25 +330,21 @@ fn test_registered_label_with_private_sort() {
         let reverse_cmp = right.cmp(&left);
         let equal_cmp = left.cmp(&left);
 
-        assert_eq!(value_cmp, Ordering::Less, "{:?} < {:?}", left, right);
+        assert_eq!(value_cmp, Ordering::Less, "{left:?} < {right:?}");
         assert_eq!(
             value_partial_cmp,
             Some(Ordering::Less),
-            "{:?} < {:?}",
-            left,
-            right
+            "{left:?} < {right:?}",
         );
         assert_eq!(
             data_cmp,
             Ordering::Less,
-            "{:?}={} < {:?}={}",
-            left,
+            "{left:?}={} < {right:?}={}",
             hex::encode(&left_data),
-            right,
             hex::encode(&right_data)
         );
-        assert_eq!(reverse_cmp, Ordering::Greater, "{:?} > {:?}", right, left);
-        assert_eq!(equal_cmp, Ordering::Equal, "{:?} = {:?}", left, left);
+        assert_eq!(reverse_cmp, Ordering::Greater, "{right:?} > {left:?}");
+        assert_eq!(equal_cmp, Ordering::Equal, "{left:?} = {left:?}");
     }
 }
 

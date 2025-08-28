@@ -177,13 +177,13 @@ pub fn expect_err<T: core::fmt::Debug, E: core::fmt::Debug + core::fmt::Display>
         }
         Err(err) => {
             assert!(
-                format!("{:?}", err).contains(err_msg),
+                format!("{err:?}").contains(err_msg),
                 "unexpected error {:?}, doesn't contain '{}' (Debug impl)",
                 err,
                 err_msg
             );
             assert!(
-                format!("{}", err).contains(err_msg),
+                format!("{err}").contains(err_msg),
                 "unexpected error {:?}, doesn't contain '{}' (Display impl)",
                 err,
                 err_msg
