@@ -25,6 +25,10 @@ use alloc::{
     vec::Vec,
 };
 
+fn no_ct_err() -> String {
+    "No ciphertext".to_string()
+}
+
 #[test]
 fn test_cose_recipient_decode() {
     let tests: Vec<(CoseRecipient, &'static str)> = vec![
@@ -702,27 +706,31 @@ fn test_cose_recipient_roundtrip() {
             .build();
 
         let recovered_pt = recipient
-            .decrypt(*context, external_aad, |ct, aad| cipher.decrypt(ct, aad))
+            .decrypt_ciphertext(*context, external_aad, no_ct_err, |ct, aad| {
+                cipher.decrypt(ct, aad)
+            })
             .unwrap();
         assert_eq!(&pt[..], recovered_pt);
 
         // Changing an unprotected header leaves the ciphertext decipherable.
         recipient.unprotected.content_type = Some(ContentType::Text("text/plain".to_owned()));
         assert!(recipient
-            .decrypt(*context, external_aad, |ct, aad| {
+            .decrypt_ciphertext(*context, external_aad, no_ct_err, |ct, aad| {
                 cipher.decrypt(ct, aad)
             })
             .is_ok());
 
         // Providing a different `aad` means the ciphertext won't validate.
         assert!(recipient
-            .decrypt(*context, b"not aad", |ct, aad| { cipher.decrypt(ct, aad) })
+            .decrypt_ciphertext(*context, b"not aad", no_ct_err, |ct, aad| {
+                cipher.decrypt(ct, aad)
+            })
             .is_err());
 
         // Changing a protected header invalidates the ciphertext.
         recipient.protected = ProtectedHeader::default();
         assert!(recipient
-            .decrypt(*context, external_aad, |ct, aad| {
+            .decrypt_ciphertext(*context, external_aad, no_ct_err, |ct, aad| {
                 cipher.decrypt(ct, aad)
             })
             .is_err());
@@ -751,7 +759,7 @@ fn test_cose_recipient_noncanonical() {
     // Deciphering the ciphertext should still succeed, because the `ProtectedHeader`
     // includes the wire data and uses it for building the decryption input.
     let recovered_pt = recipient
-        .decrypt(context, aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(context, aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .unwrap();
     assert_eq!(&pt[..], recovered_pt);
 
@@ -765,7 +773,7 @@ fn test_cose_recipient_noncanonical() {
     // inputs will use the canonical encoding of the protected header, which is not what was
     // originally used for the input.
     assert!(recreated_recipient
-        .decrypt(context, aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(context, aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 }
 
@@ -801,14 +809,31 @@ fn test_cose_recipient_result() {
 }
 
 #[test]
-#[should_panic]
 fn test_cose_recipient_missing_ciphertext() {
     let external_aad = b"This is the external aad";
     let cipher = FakeCipher {};
 
     let recipient = CoseRecipient::default();
 
+    let result = recipient.decrypt_ciphertext(
+        EncryptionContext::EncRecipient,
+        external_aad,
+        no_ct_err,
+        |ct, aad| cipher.decrypt(ct, aad),
+    );
+    assert_eq!(result, Err(no_ct_err()));
+}
+
+#[test]
+#[should_panic]
+fn test_cose_recipient_missing_ciphertext_deprecated() {
+    let external_aad = b"This is the external aad";
+    let cipher = FakeCipher {};
+
+    let recipient = CoseRecipient::default();
+
     // No ciphertext has been set, do decryption will panic.
+    #[allow(deprecated)]
     let _result = recipient.decrypt(EncryptionContext::EncRecipient, external_aad, |ct, aad| {
         cipher.decrypt(ct, aad)
     });
@@ -849,9 +874,12 @@ fn test_cose_recipient_decrypt_invalid_context() {
         .build();
 
     // Can't use a non-recipient context.
-    let _result = recipient.decrypt(EncryptionContext::CoseEncrypt, external_aad, |ct, aad| {
-        cipher.decrypt(ct, aad)
-    });
+    let _result = recipient.decrypt_ciphertext(
+        EncryptionContext::CoseEncrypt,
+        external_aad,
+        no_ct_err,
+        |ct, aad| cipher.decrypt(ct, aad),
+    );
 }
 
 #[test]
@@ -870,25 +898,25 @@ fn test_cose_encrypt_roundtrip() {
         .build();
 
     let recovered_pt = encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .unwrap();
     assert_eq!(&pt[..], recovered_pt);
 
     // Changing an unprotected header leaves the ciphertext decipherable.
     encrypt.unprotected.content_type = Some(ContentType::Text("text/plain".to_owned()));
     assert!(encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_ok());
 
     // Providing a different `aad` means the signature won't validate.
     assert!(encrypt
-        .decrypt(b"not aad", |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(b"not aad", no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 
     // Changing a protected header invalidates the ciphertext.
     encrypt.protected = ProtectedHeader::default();
     assert!(encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 }
 
@@ -917,7 +945,7 @@ fn test_cose_encrypt_noncanonical() {
     // Deciphering the ciphertext should still succeed, because the `ProtectedHeader`
     // includes the wire data and uses it for building the decryption input.
     let recovered_pt = encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .unwrap();
     assert_eq!(&pt[..], recovered_pt);
 
@@ -932,7 +960,7 @@ fn test_cose_encrypt_noncanonical() {
     // inputs will use the canonical encoding of the protected header, which is not what was
     // originally used for the input.
     assert!(recreated_encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 }
 
@@ -958,14 +986,27 @@ fn test_cose_encrypt_status() {
 }
 
 #[test]
-#[should_panic]
 fn test_cose_encrypt_missing_ciphertext() {
     let external_aad = b"This is the external aad";
     let cipher = FakeCipher {};
 
     let encrypt = CoseEncrypt::default();
 
+    let result =
+        encrypt.decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad));
+    assert_eq!(result, Err(no_ct_err()));
+}
+
+#[test]
+#[should_panic]
+fn test_cose_encrypt_missing_ciphertext_deprecated() {
+    let external_aad = b"This is the external aad";
+    let cipher = FakeCipher {};
+
+    let encrypt = CoseEncrypt::default();
+
     // No ciphertext has been set, do decryption will panic.
+    #[allow(deprecated)]
     let _result = encrypt.decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad));
 }
 
@@ -985,25 +1026,25 @@ fn test_cose_encrypt0_roundtrip() {
         .build();
 
     let recovered_pt = encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .unwrap();
     assert_eq!(&pt[..], recovered_pt);
 
     // Changing an unprotected header leaves the ciphertext decipherable.
     encrypt.unprotected.content_type = Some(ContentType::Text("text/plain".to_owned()));
     assert!(encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_ok());
 
     // Providing a different `aad` means the ciphertext won't decrypt.
     assert!(encrypt
-        .decrypt(b"not aad", |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(b"not aad", no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 
     // Changing a protected header invalidates the ciphertext.
     encrypt.protected = ProtectedHeader::default();
     assert!(encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 }
 
@@ -1032,7 +1073,7 @@ fn test_cose_encrypt0_noncanonical() {
     // Deciphering the ciphertext should still succeed, because the `ProtectedHeader`
     // includes the wire data and uses it for building the decryption input.
     let recovered_pt = encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .unwrap();
     assert_eq!(&pt[..], recovered_pt);
 
@@ -1047,7 +1088,7 @@ fn test_cose_encrypt0_noncanonical() {
     // inputs will use the canonical encoding of the protected header, which is not what was
     // originally used for the input.
     assert!(recreated_encrypt
-        .decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad))
+        .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 }
 #[test]
@@ -1072,13 +1113,26 @@ fn test_cose_encrypt0_status() {
 }
 
 #[test]
-#[should_panic]
 fn test_cose_encrypt0_missing_ciphertext() {
     let external_aad = b"This is the external aad";
     let cipher = FakeCipher {};
 
     let encrypt = CoseEncrypt0::default();
 
+    let result =
+        encrypt.decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad));
+    assert_eq!(result, Err(no_ct_err()));
+}
+
+#[test]
+#[should_panic]
+fn test_cose_encrypt0_missing_ciphertext_deprecated() {
+    let external_aad = b"This is the external aad";
+    let cipher = FakeCipher {};
+
+    let encrypt = CoseEncrypt0::default();
+
     // No ciphertext has been set, do decryption will panic.
+    #[allow(deprecated)]
     let _result = encrypt.decrypt(external_aad, |ct, aad| cipher.decrypt(ct, aad));
 }

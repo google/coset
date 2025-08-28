@@ -25,6 +25,10 @@ use alloc::{
     vec::Vec,
 };
 
+fn no_payload_err() -> String {
+    "No payload".to_string()
+}
+
 #[test]
 fn test_cose_mac_decode() {
     let tests: Vec<(CoseMac, &'static str)> = vec![
@@ -535,24 +539,28 @@ fn test_cose_mac_roundtrip() {
         .build();
 
     assert!(mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_ok());
 
     // Changing an unprotected header leaves a correct tag.
     mac.unprotected.content_type = Some(ContentType::Text("text/plain".to_owned()));
     assert!(mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_ok());
 
     // Providing a different `aad` means the tag won't validate
     assert!(mac
-        .verify_tag(b"not aad", |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(b"not aad", no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_err());
 
     // Changing a protected header invalidates the tag.
     mac.protected = ProtectedHeader::default();
     assert!(mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_err());
 }
 
@@ -577,7 +585,8 @@ fn test_cose_mac_noncanonical() {
     // Checking the MAC should still succeed, because the `ProtectedHeader`
     // includes the wire data and uses it for building the input.
     assert!(mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_ok());
 
     // However, if we attempt to build the same decryption inputs by hand (thus not including the
@@ -592,7 +601,8 @@ fn test_cose_mac_noncanonical() {
     // inputs will use the canonical encoding of the protected header, which is not what was
     // originally used for the input.
     assert!(recreated_mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_err());
 }
 
@@ -640,7 +650,25 @@ fn test_cose_mac_verify_tag_no_payload() {
 
     mac.payload = None;
     // Trying to verify with no payload available panics.
+    #[allow(deprecated)]
     let _result = mac.verify_tag(external_aad, |tag, data| tagger.verify(tag, data));
+}
+
+#[test]
+fn test_cose_mac_verify_payload_tag_no_payload() {
+    let tagger = FakeMac {};
+    let external_aad = b"This is the external aad";
+    let mut mac = CoseMacBuilder::new()
+        .protected(HeaderBuilder::new().key_id(b"11".to_vec()).build())
+        .payload(b"This is the data".to_vec())
+        .create_tag(external_aad, |data| tagger.compute(data))
+        .build();
+
+    mac.payload = None;
+    let result = mac.verify_payload_tag(external_aad, no_payload_err, |tag, data| {
+        tagger.verify(tag, data)
+    });
+    assert_eq!(result, Err(no_payload_err()));
 }
 
 #[test]
@@ -654,24 +682,28 @@ fn test_cose_mac0_roundtrip() {
         .build();
 
     assert!(mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_ok());
 
     // Changing an unprotected header leaves a correct tag.
     mac.unprotected.content_type = Some(ContentType::Text("text/plain".to_owned()));
     assert!(mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_ok());
 
     // Providing a different `aad` means the tag won't validate
     assert!(mac
-        .verify_tag(b"not aad", |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(b"not aad", no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_err());
 
     // Changing a protected header invalidates the tag.
     mac.protected = ProtectedHeader::default();
     assert!(mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_err());
 }
 
@@ -696,7 +728,8 @@ fn test_cose_mac0_noncanonical() {
     // Checking the MAC should still succeed, because the `ProtectedHeader`
     // includes the wire data and uses it for building the input.
     assert!(mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_ok());
 
     // However, if we attempt to build the same decryption inputs by hand (thus not including the
@@ -711,7 +744,8 @@ fn test_cose_mac0_noncanonical() {
     // inputs will use the canonical encoding of the protected header, which is not what was
     // originally used for the input.
     assert!(recreated_mac
-        .verify_tag(external_aad, |tag, data| tagger.verify(tag, data))
+        .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+            .verify(tag, data))
         .is_err());
 }
 
@@ -759,5 +793,6 @@ fn test_cose_mac0_verify_tag_no_payload() {
 
     mac.payload = None;
     // Trying to verify with no payload available panics.
+    #[allow(deprecated)]
     let _result = mac.verify_tag(external_aad, |tag, data| tagger.verify(tag, data));
 }
