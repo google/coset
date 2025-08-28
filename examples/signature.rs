@@ -69,7 +69,7 @@ fn main() -> Result<(), CoseError> {
 
     // Check the signature, which needs to have the same `aad` provided.
     let result = sign1.verify_signature(aad, |sig, data| verifier.verify(sig, data));
-    println!("Signature verified: {:?}.", result);
+    println!("Signature verified: {result:?}.");
     assert!(result.is_ok());
 
     // Changing an unprotected header leaves the signature valid.

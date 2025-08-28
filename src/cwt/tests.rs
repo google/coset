@@ -31,7 +31,7 @@ fn test_cwt_encode() {
                 "01", "63", "616263" // 1 (iss) => 3-tstr
             ),
         ),
-        (ClaimsSetBuilder::new().build(), concat!("a0")),
+        (ClaimsSetBuilder::new().build(), "a0"),
         (
             ClaimsSetBuilder::new()
                 .issuer("aaa".to_owned())
@@ -106,7 +106,7 @@ fn test_cwt_encode() {
     ];
     for (i, (claims, claims_data)) in tests.iter().enumerate() {
         let got = claims.clone().to_vec().unwrap();
-        assert_eq!(*claims_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*claims_data, hex::encode(&got), "case {i}");
 
         let got = ClaimsSet::from_slice(&got).unwrap();
         assert_eq!(*claims, got);

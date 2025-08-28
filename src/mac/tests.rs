@@ -53,7 +53,7 @@ fn test_cose_mac_decode() {
     ];
     for (i, (mac, mac_data)) in tests.iter().enumerate() {
         let got = mac.clone().to_vec().unwrap();
-        assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*mac_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseMac::from_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -347,7 +347,7 @@ fn test_rfc8152_cose_mac_decode() {
 
     for (i, (mac, mac_data)) in tests.iter().enumerate() {
         let got = mac.clone().to_tagged_vec().unwrap();
-        assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*mac_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseMac::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -387,7 +387,7 @@ fn test_cose_mac0_decode() {
     ];
     for (i, (mac, mac_data)) in tests.iter().enumerate() {
         let got = mac.clone().to_vec().unwrap();
-        assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*mac_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseMac0::from_slice(&got).unwrap();
         got.protected.original_data = None;
@@ -492,7 +492,7 @@ fn test_rfc8152_cose_mac0_decode() {
 
     for (i, (mac, mac_data)) in tests.iter().enumerate() {
         let got = mac.clone().to_tagged_vec().unwrap();
-        assert_eq!(*mac_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*mac_data, hex::encode(&got), "case {i}");
 
         let mut got = CoseMac0::from_tagged_slice(&got).unwrap();
         got.protected.original_data = None;

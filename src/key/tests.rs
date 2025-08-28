@@ -208,7 +208,7 @@ fn test_cose_key_encode() {
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
         let got = key.clone().to_vec().unwrap();
-        assert_eq!(*key_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*key_data, hex::encode(&got), "case {i}");
 
         let got = CoseKey::from_slice(&got).unwrap();
         assert_eq!(*key, got);
@@ -293,7 +293,7 @@ fn test_rfc8152_public_cose_key_decode() {
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
         let got = key.clone().to_vec().unwrap();
-        assert_eq!(*key_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*key_data, hex::encode(&got), "case {i}");
 
         let got = CoseKey::from_slice(&got).unwrap();
         assert_eq!(*key, got);
@@ -430,7 +430,7 @@ fn test_rfc8152_private_cose_key_decode() {
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
         let got = key.clone().to_vec().unwrap();
-        assert_eq!(*key_data, hex::encode(&got), "case {}", i);
+        assert_eq!(*key_data, hex::encode(&got), "case {i}");
 
         let got = CoseKey::from_slice(&got).unwrap();
         assert_eq!(*key, got);

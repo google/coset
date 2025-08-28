@@ -85,7 +85,7 @@ fn main() -> Result<(), CoseError> {
 
     // Check the signature.
     let result = sign1.verify_signature(aad, |sig, data| verifier.verify(sig, data));
-    println!("Signature verified: {:?}.", result);
+    println!("Signature verified: {result:?}.");
     assert!(result.is_ok());
 
     // Now it's safe to parse the payload.
