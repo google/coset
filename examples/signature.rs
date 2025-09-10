@@ -45,10 +45,11 @@ fn main() -> Result<(), CoseError> {
     let aad = b"this is additional data";
 
     // Build a `CoseSign1` object.
-    let protected = coset::HeaderBuilder::new()
+    let mut protected = coset::HeaderBuilder::new()
         .algorithm(iana::Algorithm::ES256)
         .key_id(b"11".to_vec())
         .build();
+    protected.alg = Some(coset::Algorithm::PrivateUse(-49));
     let sign1 = coset::CoseSign1Builder::new()
         .protected(protected)
         .payload(pt.to_vec())

@@ -205,6 +205,47 @@ fn test_cose_key_encode() {
                 "22", "f4" // -3 (y) => false
             ),
         ),
+        (
+            CoseKey {
+                kty: KeyType::Unassigned(17),
+                key_id: vec![1, 2, 3],
+                ..Default::default()
+            },
+            concat!(
+                "a2", // 2-map
+                "01", "11", // 1 (kty) => 17 (unassigned)
+                "02", "43", "010203" // 2 (kid) => 3-bstr
+            ),
+        ),
+        (
+            CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                key_ops: vec![
+                    KeyOperation::Assigned(iana::KeyOperation::Encrypt),
+                    KeyOperation::Unassigned(11),
+                ]
+                .into_iter()
+                .collect(),
+                ..Default::default()
+            },
+            concat!(
+                "a2", // 2-map
+                "01", "01", // 1 (kty) => OKP
+                "04", "82", "03", "0b", // 4 (key_ops) => 3-tuple [3, 11]
+            ),
+        ),
+        (
+            CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::OKP),
+                alg: Some(Algorithm::Unassigned(0x99)),
+                ..Default::default()
+            },
+            concat!(
+                "a2", // 2-map
+                "01", "01", // 1 (kty) => OKP
+                "03", "1899", // 3 (alg) => 0x99
+            ),
+        ),
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
         let got = key.clone().to_vec().unwrap();
@@ -459,14 +500,6 @@ fn test_cose_key_decode_fail() {
         (
             concat!(
                 "a2", // 2-map
-                "01", "11", // 1 (kty) => invalid value
-                "02", "43", "010203" // 2 (kid) => 3-bstr
-            ),
-            "expected recognized IANA value",
-        ),
-        (
-            concat!(
-                "a2", // 2-map
                 "01", "4101", // 1 (kty) => 1-bstr (invalid value type)
                 "02", "43", "010203" // 2 (kid) => 3-bstr
             ),
@@ -499,14 +532,6 @@ fn test_cose_key_decode_fail() {
             concat!(
                 "a2", // 2-map
                 "01", "01", // 1 (kty) => OKP
-                "03", "1899", // 3 (alg) => 0x99
-            ),
-            "expected value in IANA or private use range",
-        ),
-        (
-            concat!(
-                "a2", // 2-map
-                "01", "01", // 1 (kty) => OKP
                 "03", "4101", // 3 (alg) => 1-bstr (invalid value type)
             ),
             "expected int/tstr",
@@ -534,14 +559,6 @@ fn test_cose_key_decode_fail() {
                 "04", "80", // 4 (key_ops) => 0-tuple []
             ),
             "expected non-empty array",
-        ),
-        (
-            concat!(
-                "a2", // 2-map
-                "01", "01", // 1 (kty) => OKP
-                "04", "82", "03", "0b", // 4 (key_ops) => 3-tuple [3,11]
-            ),
-            "expected recognized IANA value",
         ),
         (
             concat!(
