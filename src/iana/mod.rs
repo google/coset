@@ -254,6 +254,12 @@ iana_registry! {
         RS384: -258,
         /// RSASSA-PKCS1-v1_5 using SHA-256
         RS256: -257,
+        /// ML-DSA-87
+        ML_DSA_87: -50,
+        /// ML-DSA-65
+        ML_DSA_65: -49,
+        /// ML-DSA-44
+        ML_DSA_44: -48,
         /// ECDSA using secp256k1 curve and SHA-256
         ES256K: -47,
         /// HSS/LMS hash-based digital signature
@@ -580,6 +586,19 @@ iana_registry! {
 }
 
 iana_registry! {
+    /// IANA-registered COSE key parameters for keys of type [`KeyType::AKP`].
+    ///
+    /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type-parameters>
+    /// as of 2025-09-13.
+    AkpKeyParameter {
+        /// Public key
+        Pub: -1,
+        /// Private key
+        Priv: -2,
+    }
+}
+
+iana_registry! {
     /// IANA-registered COSE key types.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#key-type>
@@ -599,6 +618,8 @@ iana_registry! {
         HSS_LMS: 5,
         /// WalnutDSA public key
         WalnutDSA: 6,
+        /// Algorithm Key Pair
+        AKP: 7,
     }
 }
 
