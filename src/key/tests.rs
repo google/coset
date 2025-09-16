@@ -703,6 +703,23 @@ fn test_key_builder() {
             },
         ),
         (
+            CoseKeyBuilder::new_akp_key(vec![1, 2, 3], vec![4, 5, 6]).build(),
+            CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::AKP),
+                params: vec![
+                    (
+                        Label::Int(iana::AkpKeyParameter::Pub as i64),
+                        Value::Bytes(vec![1, 2, 3]),
+                    ),
+                    (
+                        Label::Int(iana::AkpKeyParameter::Priv as i64),
+                        Value::Bytes(vec![4, 5, 6]),
+                    ),
+                ],
+                ..Default::default()
+            },
+        ),
+        (
             CoseKeyBuilder::new_okp_key().build(),
             CoseKey {
                 kty: KeyType::Assigned(iana::KeyType::OKP),

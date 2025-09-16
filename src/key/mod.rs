@@ -279,6 +279,24 @@ impl CoseKeyBuilder {
         })
     }
 
+    /// Constructor for an algorithm key pair.
+    pub fn new_akp_key(pub_key: Vec<u8>, priv_key: Vec<u8>) -> Self {
+        Self(CoseKey {
+            kty: KeyType::Assigned(iana::KeyType::AKP),
+            params: vec![
+                (
+                    Label::Int(iana::AkpKeyParameter::Pub as i64),
+                    Value::Bytes(pub_key),
+                ),
+                (
+                    Label::Int(iana::AkpKeyParameter::Priv as i64),
+                    Value::Bytes(priv_key),
+                ),
+            ],
+            ..Default::default()
+        })
+    }
+
     /// Set the key type.
     #[must_use]
     pub fn key_type(mut self, key_type: iana::KeyType) -> Self {
