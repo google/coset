@@ -108,7 +108,9 @@ fn test_cwt_encode() {
         let got = claims.clone().to_vec().unwrap();
         assert_eq!(*claims_data, hex::encode(&got), "case {i}");
 
-        let got = ClaimsSet::from_slice(&got).unwrap();
+        let got = ClaimsSet::from_slice(&got).unwrap_or_else(|e| {
+            panic!("deserialize failed on case {}, {}: {:?}", i, claims_data, e)
+        });
         assert_eq!(*claims, got);
     }
 }

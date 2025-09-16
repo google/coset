@@ -196,6 +196,19 @@ fn test_context_encode() {
                 "41", "03", // 1-bstr
             ),
         ),
+        (
+            CoseKdfContext {
+                algorithm_id: Algorithm::Unassigned(8),
+                ..CoseKdfContext::default()
+            },
+            concat!(
+                "84", // 4-tuple
+                "08", // int : unassigned value
+                "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
+                "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
+                "82", "0040", // 2-tuple: [0, 0-bstr]
+            ),
+        ),
     ];
     for (i, (key, key_data)) in tests.iter().enumerate() {
         let got = key.clone().to_vec().unwrap();
@@ -237,16 +250,6 @@ fn test_context_decode_fail() {
                 "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
             ),
             "decode CBOR failure: Io(EndOfFile",
-        ),
-        (
-            concat!(
-                "84", // 4-tuple
-                "08", // int : unassigned value
-                "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
-                "83", "f6f6f6", // 3-tuple: [nil, nil, nil]
-                "82", "0040", // 2-tuple: [0, 0-bstr]
-            ),
-            "expected value in IANA or private use range",
         ),
         (
             concat!(

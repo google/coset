@@ -160,6 +160,26 @@ fn test_header_encode() {
                 "3a00010000", // crit => 1-arr [-65537]
             ),
         ),
+        (
+            Header {
+                content_type: Some(ContentType::Unassigned(1542)),
+                ..Default::default()
+            },
+            concat!(
+                "a1", // 1-map
+                "03", "19", "0606", // 3 (content-type) => unassigned value 1542
+            ),
+        ),
+        (
+            Header {
+                alg: Some(Algorithm::Unassigned(8)),
+                ..Default::default()
+            },
+            concat!(
+                "a1", // 1-map
+                "01", "08", // 1 (alg) => unassigned value 8
+            ),
+        ),
     ];
     for (i, (header, header_data)) in tests.iter().enumerate() {
         let got = header.clone().to_vec().unwrap();
@@ -216,13 +236,6 @@ fn test_header_decode_fail() {
         (
             concat!(
                 "a1", // 1-map
-                "01", "08", // 1 (alg) => invalid value
-            ),
-            "expected value in IANA or private use range",
-        ),
-        (
-            concat!(
-                "a1", // 1-map
                 "01", "4101", // 1 (alg) => bstr (invalid value type)
             ),
             "expected int/tstr",
@@ -254,13 +267,6 @@ fn test_header_decode_fail() {
                 "03", "81", "4101", // 3 (content-type) => [bstr] (invalid value type)
             ),
             "expected int/tstr",
-        ),
-        (
-            concat!(
-                "a1", // 1-map
-                "03", "19", "0606", // 3 (content-type) => invalid value 1542
-            ),
-            "expected recognized IANA value",
         ),
         (
             concat!(

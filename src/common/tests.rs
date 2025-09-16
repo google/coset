@@ -186,6 +186,8 @@ fn test_registered_label_encode() {
         (RegisteredLabel::Assigned(iana::Algorithm::A192GCM), "02"),
         (RegisteredLabel::Assigned(iana::Algorithm::EdDSA), "27"),
         (RegisteredLabel::Text("abc".to_owned()), "63616263"),
+        (RegisteredLabel::Unassigned(9), "09"),
+        (RegisteredLabel::Unassigned(-20_000), "394e1f"),
     ];
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
@@ -247,8 +249,6 @@ fn test_registered_label_decode_fail() {
     let tests = [
         ("43010203", "expected int/tstr"),
         ("", "decode CBOR failure: Io(EndOfFile"),
-        ("09", "expected recognized IANA value"),
-        ("394e1f", "expected recognized IANA value"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
@@ -266,7 +266,7 @@ iana_registry! {
 
 impl WithPrivateRange for TestPrivateLabel {
     fn is_private(i: i64) -> bool {
-        i > 10 || i < 1000
+        !(-50_000..=10).contains(&i)
     }
 }
 
@@ -286,6 +286,8 @@ fn test_registered_label_with_private_encode() {
             "3a0001116f",
         ),
         (RegisteredLabelWithPrivate::PrivateUse(11), "0b"),
+        (RegisteredLabelWithPrivate::Unassigned(9), "09"),
+        (RegisteredLabelWithPrivate::Unassigned(-20_000), "394e1f"),
     ];
 
     for (i, (label, label_data)) in tests.iter().enumerate() {
@@ -293,7 +295,7 @@ fn test_registered_label_with_private_encode() {
         assert_eq!(*label_data, hex::encode(&got), "case {i}");
 
         let got = RegisteredLabelWithPrivate::from_slice(&got).unwrap();
-        assert_eq!(*label, got);
+        assert_eq!(*label, got, "case {i}: {label_data}");
     }
 }
 
@@ -353,8 +355,6 @@ fn test_registered_label_with_private_decode_fail() {
     let tests = [
         ("43010203", "expected int/tstr"),
         ("", "decode CBOR failure: Io(EndOfFile"),
-        ("09", "expected value in IANA or private use range"),
-        ("394e1f", "expected value in IANA or private use range"),
     ];
     for (label_data, err_msg) in tests.iter() {
         let data = hex::decode(label_data).unwrap();
