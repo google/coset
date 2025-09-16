@@ -4,6 +4,8 @@
 
 - Breaking change:  alter type of `crit` field in `Header` to support private-use labels (in accordance with
   [9052 §3.1](https://datatracker.ietf.org/doc/html/rfc9052#name-common-cose-header-paramete)).
+- Deprecate `CoseMac[0]::verify_tag` in favour of `verify_payload_tag`.
+- Deprecate `CoseEncrypt[0]::decrypt`, `CoseRecipient::decrypt` in favour of `decrypt_ciphertext`.
 
 ## 0.3.8 - 2024-07-24
 

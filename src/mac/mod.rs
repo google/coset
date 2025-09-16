@@ -100,10 +100,32 @@ impl CoseMac {
     /// # Panics
     ///
     /// This function will panic if the `payload` has not been set.
+    #[deprecated = "Use verify_payload_tag() to ensure payload is present"]
     pub fn verify_tag<F, E>(&self, external_aad: &[u8], verify: F) -> Result<(), E>
     where
         F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
     {
+        let tbm = self.tbm(external_aad);
+        verify(&self.tag, &tbm)
+    }
+
+    /// Verify the `tag` value using the provided `mac` function, feeding it
+    /// the `tag` value and the combined to-be-MACed data (in that order).
+    /// If the `CoseMac` has no payload, then `missing_payload_error()` will
+    /// be returned.
+    pub fn verify_payload_tag<F, E, G>(
+        &self,
+        external_aad: &[u8],
+        missing_payload_error: G,
+        verify: F,
+    ) -> Result<(), E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
+        G: FnOnce() -> E,
+    {
+        if self.payload.is_none() {
+            return Err(missing_payload_error());
+        }
         let tbm = self.tbm(external_aad);
         verify(&self.tag, &tbm)
     }
@@ -236,10 +258,32 @@ impl CoseMac0 {
     /// # Panics
     ///
     /// This function will panic if the `payload` has not been set.
+    #[deprecated = "Use verify_payload_tag() to ensure payload is present"]
     pub fn verify_tag<F, E>(&self, external_aad: &[u8], verify: F) -> Result<(), E>
     where
         F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
     {
+        let tbm = self.tbm(external_aad);
+        verify(&self.tag, &tbm)
+    }
+
+    /// Verify the `tag` value using the provided `mac` function, feeding it
+    /// the `tag` value and the combined to-be-MACed data (in that order).
+    /// If the `CoseMac` has no payload, then `missing_payload_error()` will
+    /// be returned.
+    pub fn verify_payload_tag<F, E, G>(
+        &self,
+        external_aad: &[u8],
+        missing_payload_error: G,
+        verify: F,
+    ) -> Result<(), E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<(), E>,
+        G: FnOnce() -> E,
+    {
+        if self.payload.is_none() {
+            return Err(missing_payload_error());
+        }
         let tbm = self.tbm(external_aad);
         verify(&self.tag, &tbm)
     }

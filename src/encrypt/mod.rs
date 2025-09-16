@@ -102,6 +102,7 @@ impl CoseRecipient {
     ///
     /// This function will panic if no `ciphertext` is available. It will also panic
     /// if the `context` parameter does not refer to a recipient context.
+    #[deprecated = "Use decrypt_ciphertext() to ensure ciphertext is present"]
     pub fn decrypt<F, E>(
         &self,
         context: EncryptionContext,
@@ -112,6 +113,38 @@ impl CoseRecipient {
         F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
     {
         let ct = self.ciphertext.as_ref().unwrap(/* safe: documented */);
+        match context {
+            EncryptionContext::EncRecipient
+            | EncryptionContext::MacRecipient
+            | EncryptionContext::RecRecipient => {}
+            _ => panic!("unsupported encryption context {:?}", context), // safe: documented
+        }
+        let aad = enc_structure_data(context, self.protected.clone(), external_aad);
+        cipher(ct, &aad)
+    }
+
+    /// Decrypt the `ciphertext` value with an AEAD, using `cipher` to decrypt the cipher text and
+    /// combined AAD as per RFC 8152 section 5.3.  Returns `missing_ciphertext_error()` if the
+    /// `ciphertext` is not set.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the `context` parameter does not refer to a recipient context.
+    pub fn decrypt_ciphertext<F, E, G>(
+        &self,
+        context: EncryptionContext,
+        external_aad: &[u8],
+        missing_ciphertext_error: G,
+        cipher: F,
+    ) -> Result<Vec<u8>, E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
+        G: FnOnce() -> E,
+    {
+        let ct = self
+            .ciphertext
+            .as_ref()
+            .ok_or_else(missing_ciphertext_error)?;
         match context {
             EncryptionContext::EncRecipient
             | EncryptionContext::MacRecipient
@@ -267,11 +300,36 @@ impl CoseEncrypt {
     /// # Panics
     ///
     /// This function will panic if no `ciphertext` is available.
+    #[deprecated = "Use decrypt_ciphertext() to ensure ciphertext is present"]
     pub fn decrypt<F, E>(&self, external_aad: &[u8], cipher: F) -> Result<Vec<u8>, E>
     where
         F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
     {
         let ct = self.ciphertext.as_ref().unwrap(/* safe: documented */);
+        let aad = enc_structure_data(
+            EncryptionContext::CoseEncrypt,
+            self.protected.clone(),
+            external_aad,
+        );
+        cipher(ct, &aad)
+    }
+
+    /// Decrypt the `ciphertext` value with an AEAD, using `cipher` to decrypt the cipher text and
+    /// combined AAD.  Returns `missing_ciphertext_error()` if the `ciphertext` is not set.
+    pub fn decrypt_ciphertext<F, E, G>(
+        &self,
+        external_aad: &[u8],
+        missing_ciphertext_error: G,
+        cipher: F,
+    ) -> Result<Vec<u8>, E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
+        G: FnOnce() -> E,
+    {
+        let ct = self
+            .ciphertext
+            .as_ref()
+            .ok_or_else(missing_ciphertext_error)?;
         let aad = enc_structure_data(
             EncryptionContext::CoseEncrypt,
             self.protected.clone(),
@@ -395,11 +453,36 @@ impl CoseEncrypt0 {
     /// # Panics
     ///
     /// This function will panic if no `ciphertext` is available.
+    #[deprecated = "Use decrypt_ciphertext() to ensure ciphertext is present"]
     pub fn decrypt<F, E>(&self, external_aad: &[u8], cipher: F) -> Result<Vec<u8>, E>
     where
         F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
     {
         let ct = self.ciphertext.as_ref().unwrap(/* safe: documented */);
+        let aad = enc_structure_data(
+            EncryptionContext::CoseEncrypt0,
+            self.protected.clone(),
+            external_aad,
+        );
+        cipher(ct, &aad)
+    }
+
+    /// Decrypt the `ciphertext` value with an AEAD, using `cipher` to decrypt the cipher text and
+    /// combined AAD.  Returns `missing_ciphertext_error()` if the `ciphertext` is not set.
+    pub fn decrypt_ciphertext<F, E, G>(
+        &self,
+        external_aad: &[u8],
+        missing_ciphertext_error: G,
+        cipher: F,
+    ) -> Result<Vec<u8>, E>
+    where
+        F: FnOnce(&[u8], &[u8]) -> Result<Vec<u8>, E>,
+        G: FnOnce() -> E,
+    {
+        let ct = self
+            .ciphertext
+            .as_ref()
+            .ok_or_else(missing_ciphertext_error)?;
         let aad = enc_structure_data(
             EncryptionContext::CoseEncrypt0,
             self.protected.clone(),
