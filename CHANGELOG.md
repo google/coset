@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.4.0 - TBD
+## 0.4.0 - 2025-09-18
 
 - Breaking change:  alter type of `crit` field in `Header` to support private-use labels (in accordance with
   [9052 §3.1](https://datatracker.ietf.org/doc/html/rfc9052#name-common-cose-header-paramete)).
