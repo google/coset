@@ -230,22 +230,30 @@ iana_registry! {
     /// IANA-registered COSE algorithms.
     ///
     /// From IANA registry <https://www.iana.org/assignments/cose/cose.xhtml#algorithms>
-    /// as of 2025-09-13.
+    /// as of 2025-11-06.
     Algorithm {
-        /// RSASSA-PKCS1-v1_5 using SHA-1
+        /// RSASSA-PKCS1-v1_5 using SHA-1 (deprecated)
         RS1: -65535,
-        /// AES-CTR with 128-bit key
+        /// AES-CTR with 128-bit key (deprecated)
         AesCtr128: -65534,
-        /// AES-CTR with 192-bit key
+        /// AES-CTR with 192-bit key (deprecated)
         AesCtr192: -65533,
-        /// AES-CTR with 256-bit key
+        /// AES-CTR with 256-bit key (deprecated)
         AesCtr256: -65532,
-        /// AES-CBC with 128-bit key
+        /// AES-CBC with 128-bit key (deprecated)
         AesCbc128: -65531,
-        /// AES-CBC with 192-bit key
+        /// AES-CBC with 192-bit key (deprecated)
         AesCbc192: -65530,
-        /// AES-CBC with 256-bit key
+        /// AES-CBC with 256-bit key (deprecated)
         AesCbc256: -65529,
+        /// ECDSA using BrainpoolP512r1 curve and SHA-512
+        ESB512: -268,
+        /// ECDSA using BrainpoolP384r1 curve and SHA-384
+        ESB384: -267,
+        /// ECDSA using BrainpoolP320r1 curve and SHA-384
+        ESB320: -266,
+        /// ECDSA using BrainpoolP256r1 curve and SHA-256
+        ESB256: -265,
         /// WalnutDSA signature
         WalnutDSA: -260,
         /// RSASSA-PKCS1-v1_5 using SHA-512
@@ -254,6 +262,12 @@ iana_registry! {
         RS384: -258,
         /// RSASSA-PKCS1-v1_5 using SHA-256
         RS256: -257,
+        /// EdDSA using the Ed448 parameter set in Section 5.2 of RFC8032
+        Ed448: -53,
+        /// ECDSA using P-521 curve and SHA-512
+        ESP512: -52,
+        /// ECDSA using P-384 curve and SHA-384
+        ESP384: -51,
         /// ML-DSA-87
         ML_DSA_87: -50,
         /// ML-DSA-65
@@ -282,9 +296,9 @@ iana_registry! {
         PS384: -38,
         /// RSASSA-PSS w/ SHA-256
         PS256: -37,
-        /// ECDSA w/ SHA-512
+        /// ECDSA w/ SHA-512 (deprecated)
         ES512: -36,
-        /// ECDSA w/ SHA-384
+        /// ECDSA w/ SHA-384 (deprecated)
         ES384: -35,
         /// ECDH SS w/ Concat KDF and AES Key Wrap w/ 256-bit key
         ECDH_SS_A256KW: -34,
@@ -306,6 +320,8 @@ iana_registry! {
         ECDH_ES_HKDF_512: -26,
         /// ECDH ES w/ HKDF - generate key directly
         ECDH_ES_HKDF_256: -25,
+        /// EdDSA using the Ed25519 parameter set in Section 5.1 of RFC8032
+        Ed25519: -19,
         /// SHAKE-128 256-bit Hash Value
         SHAKE128: -18,
         /// SHA-2 512-bit Hash truncated to 256-bits
@@ -324,9 +340,11 @@ iana_registry! {
         Direct_HKDF_SHA_512: -11,
         /// Shared secret w/ HKDF and SHA-256
         Direct_HKDF_SHA_256: -10,
-        /// EdDSA
+        /// ECDSA using P-256 curve and SHA-256
+        ESP256: -9,
+        /// EdDSA (deprecated)
         EdDSA: -8,
-        /// ECDSA w/ SHA-256
+        /// ECDSA w/ SHA-256 (deprecated)
         ES256: -7,
         /// Direct use of CEK
         Direct: -6,
