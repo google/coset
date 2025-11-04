@@ -23,7 +23,7 @@ This crate supports `no_std` (when the `std` feature is not set, which is the de
 
 ## Minimum Supported Rust Version
 
-MSRV is 1.58.
+MSRV is 1.81.
 
 ## Integer Ranges
 

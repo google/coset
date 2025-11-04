@@ -8,6 +8,7 @@ description = "Set of types for supporting COSE"
 repository = "https://github.com/google/coset"
 keywords = ["cryptography", "cose"]
 categories = ["cryptography"]
+rust-version = "1.81"
 
 [features]
 default = []
