@@ -15,7 +15,9 @@ example](examples/signature.rs) for documentation on how to use the code.
 
 ## Features
 
-The `std` feature of the crate enables an implementation of `std::error::Error` for `CoseError`.
+The `std` feature of the crate does nothing, and is maintained for back-compatibility.  (It previously
+enabled an implementation of `std::error::Error` for `CoseError`, but there is now an implementation
+of `core::error::Error` that is always present.)
 
 ## `no_std` Support
 

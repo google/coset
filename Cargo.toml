@@ -1,6 +1,6 @@
 [package]
 name = "coset"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["David Drysdale <drysdale@google.com>", "Paul Crowley <paulcrowley@google.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -12,7 +12,10 @@ rust-version = "1.81"
 
 [features]
 default = []
-# `std` feature enables an `Error` impl for `CoseError`
+
+# The `std` feature is maintained for back-compatibility; it previously enabled a
+# `std::error::Error` impl for `CoseError`, but the code now (always) has a
+# `core::error::Error` impl.
 std = []
 
 [dependencies]
