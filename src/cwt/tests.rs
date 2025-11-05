@@ -20,7 +20,7 @@ use alloc::{borrow::ToOwned, vec};
 
 #[test]
 fn test_cwt_encode() {
-    let tests = vec![
+    let tests = [
         (
             ClaimsSet {
                 issuer: Some("abc".to_owned()),

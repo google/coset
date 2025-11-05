@@ -20,7 +20,7 @@ use alloc::{borrow::ToOwned, vec};
 
 #[test]
 fn test_header_encode() {
-    let tests = vec![
+    let tests = [
         (
             Header {
                 alg: Some(Algorithm::Assigned(iana::Algorithm::A128GCM)),
