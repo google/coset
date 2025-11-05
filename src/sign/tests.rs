@@ -27,7 +27,7 @@ use alloc::{
 
 #[test]
 fn test_cose_signature_encode() {
-    let tests = vec![
+    let tests = [
         (
             CoseSignature::default(),
             concat!(
@@ -125,7 +125,7 @@ fn test_cose_signature_decode_noncanonical() {
 
 #[test]
 fn test_cose_signature_decode_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "a2",       // 2-map
@@ -269,7 +269,7 @@ fn test_cose_signature_builder() {
 
 #[test]
 fn test_cose_sign_encode() {
-    let tests = vec![
+    let tests = [
         (
             CoseSign::default(),
             concat!(
@@ -509,7 +509,7 @@ fn test_cose_sign_decode_fail() {
 
 #[test]
 fn test_cose_sign_tagged_decode_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "d862",     // tag(98)
@@ -595,7 +595,7 @@ fn test_cose_sign_tagged_decode_fail() {
 #[test]
 fn test_rfc8152_cose_sign_decode() {
     // COSE_Sign structures from RFC 8152 section C.1.
-    let tests = vec![
+    let tests = [
         (
             // C.1.1: Single Signature
             CoseSignBuilder::new()
@@ -757,7 +757,7 @@ fn test_rfc8152_cose_sign_decode() {
 
 #[test]
 fn test_cose_sign1_encode() {
-    let tests = vec![
+    let tests = [
         (
             CoseSign1Builder::new().payload(vec![]).build(),
             concat!(
@@ -843,7 +843,7 @@ fn test_cose_sign1_encode() {
 
 #[test]
 fn test_cose_sign1_decode_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "a2",       // 2-map
@@ -936,7 +936,7 @@ fn test_cose_sign1_decode_fail() {
 
 #[test]
 fn test_cose_sign1_decode_noncanonical() {
-    let tests = vec![(
+    let tests = [(
         CoseSign1Builder::new()
             .protected(
                 HeaderBuilder::new()
@@ -978,7 +978,7 @@ fn test_cose_sign1_decode_noncanonical() {
 
 #[test]
 fn test_cose_sign1_tagged_decode_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "d2",       // tag(18)
@@ -1060,7 +1060,7 @@ fn test_cose_sign1_tagged_decode_fail() {
 #[test]
 fn test_rfc8152_cose_sign1_decode() {
     // COSE_Sign1 structures from RFC 8152 section C.2.
-    let tests = vec![
+    let tests = [
         (
             CoseSign1Builder::new()
                 .protected(HeaderBuilder::new().algorithm(iana::Algorithm::ES256).build())

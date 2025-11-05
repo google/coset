@@ -67,7 +67,7 @@ fn test_cose_mac_decode() {
 
 #[test]
 fn test_cose_mac_decode_fail() {
-    let tests = vec![
+    let tests = [
         (
             concat!(
                 "a2",   // 2-map (should be tuple)

@@ -231,7 +231,7 @@ fn test_cose_key_encode() {
 fn test_rfc8152_public_cose_key_decode() {
     // Public keys from RFC8152 section 6.7.1.
     // Note that map contents have been reordered into canonical order.
-    let tests = vec![
+    let tests = [
         (
             CoseKeyBuilder::new_ec2_pub_key(
                 iana::EllipticCurve::P_256,
@@ -313,7 +313,7 @@ fn test_rfc8152_public_cose_key_decode() {
 fn test_rfc8152_private_cose_key_decode() {
     // Private keys from RFC8152 section 6.7.2.
     // Note that map contents have been reordered into canonical order.
-    let tests = vec![
+    let tests = [
         (
             CoseKeyBuilder::new_ec2_priv_key(
                 iana::EllipticCurve::P_256,
