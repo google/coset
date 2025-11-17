@@ -2,6 +2,10 @@
 
 ## 0.4.0 - 2025-09-22
 
+- Breaking change: add `Unassigned(i64)` variant to `RegisteredLabel<t>` and
+  `RegisteredLabelWithPrivateRange<T>`, to allow use of values that are not yet IANA-assigned.
+- Breaking change: remove `CoseError::UnregisteredIanaValue` and
+  `CoseError::UnregisteredIanaNonPrivateValue` variants.
 - Breaking change:  alter type of `crit` field in `Header` to support private-use labels (in accordance with
   [9052 §3.1](https://datatracker.ietf.org/doc/html/rfc9052#name-common-cose-header-paramete)).
 - Deprecate `CoseMac[0]::verify_tag` in favour of `verify_payload_tag`.

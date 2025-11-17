@@ -48,10 +48,6 @@ pub enum CoseError {
     OutOfRangeIntegerValue,
     /// Unexpected CBOR item encountered (got, want).
     UnexpectedItem(&'static str, &'static str),
-    /// Unrecognized value in IANA-controlled range (with no private range).
-    UnregisteredIanaValue,
-    /// Unrecognized value in neither IANA-controlled range nor private range.
-    UnregisteredIanaNonPrivateValue,
 }
 
 /// Crate-specific Result type
@@ -107,10 +103,6 @@ impl CoseError {
             CoseError::ExtraneousData => write!(f, "extraneous data in CBOR input"),
             CoseError::OutOfRangeIntegerValue => write!(f, "out of range integer value"),
             CoseError::UnexpectedItem(got, want) => write!(f, "got {got}, expected {want}"),
-            CoseError::UnregisteredIanaValue => write!(f, "expected recognized IANA value"),
-            CoseError::UnregisteredIanaNonPrivateValue => {
-                write!(f, "expected value in IANA or private use range")
-            }
         }
     }
 }
@@ -291,6 +283,7 @@ impl AsCborValue for Label {
 /// where the allowed integer values are governed by IANA.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RegisteredLabel<T: EnumI64> {
+    Unassigned(i64),
     Assigned(T),
     Text(String),
 }
@@ -306,16 +299,25 @@ impl<T: EnumI64> CborSerializable for RegisteredLabel<T> {}
 /// Manual implementation of [`Ord`] to ensure that CBOR canonical ordering is respected.
 impl<T: EnumI64> Ord for RegisteredLabel<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            (RegisteredLabel::Assigned(i1), RegisteredLabel::Assigned(i2)) => {
-                Label::Int(i1.to_i64()).cmp(&Label::Int(i2.to_i64()))
+        let left: i64 = match self {
+            RegisteredLabel::Assigned(i1) => i1.to_i64(),
+            RegisteredLabel::Unassigned(i1) => *i1,
+            RegisteredLabel::Text(t1) => {
+                return match other {
+                    RegisteredLabel::Assigned(_i2) => Ordering::Greater,
+                    RegisteredLabel::Unassigned(_i2) => Ordering::Greater,
+                    RegisteredLabel::Text(t2) => t1.len().cmp(&t2.len()).then(t1.cmp(t2)),
+                };
             }
-            (RegisteredLabel::Assigned(_i1), RegisteredLabel::Text(_t2)) => Ordering::Less,
-            (RegisteredLabel::Text(_t1), RegisteredLabel::Assigned(_i2)) => Ordering::Greater,
-            (RegisteredLabel::Text(t1), RegisteredLabel::Text(t2)) => {
-                t1.len().cmp(&t2.len()).then(t1.cmp(t2))
-            }
-        }
+        };
+        // The `self`/`left` value is an integer if we reach here.
+
+        let right: i64 = match other {
+            RegisteredLabel::Assigned(i2) => i2.to_i64(),
+            RegisteredLabel::Unassigned(i2) => *i2,
+            RegisteredLabel::Text(_t2) => return Ordering::Less,
+        };
+        Label::Int(left).cmp(&Label::Int(right))
     }
 }
 
@@ -329,10 +331,11 @@ impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
     fn from_cbor_value(value: Value) -> Result<Self> {
         match value {
             Value::Integer(i) => {
-                if let Some(a) = T::from_i64(i.try_into()?) {
+                let i: i64 = i.try_into()?;
+                if let Some(a) = T::from_i64(i) {
                     Ok(RegisteredLabel::Assigned(a))
                 } else {
-                    Err(CoseError::UnregisteredIanaValue)
+                    Ok(RegisteredLabel::Unassigned(i))
                 }
             }
             Value::Text(t) => Ok(RegisteredLabel::Text(t)),
@@ -342,6 +345,7 @@ impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
 
     fn to_cbor_value(self) -> Result<Value> {
         Ok(match self {
+            RegisteredLabel::Unassigned(e) => Value::from(e),
             RegisteredLabel::Assigned(e) => Value::from(e.to_i64()),
             RegisteredLabel::Text(t) => Value::Text(t),
         })
@@ -354,6 +358,7 @@ impl<T: EnumI64> AsCborValue for RegisteredLabel<T> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RegisteredLabelWithPrivate<T: EnumI64 + WithPrivateRange> {
     PrivateUse(i64),
+    Unassigned(i64),
     Assigned(T),
     Text(String),
 }
@@ -369,18 +374,26 @@ impl<T: EnumI64 + WithPrivateRange> CborSerializable for RegisteredLabelWithPriv
 /// Manual implementation of [`Ord`] to ensure that CBOR canonical ordering is respected.
 impl<T: EnumI64 + WithPrivateRange> Ord for RegisteredLabelWithPrivate<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        use RegisteredLabelWithPrivate::{Assigned, PrivateUse, Text};
-        match (self, other) {
-            (Assigned(i1), Assigned(i2)) => Label::Int(i1.to_i64()).cmp(&Label::Int(i2.to_i64())),
-            (Assigned(i1), PrivateUse(i2)) => Label::Int(i1.to_i64()).cmp(&Label::Int(*i2)),
-            (PrivateUse(i1), Assigned(i2)) => Label::Int(*i1).cmp(&Label::Int(i2.to_i64())),
-            (PrivateUse(i1), PrivateUse(i2)) => Label::Int(*i1).cmp(&Label::Int(*i2)),
-            (Assigned(_i1), Text(_t2)) => Ordering::Less,
-            (PrivateUse(_i1), Text(_t2)) => Ordering::Less,
-            (Text(_t1), Assigned(_i2)) => Ordering::Greater,
-            (Text(_t1), PrivateUse(_i2)) => Ordering::Greater,
-            (Text(t1), Text(t2)) => t1.len().cmp(&t2.len()).then(t1.cmp(t2)),
-        }
+        use RegisteredLabelWithPrivate::{Assigned, PrivateUse, Text, Unassigned};
+        let left: i64 = match self {
+            Assigned(i1) => i1.to_i64(),
+            Unassigned(i1) | PrivateUse(i1) => *i1,
+            Text(t1) => {
+                return match other {
+                    Assigned(_i2) => Ordering::Greater,
+                    Unassigned(_i2) | PrivateUse(_i2) => Ordering::Greater,
+                    Text(t2) => t1.len().cmp(&t2.len()).then(t1.cmp(t2)),
+                };
+            }
+        };
+        // The `self`/`left` value is an integer if we reach here.
+
+        let right: i64 = match other {
+            Assigned(i2) => i2.to_i64(),
+            Unassigned(i2) | PrivateUse(i2) => *i2,
+            Text(_t2) => return Ordering::Less,
+        };
+        Label::Int(left).cmp(&Label::Int(right))
     }
 }
 
@@ -400,7 +413,7 @@ impl<T: EnumI64 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T
                 } else if T::is_private(i) {
                     Ok(RegisteredLabelWithPrivate::PrivateUse(i))
                 } else {
-                    Err(CoseError::UnregisteredIanaNonPrivateValue)
+                    Ok(RegisteredLabelWithPrivate::Unassigned(i))
                 }
             }
             Value::Text(t) => Ok(RegisteredLabelWithPrivate::Text(t)),
@@ -410,6 +423,7 @@ impl<T: EnumI64 + WithPrivateRange> AsCborValue for RegisteredLabelWithPrivate<T
     fn to_cbor_value(self) -> Result<Value> {
         Ok(match self {
             RegisteredLabelWithPrivate::PrivateUse(i) => Value::from(i),
+            RegisteredLabelWithPrivate::Unassigned(i) => Value::from(i),
             RegisteredLabelWithPrivate::Assigned(i) => Value::from(i.to_i64()),
             RegisteredLabelWithPrivate::Text(t) => Value::Text(t),
         })
