@@ -88,6 +88,52 @@ pub struct CoseKey {
     pub params: Vec<(Label, Value)>,
 }
 
+const SEC1_COMPRESSED_SIGN_0: u8 = 0x02;
+const SEC1_COMPRESSED_SIGN_1: u8 = 0x03;
+const SEC1_UNCOMPRESSED: u8 = 0x04;
+
+/// The error type returned when a [`CoseKey`] can't be converted to a SEC1 octet string.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum ToSec1OctetStringError {
+    /// The [`CoseKey`] is not an elliptic curve [`iana::KeyType::EC2`] key type.
+    NotEcKey,
+    /// The X or Y coordinate is not present in the key parameters.
+    MissingCoordinate,
+    /// The X or Y coordinate is an invalid CBOR type.
+    InvalidCoordinateType,
+    /// The X and Y coordinates are not the same length.
+    UnequalCoordinateLength,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ToSec1OctetStringError {}
+
+impl core::fmt::Display for ToSec1OctetStringError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            ToSec1OctetStringError::NotEcKey => write!(f, "not an EC key"),
+            ToSec1OctetStringError::MissingCoordinate => write!(f, "missing coordinate"),
+            ToSec1OctetStringError::InvalidCoordinateType => write!(f, "invalid coordinate type"),
+            ToSec1OctetStringError::UnequalCoordinateLength => {
+                write!(f, "unequal coordinate lengths")
+            }
+        }
+    }
+}
+
+/// The error type returned when a SEC1 octet string is malformed.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct ParseSec1OctetStringError;
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSec1OctetStringError {}
+
+impl core::fmt::Display for ParseSec1OctetStringError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "ParseSec1OctetStringError")
+    }
+}
+
 impl CoseKey {
     /// Re-order the contents of the key so that the contents will be emitted in one of the standard
     /// CBOR sorted orders.
@@ -104,6 +150,45 @@ impl CoseKey {
             CborOrdering::LengthFirstLexicographic => {
                 self.params.sort_by(|l, r| l.0.cmp_canonical(&r.0))
             }
+        }
+    }
+
+    /// Converts an EC2 key to a SEC1 octet string representing the public key point. The SEC1 octet
+    /// string is compatible with the ANSI X9.62 point format.
+    ///
+    /// Minimal validation is performed, notably:
+    ///   - must be an EC2 key type
+    ///   - first instance of X and Y parameters are used
+    ///   - X and Y must be the same length
+    ///   - the absolute length of X and Y are not checked
+    ///   - the curve and algorithm are not considered
+    ///
+    /// The caller is responsible for any stricter validation.
+    pub fn to_sec1_octet_string(&self) -> Result<Vec<u8>, ToSec1OctetStringError> {
+        if self.kty != KeyType::Assigned(iana::KeyType::EC2) {
+            return Err(ToSec1OctetStringError::NotEcKey);
+        }
+        let x_param = self
+            .params
+            .iter()
+            .find(|(k, _)| k == &Label::Int(iana::Ec2KeyParameter::X as i64))
+            .ok_or(ToSec1OctetStringError::MissingCoordinate)?;
+        let y_param = self
+            .params
+            .iter()
+            .find(|(k, _)| k == &Label::Int(iana::Ec2KeyParameter::Y as i64))
+            .ok_or(ToSec1OctetStringError::MissingCoordinate)?;
+        let x = x_param
+            .1
+            .as_bytes()
+            .ok_or(ToSec1OctetStringError::InvalidCoordinateType)?
+            .as_slice();
+        match &y_param.1 {
+            Value::Bool(false) => Ok([&[SEC1_COMPRESSED_SIGN_0], x].concat()),
+            Value::Bool(true) => Ok([&[SEC1_COMPRESSED_SIGN_1], x].concat()),
+            Value::Bytes(y) if x.len() == y.len() => Ok([&[SEC1_UNCOMPRESSED], x, y].concat()),
+            Value::Bytes(_) => Err(ToSec1OctetStringError::UnequalCoordinateLength),
+            _ => Err(ToSec1OctetStringError::InvalidCoordinateType),
         }
     }
 }
@@ -241,6 +326,26 @@ impl CoseKeyBuilder {
             ],
             ..Default::default()
         })
+    }
+
+    /// Constructor for an elliptic curve public key specified by a SEC1 octet string representing
+    /// the public key point. The SEC1 octet string is compatible with ANSI X9.62 point format. The
+    /// caller is responsible for validating the SEC1 point and setting the correct curve for the
+    /// key. The leading octet must be `0x02`, `0x03`, or `0x04`.
+    pub fn new_ec2_pub_key_sec1_octet_string(
+        curve: iana::EllipticCurve,
+        sec1: &[u8],
+    ) -> Result<Self, ParseSec1OctetStringError> {
+        let (first, rest) = sec1.split_first().ok_or(ParseSec1OctetStringError)?;
+        match *first {
+            SEC1_COMPRESSED_SIGN_0 => Ok(Self::new_ec2_pub_key_y_sign(curve, rest.to_vec(), false)),
+            SEC1_COMPRESSED_SIGN_1 => Ok(Self::new_ec2_pub_key_y_sign(curve, rest.to_vec(), true)),
+            SEC1_UNCOMPRESSED if rest.len() % 2 == 0 => {
+                let (x, y) = rest.split_at(rest.len() / 2);
+                Ok(Self::new_ec2_pub_key(curve, x.to_vec(), y.to_vec()))
+            }
+            _ => Err(ParseSec1OctetStringError),
+        }
     }
 
     /// Constructor for an elliptic curve private key specified by `d`, together with public `x` and
