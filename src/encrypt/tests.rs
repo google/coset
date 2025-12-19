@@ -874,6 +874,29 @@ fn test_cose_recipient_decrypt_invalid_context() {
         .build();
 
     // Can't use a non-recipient context.
+    #[allow(deprecated)]
+    let _result = recipient.decrypt(EncryptionContext::CoseEncrypt, external_aad, |ct, aad| {
+        cipher.decrypt(ct, aad)
+    });
+}
+
+#[test]
+#[should_panic]
+fn test_cose_recipient_decrypt_ciphertext_invalid_context() {
+    let pt = b"This is the plaintext";
+    let external_aad = b"This is the external aad";
+    let cipher = FakeCipher {};
+
+    let recipient = CoseRecipientBuilder::new()
+        .create_ciphertext(
+            EncryptionContext::EncRecipient,
+            pt,
+            external_aad,
+            |pt, aad| cipher.encrypt(pt, aad).unwrap(),
+        )
+        .build();
+
+    // Can't use a non-recipient context.
     let _result = recipient.decrypt_ciphertext(
         EncryptionContext::CoseEncrypt,
         external_aad,
