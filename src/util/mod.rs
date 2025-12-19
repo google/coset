@@ -38,7 +38,7 @@ pub(crate) fn cbor_type_error<T>(value: &Value, want: &'static str) -> Result<T>
         Value::Tag(_, _) => "tag",
         Value::Array(_) => "array",
         Value::Map(_) => "map",
-        _ => "other",
+        _ => "other", // unhittable: `Value` marked as non-exhaustive
     };
     Err(CoseError::UnexpectedItem(got, want))
 }

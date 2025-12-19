@@ -16,7 +16,7 @@
 
 use super::*;
 use crate::{cbor::value::Value, iana, util::expect_err, CborOrdering, CborSerializable};
-use alloc::{borrow::ToOwned, string::ToString, vec};
+use alloc::{borrow::ToOwned, format, string::ToString, vec};
 
 #[test]
 fn test_cose_key_encode() {
@@ -302,6 +302,8 @@ fn test_new_ec2_pub_key_sec1_octet_string_errors() {
     ];
     for (i, (got, want)) in tests.iter().enumerate() {
         assert_eq!(got, want, "case {i}");
+        assert!(!format!("{got}").is_empty());
+        assert!(!format!("{got:?}").is_empty());
     }
 }
 
@@ -1149,10 +1151,11 @@ fn test_key_to_sec1_octet_string() {
         ),
     ];
     for (i, (key, want)) in tests.iter().enumerate() {
-        assert_eq!(
-            key.to_sec1_octet_string().map(hex::encode),
-            want.map(str::to_string),
-            "case {i}"
-        );
+        let got = key.to_sec1_octet_string().map(hex::encode);
+        assert_eq!(got, want.map(str::to_string), "case {i}");
+        if let Err(e) = got {
+            assert!(!format!("{e}").is_empty());
+            assert!(!format!("{e:?}").is_empty());
+        }
     }
 }

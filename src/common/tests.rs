@@ -20,7 +20,7 @@ use alloc::{borrow::ToOwned, format, vec};
 use core::cmp::Ordering;
 
 #[test]
-fn test_error_convert() {
+fn test_ser_error_convert() {
     let e = CoseError::from(crate::cbor::ser::Error::<String>::Value(
         "error message lost".to_owned(),
     ));
@@ -30,6 +30,21 @@ fn test_error_convert() {
             assert!(format!("{e}").contains("encode CBOR failure"));
         }
         _ => panic!("unexpected error enum after conversion"),
+    }
+}
+
+#[test]
+fn test_de_error_convert() {
+    // Instances of `cbor::de::Error` get embedded into the `DecodeFailed` variant.
+    let tests = [
+        || cbor::de::Error::RecursionLimitExceeded,
+        || cbor::de::Error::Semantic(None, "err".to_owned()),
+        || cbor::de::Error::Syntax(42),
+    ];
+    for err_gen in tests {
+        let got = CoseError::from(err_gen());
+        let want = CoseError::DecodeFailed(err_gen());
+        assert_eq!(format!("{got:?}"), format!("{want}"));
     }
 }
 
@@ -183,6 +198,7 @@ fn test_label_decode_fail() {
 #[test]
 fn test_registered_label_encode() {
     let tests = [
+        (RegisteredLabel::from(iana::Algorithm::A192GCM), "02"),
         (RegisteredLabel::Assigned(iana::Algorithm::A192GCM), "02"),
         (RegisteredLabel::Assigned(iana::Algorithm::EdDSA), "27"),
         (RegisteredLabel::Text("abc".to_owned()), "63616263"),
