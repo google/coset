@@ -96,7 +96,7 @@
 //! [COSE]: https://tools.ietf.org/html/rfc8152
 //! [CBOR]: https://tools.ietf.org/html/rfc7049
 
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 #![deny(rustdoc::broken_intra_doc_links)]
 extern crate alloc;
 
