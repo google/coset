@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.4.1 - 2026-01-19
+
+- Bump MSRV to 1.81.
+- Implement the `core` version of `Error`, making the `std` feature now a no-op.
+- Add new IANA COSE algorithm values.
+- Add helpers for converting EC keys to SEC1 octet strings.
+
 ## 0.4.0 - 2025-09-22
 
 - Breaking change:  alter type of `crit` field in `Header` to support private-use labels (in accordance with
