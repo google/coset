@@ -105,8 +105,7 @@ pub enum ToSec1OctetStringError {
     UnequalCoordinateLength,
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ToSec1OctetStringError {}
+impl core::error::Error for ToSec1OctetStringError {}
 
 impl core::fmt::Display for ToSec1OctetStringError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -125,8 +124,7 @@ impl core::fmt::Display for ToSec1OctetStringError {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct ParseSec1OctetStringError;
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseSec1OctetStringError {}
+impl core::error::Error for ParseSec1OctetStringError {}
 
 impl core::fmt::Display for ParseSec1OctetStringError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
