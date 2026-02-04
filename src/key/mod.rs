@@ -132,6 +132,39 @@ impl core::fmt::Display for ParseSec1OctetStringError {
     }
 }
 
+/// ML-DSA variants from FIPS 204.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum MlDsaVariant {
+    /// ML-DSA-44.
+    MlDsa44,
+    /// ML-DSA-65.
+    MlDsa65,
+    /// ML-DSA-87.
+    MlDsa87,
+}
+
+impl From<MlDsaVariant> for iana::Algorithm {
+    fn from(value: MlDsaVariant) -> iana::Algorithm {
+        match value {
+            MlDsaVariant::MlDsa44 => iana::Algorithm::ML_DSA_44,
+            MlDsaVariant::MlDsa65 => iana::Algorithm::ML_DSA_65,
+            MlDsaVariant::MlDsa87 => iana::Algorithm::ML_DSA_87,
+        }
+    }
+}
+
+impl core::convert::TryFrom<iana::Algorithm> for MlDsaVariant {
+    type Error = CoseError;
+    fn try_from(alg: iana::Algorithm) -> Result<MlDsaVariant, CoseError> {
+        match alg {
+            iana::Algorithm::ML_DSA_44 => Ok(MlDsaVariant::MlDsa44),
+            iana::Algorithm::ML_DSA_65 => Ok(MlDsaVariant::MlDsa65),
+            iana::Algorithm::ML_DSA_87 => Ok(MlDsaVariant::MlDsa87),
+            _ => Err(CoseError::OutOfRangeIntegerValue),
+        }
+    }
+}
+
 impl CoseKey {
     /// Re-order the contents of the key so that the contents will be emitted in one of the standard
     /// CBOR sorted orders.
@@ -360,6 +393,19 @@ impl CoseKeyBuilder {
             .params
             .push((Label::Int(iana::Ec2KeyParameter::D as i64), Value::Bytes(d)));
         builder
+    }
+
+    /// Constructor for an ML-DSA public key.
+    pub fn new_mldsa_pub_key(variant: MlDsaVariant, k: Vec<u8>) -> Self {
+        Self(CoseKey {
+            kty: KeyType::Assigned(iana::KeyType::AKP),
+            alg: Some(Algorithm::Assigned(variant.into())),
+            params: vec![(
+                Label::Int(iana::AkpKeyParameter::Pub as i64),
+                Value::Bytes(k),
+            )],
+            ..Default::default()
+        })
     }
 
     /// Constructor for a symmetric key specified by `k`.
