@@ -17,6 +17,7 @@
 use super::*;
 use crate::{cbor::value::Value, iana, util::expect_err, CborOrdering, CborSerializable};
 use alloc::{borrow::ToOwned, format, string::ToString, vec};
+use core::convert::TryFrom;
 
 #[test]
 fn test_cose_key_encode() {
@@ -807,6 +808,18 @@ fn test_key_builder() {
                 ..Default::default()
             },
         ),
+        (
+            CoseKeyBuilder::new_mldsa_pub_key(MlDsaVariant::MlDsa65, vec![1, 2, 3]).build(),
+            CoseKey {
+                kty: KeyType::Assigned(iana::KeyType::AKP),
+                alg: Some(Algorithm::Assigned(iana::Algorithm::ML_DSA_65)),
+                params: vec![(
+                    Label::Int(iana::AkpKeyParameter::Pub as i64),
+                    Value::Bytes(vec![1, 2, 3]),
+                )],
+                ..Default::default()
+            },
+        ),
     ];
     for (got, want) in tests {
         assert_eq!(got, want);
@@ -1158,4 +1171,28 @@ fn test_key_to_sec1_octet_string() {
             assert!(!format!("{e:?}").is_empty());
         }
     }
+}
+
+#[test]
+fn test_mldsa_variant_convert() {
+    let tests = [
+        (MlDsaVariant::MlDsa44, iana::Algorithm::ML_DSA_44),
+        (MlDsaVariant::MlDsa65, iana::Algorithm::ML_DSA_65),
+        (MlDsaVariant::MlDsa87, iana::Algorithm::ML_DSA_87),
+    ];
+    for (variant, alg) in tests {
+        let Ok(got) = MlDsaVariant::try_from(alg) else {
+            panic!("conversion failed")
+        };
+        assert_eq!(got, variant, "for {alg:?}");
+
+        let got = iana::Algorithm::from(variant);
+        assert_eq!(got, alg, "for {variant:?}");
+    }
+}
+
+#[test]
+fn test_mldsa_variant_convert_fail() {
+    let result = MlDsaVariant::try_from(iana::Algorithm::A256GCM);
+    assert!(matches!(result, Err(CoseError::OutOfRangeIntegerValue)));
 }

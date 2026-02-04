@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.4.2 - TBD
+
+- Add `CoseKeyBuilder::new_mldsa_pub_key()` helper, with associated `MlDsaVariant` enum.
+
 ## 0.4.1 - 2026-01-19
 
 - Bump MSRV to 1.81.
