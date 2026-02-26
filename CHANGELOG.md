@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.4.2 - TBD
+## 0.4.2 - 2026-03-02
 
 - Add `CoseKeyBuilder::new_mldsa_pub_key()` helper, with associated `MlDsaVariant` enum.
 
