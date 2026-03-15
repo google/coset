@@ -394,6 +394,21 @@ impl ProtectedHeader {
         ))
     }
 
+    /// Convert this protected header into a [`Value`] that represents the binary data used for
+    /// authentication (i.e. for inclusion in `Sig_structure`, `Enc_structure` or `MAC_structure`).
+    pub fn to_be_authenticated(self) -> Result<Value> {
+        let result = self.cbor_bstr()?;
+        // protected header might have been encoded as a zero length map, only containing
+        // the byte 0xA0 (see RFC 9052, Section 3).
+        // However, this byte should not be included during authentication (RFC 9052, Section 4.4,
+        // 5.3 and 6.3), so we need to return an empty byte string here instead.
+        if result.eq(&Value::Bytes(vec![0xA0])) {
+            Ok(Value::Bytes(vec![]))
+        } else {
+            Ok(result)
+        }
+    }
+
     /// Indicate whether the `ProtectedHeader` is empty.
     pub fn is_empty(&self) -> bool {
         self.header.is_empty()
