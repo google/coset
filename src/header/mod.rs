@@ -33,6 +33,77 @@ mod tests;
 /// Content type.
 pub type ContentType = crate::RegisteredLabel<iana::CoapContentFormat>;
 
+/// An ordered chain of X.509 certificates, as carried in the `x5chain` header parameter
+/// (RFC 9360).
+///
+/// The first certificate is the end-entity (leaf) certificate, whose public key verifies the
+/// COSE signature. Any subsequent certificates are intermediates, each expected to certify the
+/// one before it, leading towards a trust anchor.
+///
+/// No checks are performed on the contents: certificates are not parsed as X.509 (or even
+/// checked to be DER-encoded), and the ordering of the chain is not verified. The only checks
+/// are that the chain is non-empty and that no certificate is an empty bstr, as enforced by
+/// [`X5Chain::new`], CBOR encoding and CBOR decoding.
+///
+/// ```cddl
+///   COSE_X509 = bstr / [ 2* bstr ]
+/// ```
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct X5Chain(pub Vec<Vec<u8>>);
+
+impl X5Chain {
+    /// Build an `X5Chain` from an ordered, non-empty list of certificates (leaf certificate
+    /// first). No checks are performed on the certificate contents.
+    pub fn new(certs: Vec<Vec<u8>>) -> Result<Self> {
+        if certs.is_empty() {
+            return Err(CoseError::UnexpectedItem(
+                "empty certificate chain",
+                "non-empty certificate chain",
+            ));
+        }
+        if certs.iter().any(Vec::is_empty) {
+            return Err(CoseError::UnexpectedItem("empty bstr", "non-empty bstr"));
+        }
+        Ok(Self(certs))
+    }
+
+    /// Convert to the CBOR encoding described in RFC 9360, without checking the contents.
+    fn into_value(self) -> Value {
+        let mut certs = self.0;
+        if certs.len() == 1 {
+            Value::Bytes(certs.pop().unwrap(/* safe: len checked */))
+        } else {
+            Value::Array(certs.into_iter().map(Value::Bytes).collect())
+        }
+    }
+}
+
+impl AsCborValue for X5Chain {
+    fn from_cbor_value(value: Value) -> Result<Self> {
+        match value {
+            Value::Bytes(cert) => Self::new(vec![cert]),
+            Value::Array(a) => {
+                if a.len() < 2 {
+                    return Err(CoseError::UnexpectedItem(
+                        "array with fewer than 2 certificates",
+                        "bstr, or array of 2 or more certificates",
+                    ));
+                }
+                let certs = a
+                    .into_iter()
+                    .map(ValueTryAs::try_as_bytes)
+                    .collect::<Result<Vec<_>>>()?;
+                Self::new(certs)
+            }
+            v => cbor_type_error(&v, "bstr/array"),
+        }
+    }
+
+    fn to_cbor_value(self) -> Result<Value> {
+        Ok(Self::new(self.0)?.into_value())
+    }
+}
+
 /// Structure representing a common COSE header map.
 ///
 /// ```cddl
@@ -84,6 +155,15 @@ impl Header {
             && self.counter_signatures.is_empty()
             && self.rest.is_empty()
     }
+
+    /// Return the X.509 certificate chain for the key used to sign the message (RFC 9360), if
+    /// present in the header's `rest` parameters.
+    pub fn x5chain(&self) -> Result<Option<X5Chain>> {
+        match self.rest.iter().find(|(label, _)| label == &X5CHAIN) {
+            Some((_, value)) => Ok(Some(X5Chain::from_cbor_value(value.clone())?)),
+            None => Ok(None),
+        }
+    }
 }
 
 impl crate::CborSerializable for Header {}
@@ -95,6 +175,7 @@ const KID: Label = Label::Int(iana::HeaderParameter::Kid as i64);
 const IV: Label = Label::Int(iana::HeaderParameter::Iv as i64);
 const PARTIAL_IV: Label = Label::Int(iana::HeaderParameter::PartialIv as i64);
 const COUNTER_SIG: Label = Label::Int(iana::HeaderParameter::CounterSignature as i64);
+const X5CHAIN: Label = Label::Int(iana::HeaderParameter::X5Chain as i64);
 
 impl AsCborValue for Header {
     fn from_cbor_value(value: Value) -> Result<Self> {
@@ -324,6 +405,15 @@ impl HeaderBuilder {
     #[must_use]
     pub fn add_counter_signature(mut self, sig: CoseSignature) -> Self {
         self.0.counter_signatures.push(sig);
+        self
+    }
+
+    /// Set the X.509 certificate chain for the key used to sign the message (RFC 9360),
+    /// replacing any chain already set. The chain contents are not checked.
+    #[must_use]
+    pub fn x5chain(mut self, chain: X5Chain) -> Self {
+        self.0.rest.retain(|(label, _)| label != &X5CHAIN);
+        self.0.rest.push((X5CHAIN, chain.into_value()));
         self
     }
 

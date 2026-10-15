@@ -160,6 +160,35 @@ fn test_header_encode() {
                 "3a00010000", // crit => 1-arr [-65537]
             ),
         ),
+        (
+            Header {
+                rest: vec![(Label::Int(33), Value::Bytes(vec![1, 2, 3]))],
+                ..Default::default()
+            },
+            concat!(
+                "a1",   // 1-map
+                "1821", // 33 (x5chain)
+                "43", "010203", // => 3-bstr (single certificate)
+            ),
+        ),
+        (
+            Header {
+                rest: vec![(
+                    Label::Int(33),
+                    Value::Array(vec![
+                        Value::Bytes(vec![1, 2, 3]),
+                        Value::Bytes(vec![4, 5, 6]),
+                    ]),
+                )],
+                ..Default::default()
+            },
+            concat!(
+                "a1", // 1-map
+                "1821", "82", // 33 (x5chain) => 2-arr
+                "43", "010203", // 3-bstr (leaf certificate)
+                "43", "040506", // 3-bstr (intermediate certificate)
+            ),
+        ),
     ];
     for (i, (header, header_data)) in tests.iter().enumerate() {
         let got = header.clone().to_vec().unwrap();
@@ -514,6 +543,15 @@ fn test_header_builder() {
                 ..Default::default()
             },
         ),
+        (
+            HeaderBuilder::new()
+                .x5chain(X5Chain::new(vec![vec![1, 2, 3]]).unwrap())
+                .build(),
+            Header {
+                rest: vec![(Label::Int(33), Value::Bytes(vec![1, 2, 3]))],
+                ..Default::default()
+            },
+        ),
     ];
     for (got, want) in tests {
         assert_eq!(got, want);
@@ -525,4 +563,100 @@ fn test_header_builder() {
 fn test_header_builder_core_param_panic() {
     // Attempting to set a core header parameter (in range [1,7]) via `.param()` panics.
     let _hdr = HeaderBuilder::new().value(1, Value::Null).build();
+}
+
+#[test]
+fn test_x5chain_new_fail() {
+    expect_err(X5Chain::new(vec![]), "non-empty certificate chain");
+    expect_err(X5Chain::new(vec![vec![1, 2, 3], vec![]]), "non-empty bstr");
+    // Contents set directly are checked on CBOR encoding.
+    expect_err(
+        X5Chain(vec![]).to_cbor_value(),
+        "non-empty certificate chain",
+    );
+    expect_err(
+        X5Chain(vec![vec![1, 2, 3], vec![]]).to_cbor_value(),
+        "non-empty bstr",
+    );
+}
+
+#[test]
+fn test_header_x5chain() {
+    // No x5chain parameter present.
+    let header = HeaderBuilder::new().key_id(vec![1, 2, 3]).build();
+    assert_eq!(header.x5chain().unwrap(), None);
+
+    // A single certificate is encoded as a bare bstr.
+    let chain = X5Chain::new(vec![vec![1, 2, 3]]).unwrap();
+    let header = HeaderBuilder::new().x5chain(chain.clone()).build();
+    assert_eq!(
+        hex::encode(header.clone().to_vec().unwrap()),
+        concat!("a1", "1821", "43010203"),
+    );
+    assert_eq!(header.x5chain().unwrap(), Some(chain.clone()));
+
+    // Multiple certificates are encoded as an array, signer-first.
+    let multi_chain = X5Chain::new(vec![vec![1, 2, 3], vec![4, 5, 6]]).unwrap();
+    let header = HeaderBuilder::new().x5chain(multi_chain.clone()).build();
+    assert_eq!(
+        hex::encode(header.clone().to_vec().unwrap()),
+        concat!("a1", "1821", "824301020343040506"),
+    );
+    assert_eq!(header.x5chain().unwrap(), Some(multi_chain));
+
+    // Setting a new chain replaces the previous one.
+    let chain2 = X5Chain::new(vec![vec![7, 8, 9]]).unwrap();
+    let header = HeaderBuilder::new()
+        .x5chain(chain)
+        .x5chain(chain2.clone())
+        .build();
+    assert_eq!(header.x5chain().unwrap(), Some(chain2));
+}
+
+#[test]
+fn test_header_x5chain_fail() {
+    let tests = [
+        (
+            concat!(
+                "a1", // 1-map
+                "1821", "01", // 33 (x5chain) => invalid value type
+            ),
+            "expected bstr/array",
+        ),
+        (
+            concat!(
+                "a1", // 1-map
+                "1821", "40", // 33 (x5chain) => 0-bstr
+            ),
+            "expected non-empty bstr",
+        ),
+        (
+            concat!(
+                "a1", // 1-map
+                "1821", "80", // 33 (x5chain) => []
+            ),
+            "fewer than 2 certificates",
+        ),
+        (
+            concat!(
+                "a1", // 1-map
+                "1821", "81", "4101", // 33 (x5chain) => [1-bstr]
+            ),
+            "fewer than 2 certificates",
+        ),
+        (
+            concat!(
+                "a1", // 1-map
+                "1821", "82", "40", "4101", // 33 (x5chain) => [0-bstr, 1-bstr]
+            ),
+            "expected non-empty bstr",
+        ),
+    ];
+    for (header_data, err_msg) in tests {
+        let data = hex::decode(header_data).unwrap();
+        // The header itself still parses: an unrecognized/malformed x5chain value is only
+        // rejected when explicitly interpreted via `Header::x5chain()`.
+        let header = Header::from_slice(&data).unwrap();
+        expect_err(header.x5chain(), err_msg);
+    }
 }

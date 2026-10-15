@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+- Add `X5Chain` type, with `Header::x5chain()` and `HeaderBuilder::x5chain()` helpers for the
+  `x5chain` header parameter (RFC 9360).
+
 ## 0.4.2 - 2026-03-02
 
 - Add `CoseKeyBuilder::new_mldsa_pub_key()` helper, with associated `MlDsaVariant` enum.
