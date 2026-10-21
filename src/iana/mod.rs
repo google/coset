@@ -1052,6 +1052,28 @@ iana_registry! {
     }
 }
 
+iana_registry! {
+    /// OSCORE Security Context Parameters
+    /// From IANA registry https://www.iana.org/assignments/ace/ace.xhtml
+    /// as of 2022-11-29
+    OscoreSecurityContextParameter {
+        /// OSCORE Input Material Identifier ("id": byte string).
+        Id: 0,
+        /// OSCORE Version ("version": unsigned integer).
+        Version: 1,
+        /// OSCORE Master Secret value ("ms": byte string).
+        Ms: 2,
+        /// OSCORE HKDF value ("hkd": text string / integer).
+        Hkdf: 3,
+        /// OSCORE AEAD Algorithm value ("al": text string / integer).
+        Alg: 4,
+        /// an input to OSCORE Master Salt value ("salt": byte string).
+        Salt: 5,
+        /// OSCORE ID Context value ("contextId": byte string).
+        ContextId: 6,
+    }
+}
+
 /// Integer values for CWT claims below this value are reserved for private use.
 pub const CWT_CLAIM_PRIVATE_USE_MAX: i64 = -65536;
 
