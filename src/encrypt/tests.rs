@@ -744,16 +744,28 @@ fn test_cose_recipient_noncanonical() {
     let cipher = FakeCipher {};
     let context = EncryptionContext::EncRecipient;
 
-    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
-    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
-    assert_eq!(protected.header, Header::default());
-    assert_eq!(protected.original_data, Some(vec![0xa0]));
+    // Build a protected header from a non-canonical input, whose map is not in canonical order.
+    let protected_data = hex::decode(concat!(
+        "a2", // 2-map
+        "04", "42", "3131", // 4 (kid) => 2-bstr "11"
+        "01", "26", // 1 (alg) => ES256
+    ))
+    .unwrap();
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data.clone())).unwrap();
+    assert_eq!(
+        protected.header,
+        HeaderBuilder::new()
+            .algorithm(iana::Algorithm::ES256)
+            .key_id(vec![0x31, 0x31])
+            .build()
+    );
+    assert_eq!(protected.original_data, Some(protected_data));
 
     let mut recipient = CoseRecipient {
         protected: protected.clone(),
         ..Default::default()
     };
-    let internal_aad = crate::encrypt::enc_structure_data(context, protected, aad);
+    let internal_aad = crate::encrypt::enc_structure_data(context, protected.clone(), aad);
     recipient.ciphertext = Some(cipher.encrypt(pt, &internal_aad).unwrap());
 
     // Deciphering the ciphertext should still succeed, because the `ProtectedHeader`
@@ -766,6 +778,7 @@ fn test_cose_recipient_noncanonical() {
     // However, if we attempt to build the same decryption inputs by hand (thus not including the
     // non-canonical wire data)...
     let recreated_recipient = CoseRecipientBuilder::new()
+        .protected(protected.header)
         .ciphertext(recipient.ciphertext.unwrap())
         .build();
 
@@ -949,10 +962,22 @@ fn test_cose_encrypt_noncanonical() {
     let external_aad = b"bb";
     let cipher = FakeCipher {};
 
-    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
-    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
-    assert_eq!(protected.header, Header::default());
-    assert_eq!(protected.original_data, Some(vec![0xa0]));
+    // Build a protected header from a non-canonical input, whose map is not in canonical order.
+    let protected_data = hex::decode(concat!(
+        "a2", // 2-map
+        "04", "42", "3131", // 4 (kid) => 2-bstr "11"
+        "01", "26", // 1 (alg) => ES256
+    ))
+    .unwrap();
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data.clone())).unwrap();
+    assert_eq!(
+        protected.header,
+        HeaderBuilder::new()
+            .algorithm(iana::Algorithm::ES256)
+            .key_id(vec![0x31, 0x31])
+            .build()
+    );
+    assert_eq!(protected.original_data, Some(protected_data));
 
     let mut encrypt = CoseEncrypt {
         protected: protected.clone(),
@@ -1077,10 +1102,22 @@ fn test_cose_encrypt0_noncanonical() {
     let external_aad = b"bb";
     let cipher = FakeCipher {};
 
-    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
-    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
-    assert_eq!(protected.header, Header::default());
-    assert_eq!(protected.original_data, Some(vec![0xa0]));
+    // Build a protected header from a non-canonical input, whose map is not in canonical order.
+    let protected_data = hex::decode(concat!(
+        "a2", // 2-map
+        "04", "42", "3131", // 4 (kid) => 2-bstr "11"
+        "01", "26", // 1 (alg) => ES256
+    ))
+    .unwrap();
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data.clone())).unwrap();
+    assert_eq!(
+        protected.header,
+        HeaderBuilder::new()
+            .algorithm(iana::Algorithm::ES256)
+            .key_id(vec![0x31, 0x31])
+            .build()
+    );
+    assert_eq!(protected.original_data, Some(protected_data));
 
     let mut encrypt = CoseEncrypt0 {
         protected: protected.clone(),
@@ -1114,6 +1151,51 @@ fn test_cose_encrypt0_noncanonical() {
         .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
         .is_err());
 }
+#[test]
+fn test_cose_encrypt0_empty_protected_noncanonical() {
+    let pt = b"aa";
+    let external_aad = b"bb";
+    let cipher = FakeCipher {};
+
+    // Encrypt with the protected header empty, encoded as a zero-length bstr.
+    let aad = enc_structure_data(
+        EncryptionContext::CoseEncrypt0,
+        ProtectedHeader::default(),
+        external_aad,
+    );
+    let ciphertext = cipher.encrypt(pt, &aad).unwrap();
+
+    // A bstr holding an empty map (41a0), and one holding an empty map whose length is
+    // non-minimally encoded (42b800).
+    let tests = ["a0", "b800"];
+    for protected_data in tests.iter() {
+        let protected_data = hex::decode(protected_data).unwrap();
+        let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data)).unwrap();
+        assert_eq!(protected.header, Header::default());
+
+        // RFC 9052 section 5.3: "If there are no protected attributes, a zero-length byte string
+        // is used."
+        assert_eq!(
+            enc_structure_data(
+                EncryptionContext::CoseEncrypt0,
+                protected.clone(),
+                external_aad
+            ),
+            aad
+        );
+
+        let encrypt = CoseEncrypt0 {
+            protected,
+            ciphertext: Some(ciphertext.clone()),
+            ..Default::default()
+        };
+        let recovered_pt = encrypt
+            .decrypt_ciphertext(external_aad, no_ct_err, |ct, aad| cipher.decrypt(ct, aad))
+            .unwrap();
+        assert_eq!(&pt[..], recovered_pt);
+    }
+}
+
 #[test]
 fn test_cose_encrypt0_status() {
     let pt = b"This is the plaintext";

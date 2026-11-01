@@ -4,6 +4,9 @@
 
 - Add `X5Chain` type, with `Header::x5chain()` and `HeaderBuilder::x5chain()` helpers for the
   `x5chain` header parameter (RFC 9360).
+- Use a zero-length `bstr` for an empty protected header in `Sig_structure`, `MAC_structure` and
+  `Enc_structure`, even when it was received as a `bstr` holding an empty map (RFC 9052 §4.4, §5.3,
+  §6.3).
 
 ## 0.4.2 - 2026-03-02
 

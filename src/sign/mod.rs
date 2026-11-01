@@ -520,11 +520,16 @@ pub fn sig_structure_data(
 ) -> Vec<u8> {
     let mut arr = vec![
         Value::Text(context.text().to_owned()),
-        body.cbor_bstr().expect("failed to serialize header"), // safe: always serializable
+        // safe: always serializable
+        body.cbor_bstr_for_structure()
+            .expect("failed to serialize header"),
     ];
     if let Some(sign) = sign {
-        arr.push(sign.cbor_bstr().expect("failed to serialize header")); // safe: always
-                                                                         // serializable
+        // safe: always serializable
+        arr.push(
+            sign.cbor_bstr_for_structure()
+                .expect("failed to serialize header"),
+        );
     }
     arr.push(Value::Bytes(aad.to_vec()));
     arr.push(Value::Bytes(payload.to_vec()));

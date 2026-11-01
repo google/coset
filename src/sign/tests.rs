@@ -1236,12 +1236,6 @@ fn test_sign_noncanonical() {
     let aad = b"bb";
 
     let tests = vec![
-        // Non-canonical: empty map can just be an empty bstr, not a bstr holding an empty map.
-        ("a0", Header::default()),
-        // Non-canonical: the map length (of 0) is non-minimally encoded as the 0x00 following
-        // 0xb8; it is short enough that it would normally be folded into the type byte
-        // (0xa0).
-        ("b800", Header::default()),
         // Non-canonical: map not in canonical order.
         (
             concat!(
@@ -1709,10 +1703,22 @@ fn test_sign1_noncanonical() {
     let pt = b"aa";
     let aad = b"bb";
 
-    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
-    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
-    assert_eq!(protected.header, Header::default());
-    assert_eq!(protected.original_data, Some(vec![0xa0]));
+    // Build a protected header from a non-canonical input, whose map is not in canonical order.
+    let protected_data = hex::decode(concat!(
+        "a2", // 2-map
+        "04", "42", "3131", // 4 (kid) => 2-bstr "11"
+        "01", "26", // 1 (alg) => ES256
+    ))
+    .unwrap();
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data.clone())).unwrap();
+    assert_eq!(
+        protected.header,
+        HeaderBuilder::new()
+            .algorithm(iana::Algorithm::ES256)
+            .key_id(vec![0x31, 0x31])
+            .build()
+    );
+    assert_eq!(protected.original_data, Some(protected_data));
 
     // Build a signature whose inputs include the non-canonically encoded protected header.
     let mut sign1 = CoseSign1::default();
@@ -1742,6 +1748,101 @@ fn test_sign1_noncanonical() {
     assert!(recreated_sign1
         .verify_signature(aad, |sig, data| verifier.verify(sig, data))
         .is_err());
+}
+
+#[test]
+fn test_sign1_empty_protected_noncanonical() {
+    // cose-wg/Examples sign1-tests/sign-pass-01.json ("Redo protected"): the empty protected header
+    // is sent as a bstr holding an empty map, and the published ToBeSign has a zero-length bstr in
+    // its place. RFC 9052 section 4.4: "If there are no protected attributes, a zero-length byte
+    // string is used."
+    let sign1_data = hex::decode(concat!(
+        "d2",   // tag(18)
+        "84",   // 4-tuple
+        "41a0", // 1-bstr holding 0-map (not a 0-bstr)
+        "a2",   // 2-map (unprotected)
+        "01",
+        "26", // 1 (alg) => ES256
+        "04",
+        "42",
+        "3131", // 4 (kid) => 2-bstr "11"
+        "54",
+        "546869732069732074686520636f6e74656e742e", // 20-bstr (payload)
+        "5840",                                     // 64-bstr (signature)
+        "87db0d2e5571843b78ac33ecb2830df7b6e0a4d5b7376de336b23c591c90c425",
+        "317e56127fbe04370097ce347087b233bf722b64072beb4486bda4031d27244f",
+    ))
+    .unwrap();
+    let sign1 = CoseSign1::from_tagged_slice(&sign1_data).unwrap();
+    assert_eq!(sign1.protected.header, Header::default());
+    assert_eq!(sign1.protected.original_data, Some(vec![0xa0]));
+
+    assert_eq!(
+        hex::encode(sign1.tbs_data(b"")),
+        concat!(
+            "84", // 4-arr
+            "6a",
+            "5369676e617475726531", // 10-tstr "Signature1"
+            "40",                   // 0-bstr for body_protected
+            "40",                   // 0-bstr for external_aad
+            "54",
+            "546869732069732074686520636f6e74656e742e", // 20-bstr for payload
+        )
+    );
+
+    // Re-serializing still gives back the bytes as received.
+    assert_eq!(sign1.to_tagged_vec().unwrap(), sign1_data);
+}
+
+#[test]
+fn test_sign_empty_protected_noncanonical() {
+    let signer = FakeSigner {};
+    let verifier = signer;
+    let pt = b"aa";
+    let aad = b"bb";
+
+    let tests = [
+        // Non-canonical: empty map can just be an empty bstr, not a bstr holding an empty map.
+        "a0",
+        // Non-canonical: the map length (of 0) is non-minimally encoded as the 0x00 following
+        // 0xb8; it is short enough that it would normally be folded into the type byte (0xa0).
+        "b800",
+    ];
+
+    for protected_data in tests.iter() {
+        let protected_data = hex::decode(protected_data).unwrap();
+        let protected =
+            ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data.clone())).unwrap();
+        assert_eq!(protected.header, Header::default());
+        assert_eq!(protected.original_data, Some(protected_data));
+
+        // Sign with both protected headers empty, encoded as zero-length bstrs.
+        let canonical = CoseSignBuilder::new()
+            .payload(pt.to_vec())
+            .add_signature(CoseSignature::default())
+            .build();
+        let tbs_data = canonical.tbs_data(aad, &canonical.signatures[0]);
+
+        // Receive the same message with both protected headers in the non-canonical form.
+        let sign = CoseSign {
+            protected: protected.clone(),
+            payload: Some(pt.to_vec()),
+            signatures: vec![CoseSignature {
+                protected,
+                signature: signer.sign(&tbs_data),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let sign = CoseSign::from_slice(&sign.to_vec().unwrap()).unwrap();
+
+        // RFC 9052 section 4.4: "If there are no protected attributes, a zero-length byte string
+        // is used", for both body_protected and sign_protected.
+        assert_eq!(sign.tbs_data(aad, &sign.signatures[0]), tbs_data);
+        assert!(sign
+            .verify_signature(0, aad, |sig, data| verifier.verify(sig, data))
+            .is_ok());
+    }
 }
 
 #[test]
