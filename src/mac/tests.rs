@@ -569,10 +569,21 @@ fn test_cose_mac_noncanonical() {
     let tagger = FakeMac {};
     let external_aad = b"aad";
 
-    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
-    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
-    assert_eq!(protected.header, Header::default());
-    assert_eq!(protected.original_data, Some(vec![0xa0]));
+    // Build a protected header from a non-canonical input, whose algorithm is non-minimally
+    // encoded.
+    let protected_data = hex::decode(concat!(
+        "a1", // 1-map
+        "01", "3806", // 1 (alg) => ES256, as -7 with a 1-byte argument rather than 0x26
+    ))
+    .unwrap();
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data.clone())).unwrap();
+    assert_eq!(
+        protected.header,
+        HeaderBuilder::new()
+            .algorithm(iana::Algorithm::ES256)
+            .build()
+    );
+    assert_eq!(protected.original_data, Some(protected_data));
 
     let mut mac = CoseMac {
         protected: protected.clone(),
@@ -712,10 +723,21 @@ fn test_cose_mac0_noncanonical() {
     let tagger = FakeMac {};
     let external_aad = b"aad";
 
-    // Build an empty protected header from a non-canonical input of 41a0 rather than 40.
-    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(vec![0xa0])).unwrap();
-    assert_eq!(protected.header, Header::default());
-    assert_eq!(protected.original_data, Some(vec![0xa0]));
+    // Build a protected header from a non-canonical input, whose algorithm is non-minimally
+    // encoded.
+    let protected_data = hex::decode(concat!(
+        "a1", // 1-map
+        "01", "3806", // 1 (alg) => ES256, as -7 with a 1-byte argument rather than 0x26
+    ))
+    .unwrap();
+    let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data.clone())).unwrap();
+    assert_eq!(
+        protected.header,
+        HeaderBuilder::new()
+            .algorithm(iana::Algorithm::ES256)
+            .build()
+    );
+    assert_eq!(protected.original_data, Some(protected_data));
 
     let mut mac = CoseMac0 {
         protected: protected.clone(),
@@ -747,6 +769,40 @@ fn test_cose_mac0_noncanonical() {
         .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
             .verify(tag, data))
         .is_err());
+}
+
+#[test]
+fn test_cose_mac0_empty_protected_noncanonical() {
+    let tagger = FakeMac {};
+    let external_aad = b"aad";
+
+    // A tag computed with the protected header empty, encoded as a zero-length bstr.
+    let canonical = CoseMac0Builder::new().payload(b"data".to_vec()).build();
+    let tbm = canonical.tbm(external_aad);
+
+    // A bstr holding an empty map (41a0), and one holding an empty map whose length is
+    // non-minimally encoded (42b800).
+    let tests = ["a0", "b800"];
+    for protected_data in tests.iter() {
+        let protected_data = hex::decode(protected_data).unwrap();
+        let protected = ProtectedHeader::from_cbor_bstr(Value::Bytes(protected_data)).unwrap();
+        assert_eq!(protected.header, Header::default());
+
+        let mac = CoseMac0 {
+            protected,
+            payload: Some(b"data".to_vec()),
+            tag: tagger.compute(&tbm),
+            ..Default::default()
+        };
+
+        // RFC 9052 section 6.3: "If there are no protected attributes, a zero-length bstr is
+        // used."
+        assert_eq!(mac.tbm(external_aad), tbm);
+        assert!(mac
+            .verify_payload_tag(external_aad, no_payload_err, |tag, data| tagger
+                .verify(tag, data))
+            .is_ok());
+    }
 }
 
 #[test]

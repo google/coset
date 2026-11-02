@@ -579,7 +579,10 @@ pub fn enc_structure_data(
 ) -> Vec<u8> {
     let arr = vec![
         Value::Text(context.text().to_owned()),
-        protected.cbor_bstr().expect("failed to serialize header"), // safe: always serializable
+        // safe: always serializable
+        protected
+            .cbor_bstr_for_structure()
+            .expect("failed to serialize header"),
         Value::Bytes(external_aad.to_vec()),
     ];
 

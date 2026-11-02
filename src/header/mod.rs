@@ -484,6 +484,22 @@ impl ProtectedHeader {
         ))
     }
 
+    /// Convert this header to the `bstr` that goes into a structure built as the input of a
+    /// cryptographic operation (`Sig_structure`, `MAC_structure` or `Enc_structure`), consuming
+    /// the object along the way.
+    ///
+    /// This is the same as [`cbor_bstr`](Self::cbor_bstr), except that a header with no
+    /// attributes is always a zero-length `bstr`, even if it was received as a `bstr` holding an
+    /// empty map: RFC 9052 sections 4.4, 5.3 and 6.3 say "If there are no protected attributes, a
+    /// zero-length byte string is used".
+    pub(crate) fn cbor_bstr_for_structure(self) -> Result<Value> {
+        if self.is_empty() {
+            Ok(Value::Bytes(vec![]))
+        } else {
+            self.cbor_bstr()
+        }
+    }
+
     /// Indicate whether the `ProtectedHeader` is empty.
     pub fn is_empty(&self) -> bool {
         self.header.is_empty()
