@@ -466,3 +466,69 @@ fn test_as_cbor_value() {
         assert_eq!(val, val.clone().to_cbor_value().unwrap());
     }
 }
+
+#[derive(Clone, Debug, PartialEq)]
+struct TaggedValue(Value);
+
+impl AsCborValue for TaggedValue {
+    fn from_cbor_value(value: Value) -> Result<Self> {
+        Ok(Self(value))
+    }
+
+    fn to_cbor_value(self) -> Result<Value> {
+        Ok(self.0)
+    }
+}
+
+impl TaggedCborSerializable for TaggedValue {
+    const TAG: u64 = 1;
+}
+
+#[test]
+fn test_cbor_recursion_limit() {
+    let mut at_default = vec![0x81; DEFAULT_CBOR_RECURSION_LIMIT];
+    at_default.push(0x00);
+    assert!(Value::from_slice(&at_default).is_ok());
+
+    let mut over_default = vec![0x81; DEFAULT_CBOR_RECURSION_LIMIT + 1];
+    over_default.push(0x00);
+    expect_err(Value::from_slice(&over_default), "RecursionLimitExceeded");
+    assert!(Value::from_slice_with_recursion_limit(
+        &over_default,
+        DEFAULT_CBOR_RECURSION_LIMIT + 1
+    )
+    .is_ok());
+    expect_err(
+        Value::from_slice_with_recursion_limit(&at_default, 4),
+        "RecursionLimitExceeded",
+    );
+}
+
+#[test]
+fn test_tagged_cbor_recursion_limit() {
+    // CBOR tag 1 (`0xc1`) consumes 1 level of recursion.
+    let mut at_default = vec![0xc1];
+    at_default.extend(vec![0x81; DEFAULT_CBOR_RECURSION_LIMIT - 1]);
+    at_default.push(0x00);
+    assert!(TaggedValue::from_tagged_slice(&at_default).is_ok());
+
+    let mut over_default = vec![0xc1];
+    over_default.extend(vec![0x81; DEFAULT_CBOR_RECURSION_LIMIT]);
+    over_default.push(0x00);
+    expect_err(
+        TaggedValue::from_tagged_slice(&over_default),
+        "RecursionLimitExceeded",
+    );
+    assert!(TaggedValue::from_tagged_slice_with_recursion_limit(
+        &over_default,
+        DEFAULT_CBOR_RECURSION_LIMIT + 1,
+    )
+    .is_ok());
+
+    // Wrong tag (`0xc2` = tag 2) fails with UnexpectedItem.
+    let wrong_tag = vec![0xc2, 0x00];
+    expect_err(
+        TaggedValue::from_tagged_slice_with_recursion_limit(&wrong_tag, 4),
+        "expected other tag",
+    );
+}
