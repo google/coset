@@ -114,10 +114,13 @@ impl CoseError {
     }
 }
 
+/// Default maximum CBOR nesting depth allowed when decoding a COSE object.
+pub const DEFAULT_CBOR_RECURSION_LIMIT: usize = 16;
+
 /// Read a CBOR [`Value`] from a byte slice, failing if any extra data remains after the `Value` has
-/// been read.
-fn read_to_value(mut slice: &[u8]) -> Result<Value> {
-    let value = cbor::de::from_reader(&mut slice)?;
+/// been read or if nesting exceeds `recurse_limit`.
+fn read_to_value(mut slice: &[u8], recurse_limit: usize) -> Result<Value> {
+    let value = cbor::de::from_reader_with_recursion_limit(&mut slice, recurse_limit)?;
     if slice.is_empty() {
         Ok(value)
     } else {
@@ -135,10 +138,21 @@ pub trait AsCborValue: Sized {
 
 /// Extension trait that adds serialization/deserialization methods.
 pub trait CborSerializable: AsCborValue {
-    /// Create an object instance from serialized CBOR data in a slice.  This method will fail (with
-    /// `CoseError::ExtraneousData`) if there is additional CBOR data after the object.
+    /// Create an object instance from serialized CBOR data in a slice, using
+    /// [`DEFAULT_CBOR_RECURSION_LIMIT`] as the maximum CBOR nesting depth.  This method will fail
+    /// (with `CoseError::ExtraneousData`) if there is additional CBOR data after the object.
     fn from_slice(slice: &[u8]) -> Result<Self> {
-        Self::from_cbor_value(read_to_value(slice)?)
+        Self::from_slice_with_recursion_limit(slice, DEFAULT_CBOR_RECURSION_LIMIT)
+    }
+
+    /// Create an object instance from serialized CBOR data in a slice, using a caller-specified
+    /// maximum CBOR nesting depth.  Inputs nested beyond `recurse_limit` fail with
+    /// `CoseError::DecodeFailed(cbor::de::Error::RecursionLimitExceeded)`.  Note that nested
+    /// `bstr`-wrapped structures (such as [`ProtectedHeader`](crate::ProtectedHeader)) are decoded
+    /// using [`DEFAULT_CBOR_RECURSION_LIMIT`].  This method will fail (with
+    /// `CoseError::ExtraneousData`) if there is additional CBOR data after the object.
+    fn from_slice_with_recursion_limit(slice: &[u8], recurse_limit: usize) -> Result<Self> {
+        Self::from_cbor_value(read_to_value(slice, recurse_limit)?)
     }
 
     /// Serialize this object to a vector, consuming it along the way.
@@ -155,9 +169,19 @@ pub trait TaggedCborSerializable: AsCborValue {
     const TAG: u64;
 
     /// Create an object instance from serialized CBOR data in a slice, expecting an initial
-    /// tag value.
+    /// tag value and using [`DEFAULT_CBOR_RECURSION_LIMIT`] as the maximum CBOR nesting depth.
     fn from_tagged_slice(slice: &[u8]) -> Result<Self> {
-        let (t, v) = read_to_value(slice)?.try_as_tag()?;
+        Self::from_tagged_slice_with_recursion_limit(slice, DEFAULT_CBOR_RECURSION_LIMIT)
+    }
+
+    /// Create an object instance from serialized CBOR data in a slice, expecting an initial
+    /// tag value and using a caller-specified maximum CBOR nesting depth.  Inputs nested beyond
+    /// `recurse_limit` fail with
+    /// `CoseError::DecodeFailed(cbor::de::Error::RecursionLimitExceeded)`.  Note that nested
+    /// `bstr`-wrapped structures (such as [`ProtectedHeader`](crate::ProtectedHeader)) are decoded
+    /// using [`DEFAULT_CBOR_RECURSION_LIMIT`].
+    fn from_tagged_slice_with_recursion_limit(slice: &[u8], recurse_limit: usize) -> Result<Self> {
+        let (t, v) = read_to_value(slice, recurse_limit)?.try_as_tag()?;
         if t != Self::TAG {
             return Err(CoseError::UnexpectedItem("tag", "other tag"));
         }
